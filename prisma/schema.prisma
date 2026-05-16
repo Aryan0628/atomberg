@@ -1,0 +1,373 @@
+// prisma/schema.prisma
+// AtomQuest Hackathon 1.0 — Goal Setting & Tracking Portal
+// Every field maps to a PS requirement. Do not remove any field.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── USERS & ORG ─────────────────────────────────────────────
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  name            String
+  password        String    // bcrypt, min 10 rounds
+  role            Role      @default(EMPLOYEE)
+  department      String?
+  designation     String?
+  employeeCode    String?   @unique
+  isActive        Boolean   @default(true)
+  avatarUrl       String?
+
+  managerId       String?
+  manager         User?     @relation("Reports", fields: [managerId], references: [id])
+  reports         User[]    @relation("Reports")
+
+  skipManagerId   String?
+  skipManager     User?     @relation("SkipLevel", fields: [skipManagerId], references: [id])
+  skipReports     User[]    @relation("SkipLevel")
+
+  ownedGoals      Goal[]    @relation("GoalOwner")
+  approvedGoals   Goal[]    @relation("GoalApprover")
+  sharedGoals     Goal[]    @relation("SharedGoalRecipients")
+  checkins        Checkin[]
+  auditLogs       AuditLog[]
+  notifications   Notification[]
+  escalationLogs  EscalationLog[]
+  comments        GoalComment[]
+
+  lastLoginAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([managerId])
+  @@index([department])
+}
+
+enum Role {
+  EMPLOYEE
+  MANAGER
+  ADMIN
+  HR
+}
+
+// ─── CYCLES ──────────────────────────────────────────────────
+
+model Cycle {
+  id               String      @id @default(cuid())
+  name             String
+  fiscalYear       String
+  isActive         Boolean     @default(false)
+  createdBy        String
+
+  goalSettingOpen  DateTime
+  goalSettingClose DateTime
+  q1Open           DateTime
+  q1Close          DateTime
+  q2Open           DateTime
+  q2Close          DateTime
+  q3Open           DateTime
+  q3Close          DateTime
+  q4Open           DateTime
+  q4Close          DateTime
+
+  goals            Goal[]
+  checkins         Checkin[]
+  escalationRules  EscalationRule[]
+
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+// ─── GOALS ───────────────────────────────────────────────────
+
+model Goal {
+  id              String      @id @default(cuid())
+  title           String
+  description     String?
+  thrustArea      String
+
+  uomType         UoMType
+  uomUnit         String?
+  target          Float?
+  targetDate      DateTime?
+
+  weightage       Float       // 10-100, per-employee sum must = 100 per cycle
+
+  status          GoalStatus  @default(DRAFT)
+  isLocked        Boolean     @default(false)
+  lockedAt        DateTime?
+
+  isShared        Boolean     @default(false)
+  primaryOwnerId  String?
+  sharedWith      User[]      @relation("SharedGoalRecipients")
+
+  ownerId         String
+  owner           User        @relation("GoalOwner", fields: [ownerId], references: [id])
+  approverId      String?
+  approver        User?       @relation("GoalApprover", fields: [approverId], references: [id])
+  cycleId         String
+  cycle           Cycle       @relation(fields: [cycleId], references: [id])
+
+  submittedAt     DateTime?
+  approvedAt      DateTime?
+  rejectedAt      DateTime?
+  rejectReason    String?
+  returnedAt      DateTime?
+  returnReason    String?
+  reworkCount     Int         @default(0)
+
+  latestScore     Float?
+  latestStatus    ProgressStatus @default(NOT_STARTED)
+
+  checkins        Checkin[]
+  auditLogs       AuditLog[]
+  comments        GoalComment[]
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([ownerId, cycleId])
+  @@index([approverId])
+  @@index([status])
+}
+
+enum UoMType {
+  NUMERIC_MIN   // Higher is better: score = actual / target
+  NUMERIC_MAX   // Lower is better: score = target / actual
+  TIMELINE      // Date completion
+  ZERO          // Zero = 100%
+  PERCENTAGE    // 0-100 scale
+}
+
+enum GoalStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  RETURNED
+  LOCKED
+}
+
+enum ProgressStatus {
+  NOT_STARTED
+  ON_TRACK
+  AT_RISK
+  COMPLETED
+  OVERDUE
+}
+
+// ─── CHECK-INS ───────────────────────────────────────────────
+
+model Checkin {
+  id                String          @id @default(cuid())
+  quarter           Quarter
+  goalId            String
+  goal              Goal            @relation(fields: [goalId], references: [id])
+  cycleId           String
+  cycle             Cycle           @relation(fields: [cycleId], references: [id])
+  employeeId        String
+  employee          User            @relation(fields: [employeeId], references: [id])
+
+  actualValue       Float?
+  actualDate        DateTime?
+  progressStatus    ProgressStatus  @default(NOT_STARTED)
+  employeeNote      String?
+  selfRating        Int?            // 1-5 stars (employee self-assessment)
+  whatWentWell      String?
+  blockers          String?
+
+  progressScore     Float?          // 0.0 to 1.0+
+  scorePercentage   Float?          // progressScore * 100
+
+  managerCheckedIn  Boolean         @default(false)
+  managerComment    String?
+  managerRating     Int?            // 1-5
+  checkedInBy       String?
+  checkedInAt       DateTime?
+
+  submittedAt       DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@unique([goalId, quarter, cycleId])
+  @@index([employeeId, cycleId])
+}
+
+enum Quarter {
+  Q1
+  Q2
+  Q3
+  Q4
+}
+
+// ─── AUDIT TRAIL ─────────────────────────────────────────────
+
+model AuditLog {
+  id          String      @id @default(cuid())
+  goalId      String?
+  goal        Goal?       @relation(fields: [goalId], references: [id])
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  action      AuditAction
+  entityType  String
+  entityId    String
+  oldValue    Json?
+  newValue    Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime    @default(now())
+
+  @@index([goalId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([action])
+}
+
+enum AuditAction {
+  GOAL_CREATED
+  GOAL_SUBMITTED
+  GOAL_APPROVED
+  GOAL_REJECTED
+  GOAL_RETURNED
+  GOAL_LOCKED
+  GOAL_UNLOCKED
+  TARGET_EDITED
+  WEIGHTAGE_EDITED
+  CHECKIN_SUBMITTED
+  CHECKIN_MANAGER_REVIEWED
+  USER_CREATED
+  USER_ROLE_CHANGED
+  CYCLE_CREATED
+  CYCLE_ACTIVATED
+  ESCALATION_SENT
+  EXPORT_GENERATED
+  SHARED_GOAL_ASSIGNED
+  GOAL_COMMENT_ADDED
+  TEMPLATE_USED
+  CYCLE_CLONED
+  GOALS_AUTO_LOCKED
+}
+
+// ─── NOTIFICATIONS ───────────────────────────────────────────
+
+model Notification {
+  id          String              @id @default(cuid())
+  userId      String
+  user        User                @relation(fields: [userId], references: [id])
+  type        NotificationType
+  title       String
+  message     String
+  link        String?
+  read        Boolean             @default(false)
+  readAt      DateTime?
+  createdAt   DateTime            @default(now())
+
+  @@index([userId, read])
+}
+
+enum NotificationType {
+  GOAL_SUBMITTED_FOR_APPROVAL
+  GOAL_APPROVED
+  GOAL_REJECTED
+  GOAL_RETURNED
+  CHECKIN_WINDOW_OPEN
+  CHECKIN_REMINDER
+  CHECKIN_OVERDUE
+  ESCALATION_TRIGGERED
+  MANAGER_CHECKIN_COMPLETE
+  CYCLE_STARTED
+  GOAL_SHARED_WITH_YOU
+  GOAL_COMMENT_FROM_MANAGER
+  GOAL_COMMENT_FROM_EMPLOYEE
+}
+
+// ─── ESCALATION ──────────────────────────────────────────────
+
+model EscalationRule {
+  id                String              @id @default(cuid())
+  cycleId           String
+  cycle             Cycle               @relation(fields: [cycleId], references: [id])
+  trigger           EscalationTrigger
+  daysAfterTrigger  Int
+  escalateTo        EscalateeTo
+  isActive          Boolean             @default(true)
+  createdAt         DateTime            @default(now())
+}
+
+enum EscalationTrigger {
+  GOAL_NOT_SUBMITTED
+  GOAL_NOT_APPROVED
+  CHECKIN_NOT_COMPLETED
+}
+
+enum EscalateeTo {
+  EMPLOYEE
+  MANAGER
+  SKIP_LEVEL
+  HR
+}
+
+model EscalationLog {
+  id            String              @id @default(cuid())
+  userId        String
+  user          User                @relation(fields: [userId], references: [id])
+  trigger       EscalationTrigger
+  escalatedTo   String
+  emailSent     Boolean             @default(false)
+  resolvedAt    DateTime?
+  createdAt     DateTime            @default(now())
+}
+
+// ─── THRUST AREAS (Admin Configurable) ───────────────────────
+
+model ThrustArea {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+}
+
+// ─── GOAL TEMPLATES ──────────────────────────────────────────
+
+model GoalTemplate {
+  id                 String    @id @default(cuid())
+  title              String
+  description        String?
+  thrustArea         String
+  uomType            UoMType
+  uomUnit            String?
+  suggestedTarget    Float?
+  suggestedWeightage Float     @default(20)
+  isActive           Boolean   @default(true)
+  usageCount         Int       @default(0) // incremented each time an employee picks this template
+  createdById        String
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([thrustArea])
+}
+
+// ─── GOAL COMMENTS (pre/post approval discussion) ────────────
+
+model GoalComment {
+  id        String   @id @default(cuid())
+  goalId    String
+  goal      Goal     @relation(fields: [goalId], references: [id])
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  content   String
+  isInternal Boolean @default(false) // true = manager-only note, not shown to employee
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([goalId])
+}

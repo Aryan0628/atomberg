@@ -1,0 +1,152 @@
+// lib/escalation.ts
+// Escalation engine — runs daily via Vercel cron. Deduplicates via Redis.
+
+import { prisma } from "@/lib/db";
+import { writeAudit } from "@/lib/audit";
+import { sendEscalationEmail } from "@/lib/notifications";
+import { redisGet, redisSetex } from "@/lib/redis";
+
+export async function runEscalationEngine() {
+  const cycle = await prisma.cycle.findFirst({ where: { isActive: true } });
+  if (!cycle) return { processed: 0 };
+
+  const now = new Date();
+  const rules = await prisma.escalationRule.findMany({
+    where: { cycleId: cycle.id, isActive: true },
+  });
+  let processed = 0;
+
+  for (const rule of rules) {
+    if (rule.trigger === "GOAL_NOT_SUBMITTED") {
+      const daysSince = Math.floor(
+        (now.getTime() - cycle.goalSettingOpen.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      if (daysSince < rule.daysAfterTrigger) continue;
+
+      const employees = await prisma.user.findMany({
+        where: { role: "EMPLOYEE", isActive: true },
+      });
+
+      for (const emp of employees) {
+        const submitted = await prisma.goal.count({
+          where: {
+            ownerId: emp.id,
+            cycleId: cycle.id,
+            status: { in: ["SUBMITTED", "APPROVED", "LOCKED"] },
+          },
+        });
+
+        if (submitted === 0) {
+          const key = `esc:${emp.id}:${rule.trigger}:${cycle.id}:${rule.escalateTo}`;
+          const already = await redisGet(key);
+          if (!already) {
+            await sendEscalationEmail(emp, rule.trigger, rule.escalateTo, cycle.name);
+            await prisma.escalationLog.create({
+              data: {
+                userId: emp.id,
+                trigger: rule.trigger,
+                escalatedTo: rule.escalateTo,
+                emailSent: true,
+              },
+            });
+            await writeAudit({
+              userId: emp.id,
+              action: "ESCALATION_SENT",
+              entityType: "User",
+              entityId: emp.id,
+              newValue: { trigger: rule.trigger, escalateTo: rule.escalateTo },
+            });
+            await redisSetex(key, 86400, "1");
+            processed++;
+          }
+        }
+      }
+    }
+
+    if (rule.trigger === "GOAL_NOT_APPROVED") {
+      const daysSince = Math.floor(
+        (now.getTime() - cycle.goalSettingOpen.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      if (daysSince < rule.daysAfterTrigger) continue;
+
+      const pendingGoals = await prisma.goal.findMany({
+        where: { cycleId: cycle.id, status: "SUBMITTED" },
+        include: { owner: true },
+      });
+
+      const managerIds = [...new Set(pendingGoals.map((g) => g.owner.managerId).filter(Boolean))];
+      for (const mId of managerIds) {
+        if (!mId) continue;
+        const key = `esc:${mId}:${rule.trigger}:${cycle.id}:${rule.escalateTo}`;
+        const already = await redisGet(key);
+        if (!already) {
+          const manager = await prisma.user.findUnique({ where: { id: mId } });
+          if (manager) {
+            await sendEscalationEmail(manager, rule.trigger, rule.escalateTo, cycle.name);
+            await prisma.escalationLog.create({
+              data: {
+                userId: mId,
+                trigger: rule.trigger,
+                escalatedTo: rule.escalateTo,
+                emailSent: true,
+              },
+            });
+            await redisSetex(key, 86400, "1");
+            processed++;
+          }
+        }
+      }
+    }
+
+    if (rule.trigger === "CHECKIN_NOT_COMPLETED") {
+      const currentQuarter = getCurrentQuarter(cycle, now);
+      if (!currentQuarter) continue;
+
+      const employees = await prisma.user.findMany({
+        where: { role: "EMPLOYEE", isActive: true },
+        include: {
+          ownedGoals: {
+            where: { cycleId: cycle.id, status: "LOCKED" },
+          },
+        },
+      });
+
+      for (const emp of employees) {
+        if (emp.ownedGoals.length === 0) continue;
+        const checkins = await prisma.checkin.count({
+          where: { employeeId: emp.id, cycleId: cycle.id, quarter: currentQuarter },
+        });
+        if (checkins < emp.ownedGoals.length) {
+          const key = `esc:${emp.id}:${rule.trigger}:${cycle.id}:${currentQuarter}`;
+          const already = await redisGet(key);
+          if (!already) {
+            await sendEscalationEmail(emp, rule.trigger, rule.escalateTo, cycle.name);
+            await prisma.escalationLog.create({
+              data: {
+                userId: emp.id,
+                trigger: rule.trigger,
+                escalatedTo: rule.escalateTo,
+                emailSent: true,
+              },
+            });
+            await redisSetex(key, 86400, "1");
+            processed++;
+          }
+        }
+      }
+    }
+  }
+
+  return { processed };
+}
+
+function getCurrentQuarter(
+  cycle: { q1Open: Date; q1Close: Date; q2Open: Date; q2Close: Date; q3Open: Date; q3Close: Date; q4Open: Date; q4Close: Date },
+  now: Date
+): "Q1" | "Q2" | "Q3" | "Q4" | null {
+  if (now >= cycle.q1Open && now <= cycle.q1Close) return "Q1";
+  if (now >= cycle.q2Open && now <= cycle.q2Close) return "Q2";
+  if (now >= cycle.q3Open && now <= cycle.q3Close) return "Q3";
+  if (now >= cycle.q4Open && now <= cycle.q4Close) return "Q4";
+  return null;
+}
