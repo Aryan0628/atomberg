@@ -4,7 +4,7 @@
 
 import { createHash } from "crypto";
 import { prisma } from "@/lib/db";
-import { AuditAction } from "@/lib/generated/prisma";
+import { AuditAction } from "@/lib/generated/prisma/enums";
 
 interface AuditData {
   userId: string;

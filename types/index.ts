@@ -22,7 +22,7 @@ import type {
   NotificationType,
   EscalationTrigger,
   EscalateeTo,
-} from "@/lib/generated/prisma";
+} from "@/lib/generated/prisma/client";
 
 // Re-export Prisma types for convenience
 export type {
@@ -49,7 +49,7 @@ export {
   NotificationType,
   EscalationTrigger,
   EscalateeTo,
-} from "@/lib/generated/prisma";
+} from "@/lib/generated/prisma/client";
 
 // ─── Extended Session Types ──────────────────────────────────
 

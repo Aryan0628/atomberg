@@ -4,7 +4,7 @@
 // to ensure no employee receives more than 1 escalation per 24 hours.
 
 import { prisma } from "@/lib/db";
-import { NotificationType } from "@/lib/generated/prisma";
+import { NotificationType } from "@/lib/generated/prisma/enums";
 
 interface CreateNotificationParams {
   userId: string;
