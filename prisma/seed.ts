@@ -1,8 +1,27 @@
 import "dotenv/config";
+import { createHash } from "crypto";
 import { PrismaClient } from "../lib/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
 import bcrypt from "bcryptjs";
+
+// Compute a hash-chained audit entry inline (mirrors lib/audit.ts logic)
+async function seedAudit(
+  prisma: PrismaClient,
+  entry: { userId: string; action: string; entityType: string; entityId: string; goalId?: string; newValue?: object; oldValue?: object; createdAt: Date }
+) {
+  const last = await prisma.auditLog.findFirst({ orderBy: { createdAt: "desc" } });
+  const previousHash = last?.hash ?? "GENESIS";
+  const payload = JSON.stringify({
+    userId: entry.userId, action: entry.action, entityType: entry.entityType,
+    entityId: entry.entityId, newValue: entry.newValue ?? null, createdAt: entry.createdAt.toISOString(),
+  });
+  const hash = createHash("sha256").update(payload + previousHash).digest("hex");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (prisma as any).auditLog.create({
+    data: { ...entry, hash, previousHash },
+  });
+}
 
 // Parse the DATABASE_URL from prisma dev
 let connectionString = process.env.DATABASE_URL || "";
@@ -503,38 +522,13 @@ async function main() {
     ],
   });
 
-  // ─── AUDIT LOGS ────────────────────────────────────────────
+  // ─── AUDIT LOGS (hash-chained for tamper-evident ledger) ──────────────────
   console.log("  Creating audit logs...");
-  await prisma.auditLog.createMany({
-    data: [
-      {
-        userId: rahul.id, action: "GOAL_CREATED", entityType: "Goal", entityId: rahulGoal1.id, goalId: rahulGoal1.id,
-        newValue: { title: "Quarterly Sales Revenue Achievement", weightage: 40 },
-        createdAt: new Date("2026-05-10T09:00:00Z"),
-      },
-      {
-        userId: rahul.id, action: "GOAL_SUBMITTED", entityType: "Goal", entityId: rahulGoal1.id, goalId: rahulGoal1.id,
-        newValue: { count: 4, status: "SUBMITTED" },
-        createdAt: new Date("2026-05-10T10:00:00Z"),
-      },
-      {
-        userId: vikram.id, action: "GOAL_APPROVED", entityType: "Goal", entityId: rahulGoal1.id, goalId: rahulGoal1.id,
-        oldValue: { status: "SUBMITTED", target: 50, weightage: 40 },
-        newValue: { status: "APPROVED" },
-        createdAt: new Date("2026-05-12T14:00:00Z"),
-      },
-      {
-        userId: rahul.id, action: "CHECKIN_SUBMITTED", entityType: "Checkin", entityId: rahulGoal1.id, goalId: rahulGoal1.id,
-        newValue: { quarter: "Q1", score: 84, progressStatus: "ON_TRACK" },
-        createdAt: new Date("2026-07-15T10:00:00Z"),
-      },
-      {
-        userId: priya.id, action: "GOAL_SUBMITTED", entityType: "Goal", entityId: cycle.id,
-        newValue: { count: 3, status: "SUBMITTED" },
-        createdAt: new Date("2026-05-14T09:00:00Z"),
-      },
-    ],
-  });
+  await seedAudit(prisma, { userId: rahul.id, action: "GOAL_CREATED", entityType: "Goal", entityId: rahulGoal1.id, goalId: rahulGoal1.id, newValue: { title: "Quarterly Sales Revenue Achievement", weightage: 40 }, createdAt: new Date("2026-05-10T09:00:00Z") });
+  await seedAudit(prisma, { userId: rahul.id, action: "GOAL_SUBMITTED", entityType: "Goal", entityId: rahulGoal1.id, goalId: rahulGoal1.id, newValue: { count: 4, status: "SUBMITTED" }, createdAt: new Date("2026-05-10T10:00:00Z") });
+  await seedAudit(prisma, { userId: vikram.id, action: "GOAL_APPROVED", entityType: "Goal", entityId: rahulGoal1.id, goalId: rahulGoal1.id, oldValue: { status: "SUBMITTED", target: 50, weightage: 40 }, newValue: { status: "APPROVED" }, createdAt: new Date("2026-05-12T14:00:00Z") });
+  await seedAudit(prisma, { userId: rahul.id, action: "CHECKIN_SUBMITTED", entityType: "Checkin", entityId: rahulGoal1.id, goalId: rahulGoal1.id, newValue: { quarter: "Q1", score: 84, progressStatus: "ON_TRACK" }, createdAt: new Date("2026-07-15T10:00:00Z") });
+  await seedAudit(prisma, { userId: priya.id, action: "GOAL_SUBMITTED", entityType: "Goal", entityId: cycle.id, newValue: { count: 3, status: "SUBMITTED" }, createdAt: new Date("2026-05-14T09:00:00Z") });
 
   console.log("✅ Seed completed successfully!");
   console.log("\n📋 Demo Credentials:");

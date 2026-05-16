@@ -219,11 +219,13 @@ model AuditLog {
   action      AuditAction
   entityType  String
   entityId    String
-  oldValue    Json?
-  newValue    Json?
-  ipAddress   String?
-  userAgent   String?
-  createdAt   DateTime    @default(now())
+  oldValue      Json?
+  newValue      Json?
+  ipAddress     String?
+  userAgent     String?
+  hash          String    @unique  // SHA-256(payload + previousHash) — tamper-evident chain
+  previousHash  String?            // null only for the genesis entry
+  createdAt     DateTime  @default(now())
 
   @@index([goalId])
   @@index([userId])
