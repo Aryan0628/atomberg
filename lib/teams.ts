@@ -29,5 +29,5 @@ export async function sendTeamsCard(card: TeamsCard): Promise<void> {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
-  }).catch(() => {});
+  }).catch((err) => console.error("[TEAMS ERROR]", err));
 }

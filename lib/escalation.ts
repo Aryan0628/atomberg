@@ -6,6 +6,44 @@ import { writeAudit } from "@/lib/audit";
 import { sendEscalationEmail } from "@/lib/notifications";
 import { redisGet, redisSetex } from "@/lib/redis";
 
+interface EscalationUser {
+  id: string;
+  name: string;
+  email: string;
+  managerId: string | null;
+  skipManagerId: string | null;
+}
+
+// Returns the actual recipient to email based on rule.escalateTo
+async function resolveRecipient(
+  subject: EscalationUser,
+  escalateTo: string
+): Promise<{ name: string; email: string } | null> {
+  switch (escalateTo) {
+    case "EMPLOYEE":
+      return { name: subject.name, email: subject.email };
+    case "MANAGER":
+      if (!subject.managerId) return null;
+      return prisma.user.findUnique({
+        where: { id: subject.managerId },
+        select: { name: true, email: true },
+      });
+    case "SKIP_LEVEL":
+      if (!subject.skipManagerId) return null;
+      return prisma.user.findUnique({
+        where: { id: subject.skipManagerId },
+        select: { name: true, email: true },
+      });
+    case "HR":
+      return prisma.user.findFirst({
+        where: { role: "HR", isActive: true },
+        select: { name: true, email: true },
+      });
+    default:
+      return null;
+  }
+}
+
 export async function runEscalationEngine() {
   const cycle = await prisma.cycle.findFirst({ where: { isActive: true } });
   if (!cycle) return { processed: 0 };
@@ -40,13 +78,16 @@ export async function runEscalationEngine() {
           const key = `esc:${emp.id}:${rule.trigger}:${cycle.id}:${rule.escalateTo}`;
           const already = await redisGet(key);
           if (!already) {
-            await sendEscalationEmail(emp, rule.trigger, rule.escalateTo, cycle.name);
+            const recipient = await resolveRecipient(emp, rule.escalateTo);
+            if (recipient) {
+              await sendEscalationEmail(recipient, rule.trigger, rule.escalateTo, cycle.name);
+            }
             await prisma.escalationLog.create({
               data: {
                 userId: emp.id,
                 trigger: rule.trigger,
                 escalatedTo: rule.escalateTo,
-                emailSent: true,
+                emailSent: !!recipient,
               },
             });
             await writeAudit({
@@ -64,31 +105,39 @@ export async function runEscalationEngine() {
     }
 
     if (rule.trigger === "GOAL_NOT_APPROVED") {
-      const daysSince = Math.floor(
-        (now.getTime() - cycle.goalSettingOpen.getTime()) / (1000 * 60 * 60 * 24)
-      );
-      if (daysSince < rule.daysAfterTrigger) continue;
-
+      // Escalate based on how long the goal has been in SUBMITTED state, not cycle start date
+      const cutoffDate = new Date(now.getTime() - rule.daysAfterTrigger * 24 * 60 * 60 * 1000);
       const pendingGoals = await prisma.goal.findMany({
-        where: { cycleId: cycle.id, status: "SUBMITTED" },
+        where: {
+          cycleId: cycle.id,
+          status: "SUBMITTED",
+          submittedAt: { lte: cutoffDate }, // submitted more than N days ago
+        },
         include: { owner: true },
       });
 
+      // For GOAL_NOT_APPROVED, the "subject" is the manager who hasn't approved
       const managerIds = [...new Set(pendingGoals.map((g) => g.owner.managerId).filter(Boolean))];
       for (const mId of managerIds) {
         if (!mId) continue;
         const key = `esc:${mId}:${rule.trigger}:${cycle.id}:${rule.escalateTo}`;
         const already = await redisGet(key);
         if (!already) {
-          const manager = await prisma.user.findUnique({ where: { id: mId } });
+          const manager = await prisma.user.findUnique({
+            where: { id: mId },
+            select: { id: true, name: true, email: true, managerId: true, skipManagerId: true },
+          });
           if (manager) {
-            await sendEscalationEmail(manager, rule.trigger, rule.escalateTo, cycle.name);
+            const recipient = await resolveRecipient(manager, rule.escalateTo);
+            if (recipient) {
+              await sendEscalationEmail(recipient, rule.trigger, rule.escalateTo, cycle.name);
+            }
             await prisma.escalationLog.create({
               data: {
                 userId: mId,
                 trigger: rule.trigger,
                 escalatedTo: rule.escalateTo,
-                emailSent: true,
+                emailSent: !!recipient,
               },
             });
             await redisSetex(key, 86400, "1");
@@ -120,13 +169,16 @@ export async function runEscalationEngine() {
           const key = `esc:${emp.id}:${rule.trigger}:${cycle.id}:${currentQuarter}`;
           const already = await redisGet(key);
           if (!already) {
-            await sendEscalationEmail(emp, rule.trigger, rule.escalateTo, cycle.name);
+            const recipient = await resolveRecipient(emp, rule.escalateTo);
+            if (recipient) {
+              await sendEscalationEmail(recipient, rule.trigger, rule.escalateTo, cycle.name);
+            }
             await prisma.escalationLog.create({
               data: {
                 userId: emp.id,
                 trigger: rule.trigger,
                 escalatedTo: rule.escalateTo,
-                emailSent: true,
+                emailSent: !!recipient,
               },
             });
             await redisSetex(key, 86400, "1");

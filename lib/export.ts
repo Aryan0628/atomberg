@@ -39,8 +39,11 @@ export function generateCSV(rows: object[]): string {
     ...rows.map((row) =>
       headers
         .map((h) => {
-          const val = String((row as Record<string, unknown>)[h] ?? "");
-          // Escape commas and quotes in CSV values
+          let val = String((row as Record<string, unknown>)[h] ?? "");
+          // Neutralise formula injection (=, +, -, @)
+          if (/^[=+\-@]/.test(val)) val = `'${val}`;
+          // Strip newlines to prevent row-breaking
+          val = val.replace(/\r?\n|\r/g, " ");
           return val.includes(",") || val.includes('"')
             ? `"${val.replace(/"/g, '""')}"`
             : val;

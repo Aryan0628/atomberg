@@ -197,7 +197,7 @@ model Checkin {
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 
-  @@unique([goalId, quarter, cycleId])
+  @@unique([goalId, quarter, cycleId, employeeId])
   @@index([employeeId, cycleId])
 }
 

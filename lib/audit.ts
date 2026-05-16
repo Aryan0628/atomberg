@@ -51,6 +51,7 @@ export async function writeAudit(data: AuditData) {
       userAgent: ua,
       hash,
       previousHash,
+      createdAt: now, // must match the timestamp used in payload hash — do not let DB default this
     },
   });
 }
