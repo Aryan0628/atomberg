@@ -25,12 +25,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const goal = await prisma.goal.findUnique({
     where: { id: goalId },
-    include: { owner: { select: { id: true, name: true } }, cycle: { select: { id: true } } },
+    include: { owner: { select: { id: true, name: true, managerId: true } }, cycle: { select: { id: true } } },
   });
   if (!goal) return NextResponse.json({ error: "Goal not found" }, { status: 404 });
 
+  // Managers can only review check-ins for their own reports
+  if (session.user.role === "MANAGER" && goal.owner.managerId !== session.user.id) {
+    return NextResponse.json({ error: "Forbidden — goal owner is not your report" }, { status: 403 });
+  }
+
   const checkin = await prisma.checkin.findFirst({
-    where: { goalId, quarter },
+    where: { goalId, quarter, cycleId: goal.cycle.id, employeeId: goal.owner.id },
   });
   if (!checkin) return NextResponse.json({ error: "No check-in found for this quarter" }, { status: 404 });
 

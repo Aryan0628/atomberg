@@ -15,8 +15,18 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
   const { id } = await params;
 
-  const goal = await prisma.goal.findUnique({ where: { id }, select: { ownerId: true, approverId: true } });
+  const goal = await prisma.goal.findUnique({
+    where: { id },
+    select: { ownerId: true, approverId: true, sharedWith: { select: { id: true } } },
+  });
   if (!goal) return NextResponse.json({ error: "Goal not found" }, { status: 404 });
+
+  // Employees can only read comments on their own goals (or shared goals they're a recipient of)
+  if (session.user.role === "EMPLOYEE") {
+    const isOwner = goal.ownerId === session.user.id;
+    const isRecipient = goal.sharedWith.some((u) => u.id === session.user.id);
+    if (!isOwner && !isRecipient) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const where: Record<string, unknown> = { goalId: id };
   if (session.user.role === "EMPLOYEE") {
@@ -49,7 +59,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   // Only owner or their manager/admin can comment
   const isOwner = goal.ownerId === session.user.id;
-  const isManager = ["MANAGER", "ADMIN", "HR"].includes(session.user.role);
+  const isAdminOrHr = ["ADMIN", "HR"].includes(session.user.role);
+  let isAuthorisedManager = false;
+  if (session.user.role === "MANAGER") {
+    // Manager must manage the goal owner or be the assigned approver
+    const ownsReport = await prisma.user.findFirst({
+      where: { id: goal.ownerId, managerId: session.user.id },
+    });
+    isAuthorisedManager = !!(ownsReport || goal.approverId === session.user.id);
+  }
+  const isManager = isAdminOrHr || isAuthorisedManager;
+
   if (!isOwner && !isManager) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }

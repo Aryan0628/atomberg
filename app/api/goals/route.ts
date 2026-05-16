@@ -21,24 +21,28 @@ export async function GET(req: Request) {
   const where: Record<string, unknown> = {};
   if (cycleId) where.cycleId = cycleId;
   if (status) where.status = status;
-  if (ownerId) where.ownerId = ownerId;
   if (thrustArea) where.thrustArea = thrustArea;
 
-  // Role-based filtering
+  // Role-based filtering — always enforced, ownerId param cannot bypass team scope
   if (session.user.role === "EMPLOYEE") {
     where.ownerId = session.user.id;
   } else if (session.user.role === "MANAGER") {
-    // Manager sees their reports' goals + their own
     const reports = await prisma.user.findMany({
       where: { managerId: session.user.id },
       select: { id: true },
     });
     const reportIds = reports.map((r) => r.id);
-    if (!ownerId) {
-      where.ownerId = { in: [...reportIds, session.user.id] };
+    const allowedIds = [...reportIds, session.user.id];
+    // If ownerId param is provided, validate it's within team scope
+    if (ownerId && !allowedIds.includes(ownerId)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+    where.ownerId = ownerId ? ownerId : { in: allowedIds };
+  } else if (ownerId) {
+    // ADMIN/HR can filter by any ownerId
+    where.ownerId = ownerId;
   }
-  // ADMIN/HR see all
+  // ADMIN/HR with no ownerId see all
 
   if (search) {
     where.OR = [

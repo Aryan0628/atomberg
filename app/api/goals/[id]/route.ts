@@ -29,6 +29,20 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
   if (!goal) return NextResponse.json({ error: "Goal not found" }, { status: 404 });
 
+  // Role-based access: employees can only see their own goals
+  if (session.user.role === "EMPLOYEE" && goal.ownerId !== session.user.id) {
+    // Allow if it's a shared goal they're a recipient of
+    const isRecipient = goal.sharedWith.some((u) => u.id === session.user.id);
+    if (!isRecipient) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  // Managers can only see their reports' goals
+  if (session.user.role === "MANAGER" && goal.owner.id !== session.user.id) {
+    const report = await prisma.user.findFirst({
+      where: { id: goal.owner.id, managerId: session.user.id },
+    });
+    if (!report) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   // Filter internal comments for employees
   if (session.user.role === "EMPLOYEE") {
     goal.comments = goal.comments.filter((c) => !c.isInternal);
@@ -45,7 +59,27 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const goal = await prisma.goal.findUnique({ where: { id } });
   if (!goal) return NextResponse.json({ error: "Goal not found" }, { status: 404 });
 
-  // Only owner can edit, and only in DRAFT or RETURNED status
+  const body = await req.json();
+
+  // Shared goal recipients (non-primary-owners) can only edit their own weightage.
+  // Also catches isShared=true with null primaryOwnerId (data anomaly) — falls through to owner check.
+  if (goal.isShared && goal.primaryOwnerId !== null && goal.primaryOwnerId !== session.user.id) {
+    const fullGoal = await prisma.goal.findUnique({
+      where: { id },
+      select: { sharedWith: { select: { id: true } } },
+    });
+    const isRecipient = fullGoal?.sharedWith.some((u) => u.id === session.user.id) ?? false;
+    if (!isRecipient) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+    const weightage = Number(body.weightage);
+    if (!body.weightage || isNaN(weightage) || weightage < 10 || weightage > 100) {
+      return NextResponse.json({ error: "Shared goal recipients can only edit weightage (10–100)" }, { status: 400 });
+    }
+    const updated = await prisma.goal.update({ where: { id }, data: { weightage } });
+    return NextResponse.json(updated);
+  }
+
+  // Only the primary owner can fully edit, and only in DRAFT or RETURNED status
   if (goal.ownerId !== session.user.id) {
     return NextResponse.json({ error: "Only goal owner can edit" }, { status: 403 });
   }
@@ -54,15 +88,6 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   }
   if (goal.isLocked) {
     return NextResponse.json({ error: "Goal is locked" }, { status: 400 });
-  }
-
-  // Shared goals: recipients can only edit weightage
-  const body = await req.json();
-  if (goal.isShared && goal.primaryOwnerId && goal.primaryOwnerId !== session.user.id) {
-    const { weightage } = body;
-    if (!weightage) return NextResponse.json({ error: "Shared goal recipients can only edit weightage" }, { status: 400 });
-    const updated = await prisma.goal.update({ where: { id }, data: { weightage } });
-    return NextResponse.json(updated);
   }
 
   const parsed = GoalUpdateSchema.safeParse(body);

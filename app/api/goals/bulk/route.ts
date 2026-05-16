@@ -14,6 +14,16 @@ export async function POST(req: Request) {
 
   const { cycleId } = await req.json();
 
+  // Verify this is the active cycle and goal-setting window is open
+  const activeCycle = await prisma.cycle.findFirst({ where: { isActive: true } });
+  if (!activeCycle || activeCycle.id !== cycleId) {
+    return NextResponse.json({ error: "Can only submit goals for the active cycle" }, { status: 400 });
+  }
+  const now = new Date();
+  if (now < activeCycle.goalSettingOpen || now > activeCycle.goalSettingClose) {
+    return NextResponse.json({ error: "Goal setting window is closed" }, { status: 403 });
+  }
+
   const goals = await prisma.goal.findMany({
     where: { ownerId: session.user.id, cycleId, status: "DRAFT" },
   });

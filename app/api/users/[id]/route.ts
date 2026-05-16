@@ -4,6 +4,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { writeAudit } from "@/lib/audit";
+import { UserUpdateSchema } from "@/lib/validations";
 import { NextResponse } from "next/server";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -42,23 +43,27 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const { id } = await params;
   const body = await req.json();
 
+  const parsed = UserUpdateSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
+  }
+
   const existing = await prisma.user.findUnique({ where: { id } });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const oldRole = existing.role;
+  const data = parsed.data;
 
   const updated = await prisma.user.update({
     where: { id },
     data: {
-      name: body.name ?? existing.name,
-      email: body.email ?? existing.email,
-      role: body.role ?? existing.role,
-      department: body.department ?? existing.department,
-      designation: body.designation ?? existing.designation,
-      employeeCode: body.employeeCode ?? existing.employeeCode,
-      managerId: body.managerId !== undefined ? body.managerId : existing.managerId,
-      skipManagerId: body.skipManagerId !== undefined ? body.skipManagerId : existing.skipManagerId,
-      isActive: body.isActive !== undefined ? body.isActive : existing.isActive,
+      name: data.name ?? existing.name,
+      role: data.role ?? existing.role,
+      department: data.department !== undefined ? data.department : existing.department,
+      designation: data.designation !== undefined ? data.designation : existing.designation,
+      managerId: data.managerId !== undefined ? data.managerId : existing.managerId,
+      skipManagerId: data.skipManagerId !== undefined ? data.skipManagerId : existing.skipManagerId,
+      isActive: data.isActive !== undefined ? data.isActive : existing.isActive,
     },
     select: {
       id: true, name: true, email: true, role: true, department: true,
@@ -66,7 +71,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     },
   });
 
-  if (body.role && body.role !== oldRole) {
+  if (data.role && data.role !== oldRole) {
     await writeAudit({
       userId: session.user.id,
       action: "USER_ROLE_CHANGED",
@@ -76,13 +81,14 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       newValue: { role: body.role },
     });
   } else {
+    // USER_ROLE_CHANGED is the closest audit action for general profile updates (no USER_UPDATED in enum)
     await writeAudit({
       userId: session.user.id,
-      action: "USER_CREATED",
+      action: "USER_ROLE_CHANGED",
       entityType: "User",
       entityId: id,
-      oldValue: { name: existing.name, department: existing.department },
-      newValue: { name: updated.name, department: updated.department },
+      oldValue: { name: existing.name, department: existing.department, managerId: existing.managerId },
+      newValue: { name: updated.name, department: updated.department, managerId: updated.managerId },
     });
   }
 
@@ -105,7 +111,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
 
   await writeAudit({
     userId: session.user.id,
-    action: "USER_CREATED",
+    action: "USER_ROLE_CHANGED",
     entityType: "User",
     entityId: id,
     newValue: { isActive: false, action: "deactivated" },

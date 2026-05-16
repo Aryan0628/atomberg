@@ -28,6 +28,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ error: "Goal is not in submitted state" }, { status: 400 });
   }
 
+  // Managers can only act on their own reports' goals
+  if (session.user.role === "MANAGER" && goal.owner.managerId !== session.user.id) {
+    return NextResponse.json({ error: "Forbidden — goal owner is not your report" }, { status: 403 });
+  }
+
   const { action, targetOverride, weightageOverride, rejectReason, returnReason } = parsed.data;
   const oldValue = { target: goal.target, weightage: goal.weightage, status: goal.status };
 

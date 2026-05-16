@@ -25,8 +25,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ error: `${quarter} check-in window is not open` }, { status: 403 });
   }
 
-  const goal = await prisma.goal.findUnique({ where: { id } });
-  if (!goal || goal.ownerId !== session.user.id) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const goal = await prisma.goal.findUnique({
+    where: { id },
+    include: { sharedWith: { select: { id: true } } },
+  });
+  const isOwner = goal?.ownerId === session.user.id;
+  const isRecipient = goal?.sharedWith?.some((u) => u.id === session.user.id) ?? false;
+  if (!goal || (!isOwner && !isRecipient)) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (goal.cycleId !== activeCycle.id) return NextResponse.json({ error: "Goal does not belong to the active cycle" }, { status: 400 });
   if (!goal.isLocked) return NextResponse.json({ error: "Goal must be locked before check-in" }, { status: 400 });
 
   const score = computeScore({
@@ -38,7 +44,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   });
 
   const checkin = await prisma.checkin.upsert({
-    where: { goalId_quarter_cycleId: { goalId: id, quarter, cycleId: activeCycle.id } },
+    where: { goalId_quarter_cycleId_employeeId: { goalId: id, quarter, cycleId: activeCycle.id, employeeId: session.user.id } },
     create: {
       goalId: id, quarter, cycleId: activeCycle.id, employeeId: session.user.id,
       actualValue, actualDate, progressStatus, employeeNote, selfRating, whatWentWell, blockers,
@@ -52,11 +58,20 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   await prisma.goal.update({ where: { id }, data: { latestScore: score, latestStatus: progressStatus } });
 
+  // Sync score to each other shared recipient's own checkin row
   if (goal.isShared) {
-    await prisma.checkin.updateMany({
-      where: { goalId: id, quarter, cycleId: activeCycle.id, employeeId: { not: session.user.id } },
-      data: { actualValue, actualDate, progressScore: score / 100, scorePercentage: score },
-    });
+    const recipients = goal.sharedWith.filter((u) => u.id !== session.user.id);
+    for (const recipient of recipients) {
+      await prisma.checkin.upsert({
+        where: { goalId_quarter_cycleId_employeeId: { goalId: id, quarter, cycleId: activeCycle.id, employeeId: recipient.id } },
+        create: {
+          goalId: id, quarter, cycleId: activeCycle.id, employeeId: recipient.id,
+          actualValue, actualDate, progressStatus, progressScore: score / 100, scorePercentage: score,
+          submittedAt: new Date(),
+        },
+        update: { actualValue, actualDate, progressScore: score / 100, scorePercentage: score },
+      });
+    }
   }
 
   await writeAudit({

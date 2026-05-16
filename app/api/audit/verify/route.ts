@@ -47,12 +47,25 @@ export async function GET() {
       .update(payload + runningPreviousHash)
       .digest("hex");
 
+    // Check stored previousHash field wasn't tampered independently
+    if (log.previousHash !== runningPreviousHash) {
+      return NextResponse.json({
+        valid: false,
+        totalEntries: logs.length,
+        firstTamperedId: log.id,
+        firstTamperedAction: log.action,
+        reason: "stored previousHash does not match chain",
+        detectedAt: new Date().toISOString(),
+      });
+    }
+
     if (log.hash !== expectedHash) {
       return NextResponse.json({
         valid: false,
         totalEntries: logs.length,
         firstTamperedId: log.id,
         firstTamperedAction: log.action,
+        reason: "hash mismatch — entry content was modified",
         detectedAt: new Date().toISOString(),
       });
     }
