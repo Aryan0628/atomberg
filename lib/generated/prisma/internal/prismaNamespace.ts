@@ -1384,6 +1384,8 @@ export const AuditLogScalarFieldEnum = {
   newValue: 'newValue',
   ipAddress: 'ipAddress',
   userAgent: 'userAgent',
+  hash: 'hash',
+  previousHash: 'previousHash',
   createdAt: 'createdAt'
 } as const
 

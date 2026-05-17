@@ -72,4 +72,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   pages: { signIn: "/login" },
   session: { strategy: "jwt", maxAge: 8 * 60 * 60 }, // 8 hour sessions
+  trustHost: true,
 });

@@ -403,7 +403,7 @@ export type CheckinOrderByWithRelationInput = {
 
 export type CheckinWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  goalId_quarter_cycleId?: Prisma.CheckinGoalIdQuarterCycleIdCompoundUniqueInput
+  goalId_quarter_cycleId_employeeId?: Prisma.CheckinGoalIdQuarterCycleIdEmployeeIdCompoundUniqueInput
   AND?: Prisma.CheckinWhereInput | Prisma.CheckinWhereInput[]
   OR?: Prisma.CheckinWhereInput[]
   NOT?: Prisma.CheckinWhereInput | Prisma.CheckinWhereInput[]
@@ -431,7 +431,7 @@ export type CheckinWhereUniqueInput = Prisma.AtLeast<{
   goal?: Prisma.XOR<Prisma.GoalScalarRelationFilter, Prisma.GoalWhereInput>
   cycle?: Prisma.XOR<Prisma.CycleScalarRelationFilter, Prisma.CycleWhereInput>
   employee?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-}, "id" | "goalId_quarter_cycleId">
+}, "id" | "goalId_quarter_cycleId_employeeId">
 
 export type CheckinOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -673,10 +673,11 @@ export type CheckinOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type CheckinGoalIdQuarterCycleIdCompoundUniqueInput = {
+export type CheckinGoalIdQuarterCycleIdEmployeeIdCompoundUniqueInput = {
   goalId: string
   quarter: $Enums.Quarter
   cycleId: string
+  employeeId: string
 }
 
 export type CheckinCountOrderByAggregateInput = {
