@@ -34,6 +34,15 @@ export async function POST(req: Request) {
 
   const { employeeId, cycleId } = parsed.data;
 
+  // Managers may only synthesize reviews for their own direct reports
+  if (session.user.role === "MANAGER") {
+    const isReport = await prisma.user.findFirst({
+      where: { id: employeeId, managerId: session.user.id, isActive: true },
+      select: { id: true },
+    });
+    if (!isReport) return NextResponse.json({ error: "Forbidden — employee is not your report" }, { status: 403 });
+  }
+
   // Fetch everything in parallel
   const [employee, cycle, goals] = await Promise.all([
     prisma.user.findUnique({

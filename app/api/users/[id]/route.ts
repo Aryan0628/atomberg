@@ -1,10 +1,16 @@
 // app/api/users/[id]/route.ts
 // GET user detail, PUT update user, DELETE deactivate user
+//
+// Scope rules (GET):
+//   EMPLOYEE → self only
+//   MANAGER  → self or one of their direct reports
+//   ADMIN/HR → any user
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { writeAudit } from "@/lib/audit";
 import { UserUpdateSchema } from "@/lib/validations";
+import { parseJson } from "@/lib/utils";
 import { NextResponse } from "next/server";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -13,9 +19,17 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const { id } = await params;
 
-  // Employees can only get their own profile
   if (session.user.role === "EMPLOYEE" && session.user.id !== id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  if (session.user.role === "MANAGER" && session.user.id !== id) {
+    // Managers may only fetch their own direct reports
+    const isReport = await prisma.user.findFirst({
+      where: { id, managerId: session.user.id, isActive: true },
+      select: { id: true },
+    });
+    if (!isReport) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const user = await prisma.user.findUnique({
@@ -41,9 +55,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   }
 
   const { id } = await params;
-  const body = await req.json();
+  const bodyResult = await parseJson(req);
+  if (!bodyResult.ok) return bodyResult.error;
 
-  const parsed = UserUpdateSchema.safeParse(body);
+  const parsed = UserUpdateSchema.safeParse(bodyResult.data);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
   }

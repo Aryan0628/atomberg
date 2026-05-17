@@ -21,11 +21,28 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   });
   if (!goal) return NextResponse.json({ error: "Goal not found" }, { status: 404 });
 
-  // Employees can only read comments on their own goals (or shared goals they're a recipient of)
-  if (session.user.role === "EMPLOYEE") {
-    const isOwner = goal.ownerId === session.user.id;
-    const isRecipient = goal.sharedWith.some((u) => u.id === session.user.id);
-    if (!isOwner && !isRecipient) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const isOwner = goal.ownerId === session.user.id;
+  const isRecipient = goal.sharedWith.some((u) => u.id === session.user.id);
+  const isAdminOrHr = ["ADMIN", "HR"].includes(session.user.role as string);
+
+  if (session.user.role === "EMPLOYEE" && !isOwner && !isRecipient) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  if (session.user.role === "MANAGER") {
+    // Managers may only read comments on goals belonging to their direct reports or themselves
+    const ownsReport = await prisma.user.findFirst({
+      where: { id: goal.ownerId, managerId: session.user.id },
+      select: { id: true },
+    });
+    const isApprover = goal.approverId === session.user.id;
+    if (!ownsReport && !isApprover && !isOwner) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+  }
+
+  if (!isOwner && !isRecipient && !isAdminOrHr && session.user.role !== "MANAGER") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const where: Record<string, unknown> = { goalId: id };

@@ -35,22 +35,31 @@ export async function POST(req: Request) {
 
   const { title, description, thrustArea, cycleId, excludeGoalId } = parsed.data;
 
-  // Fetch all active-cycle goals except the current user's drafts and the excluded goal
+  // Scope the comparison set by role:
+  //   EMPLOYEE → their department's goals only (avoids cross-team PII exposure)
+  //   MANAGER  → their reports' goals + own goals
+  //   ADMIN/HR → org-wide (up to 100 cap)
+  let ownerFilter: Record<string, unknown> = {};
+  if (session.user.role === "EMPLOYEE") {
+    const me = await prisma.user.findUnique({ where: { id: session.user.id }, select: { department: true } });
+    ownerFilter = { owner: { department: me?.department ?? undefined } };
+  } else if (session.user.role === "MANAGER") {
+    const reportIds = await prisma.user.findMany({
+      where: { managerId: session.user.id, isActive: true },
+      select: { id: true },
+    });
+    ownerFilter = { ownerId: { in: [session.user.id, ...reportIds.map((r) => r.id)] } };
+  }
+
   const existingGoals = await prisma.goal.findMany({
     where: {
       cycleId,
       status: { in: ["SUBMITTED", "APPROVED", "LOCKED"] },
-      // Exclude the goal being edited (so you don't flag it against itself)
       ...(excludeGoalId ? { id: { not: excludeGoalId } } : {}),
+      ...ownerFilter,
     },
-    select: {
-      id: true,
-      title: true,
-      description: true,
-      thrustArea: true,
-      owner: { select: { name: true, department: true } },
-    },
-    take: 100, // Safety cap — cosine similarity is O(n), keep it bounded
+    select: { id: true, title: true, description: true, thrustArea: true },
+    take: 100,
   });
 
   if (!existingGoals.length) {
@@ -59,13 +68,14 @@ export async function POST(req: Request) {
 
   const payload: RedundancyRequest = {
     new_goal: { title, description: description ?? "", thrust_area: thrustArea },
+    // Strip owner PII — the AI only needs goal content for semantic matching
     existing_goals: existingGoals.map((g) => ({
       id: g.id,
       title: g.title,
       description: g.description ?? "",
       thrust_area: g.thrustArea,
-      owner_name: g.owner.name,
-      owner_department: g.owner.department ?? "",
+      owner_name: "",
+      owner_department: "",
     })),
   };
 

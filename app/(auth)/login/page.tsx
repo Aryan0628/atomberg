@@ -11,6 +11,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
+const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+
 const demoCredentials = [
   { role: "Admin", email: "admin@atomberg.com", password: "Admin@123" },
   { role: "HR", email: "hr@atomberg.com", password: "Hr@123" },
@@ -196,29 +198,31 @@ export default function LoginPage() {
           </form>
         </div>
 
-        {/* Demo Credentials */}
-        <div className="border border-border rounded-xl bg-card p-5 shadow-sm">
-          <p className="text-xs font-medium text-foreground mb-3 text-center">
-            Quick Login (Demo)
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            {demoCredentials.map((cred) => (
-              <button
-                key={cred.email}
-                onClick={() => handleQuickLogin(cred)}
-                disabled={loading}
-                className="flex flex-col items-start p-2.5 rounded-lg border border-border hover:bg-muted transition-colors disabled:opacity-50 text-left"
-              >
-                <span className="text-sm font-medium text-foreground">
-                  {cred.role}
-                </span>
-                <span className="text-[10px] text-muted-foreground truncate w-full">
-                  {cred.email}
-                </span>
-              </button>
-            ))}
+        {/* Demo Credentials — only visible when NEXT_PUBLIC_DEMO_MODE=true */}
+        {IS_DEMO && (
+          <div className="border border-border rounded-xl bg-card p-5 shadow-sm">
+            <p className="text-xs font-medium text-foreground mb-3 text-center">
+              Quick Login (Demo)
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {demoCredentials.map((cred) => (
+                <button
+                  key={cred.email}
+                  onClick={() => handleQuickLogin(cred)}
+                  disabled={loading}
+                  className="flex flex-col items-start p-2.5 rounded-lg border border-border hover:bg-muted transition-colors disabled:opacity-50 text-left"
+                >
+                  <span className="text-sm font-medium text-foreground">
+                    {cred.role}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground truncate w-full">
+                    {cred.email}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
       </div>
     </div>
