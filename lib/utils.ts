@@ -1,6 +1,29 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { format, formatDistanceToNow, differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds } from "date-fns"
+import { NextResponse } from "next/server"
+
+// ─── API Helpers ─────────────────────────────────────────────
+
+/**
+ * Safely parse the JSON body of a Next.js Request.
+ * Returns { ok: true, data } on success or { ok: false, error: NextResponse } on failure.
+ * Use this instead of bare `req.json()` to prevent malformed payloads from
+ * causing unhandled 500s — the caller gets a proper 400 Bad Request instead.
+ */
+export async function parseJson(
+  req: Request
+): Promise<{ ok: true; data: unknown } | { ok: false; error: NextResponse }> {
+  try {
+    const data = await req.json();
+    return { ok: true, data };
+  } catch {
+    return {
+      ok: false,
+      error: NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 }),
+    };
+  }
+}
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))

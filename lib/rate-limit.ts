@@ -1,7 +1,12 @@
 // lib/rate-limit.ts
-// API rate limiting — uses Upstash Redis when available, falls back to in-memory.
+// Atomic API rate limiting using Redis INCR + EXPIRE.
+// INCR is an atomic Redis operation — no get/check/set race condition.
+// Falls back to an in-process Map when Redis is not configured (dev).
+//
+// COST: Upstash free tier — 10k commands/day. Each rate-limited request
+// costs exactly 1 INCR + 1 EXPIRE (first hit) or 1 INCR (subsequent hits).
 
-import { redisGet, redisSetex } from "@/lib/redis";
+import { redis as getRedis } from "@/lib/redis";
 
 interface RateLimitResult {
   success: boolean;
@@ -9,19 +14,36 @@ interface RateLimitResult {
   reset: number;
 }
 
+// In-process fallback for when Redis is not configured
+const memStore = new Map<string, { count: number; expiresAt: number }>();
+
 export async function rateLimit(
   identifier: string,
-  maxRequests: number = 60,
-  windowSeconds: number = 60
+  maxRequests = 60,
+  windowSeconds = 60
 ): Promise<RateLimitResult> {
-  const key = `rate:${identifier}`;
-  const current = await redisGet(key);
-  const count = current ? parseInt(current, 10) : 0;
+  const key = `rl:${identifier}`;
+  const redis = getRedis();
 
-  if (count >= maxRequests) {
-    return { success: false, remaining: 0, reset: windowSeconds };
+  if (redis) {
+    // Atomic: INCR returns the new count after increment
+    const count = await redis.incr(key);
+    if (count === 1) {
+      // First request in window — set the expiry
+      await redis.expire(key, windowSeconds);
+    }
+    const success = count <= maxRequests;
+    return { success, remaining: Math.max(0, maxRequests - count), reset: windowSeconds };
   }
 
-  await redisSetex(key, windowSeconds, String(count + 1));
-  return { success: true, remaining: maxRequests - count - 1, reset: windowSeconds };
+  // In-memory fallback
+  const now = Date.now();
+  const entry = memStore.get(key);
+  if (!entry || now > entry.expiresAt) {
+    memStore.set(key, { count: 1, expiresAt: now + windowSeconds * 1000 });
+    return { success: true, remaining: maxRequests - 1, reset: windowSeconds };
+  }
+  entry.count += 1;
+  const success = entry.count <= maxRequests;
+  return { success, remaining: Math.max(0, maxRequests - entry.count), reset: windowSeconds };
 }

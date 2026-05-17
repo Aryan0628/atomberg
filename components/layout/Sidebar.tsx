@@ -60,28 +60,27 @@ export function Sidebar() {
     <aside
       className={cn(
         "fixed left-0 top-0 z-40 h-screen flex flex-col",
-        "bg-[#0d1117] border-r border-white/[0.06]",
+        "bg-sidebar border-r border-sidebar-border",
         "transition-all duration-300 ease-in-out",
         sidebarCollapsed ? "w-[60px]" : "w-60"
       )}
     >
       {/* Brand */}
-      <div className="h-14 flex items-center px-4 border-b border-white/[0.06] shrink-0">
+      <div className="h-14 flex items-center px-4 border-b border-sidebar-border shrink-0">
         <Link href="/" className="flex items-center gap-3 min-w-0">
-          <div className="w-7 h-7 rounded-md bg-indigo-500 flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-bold text-xs tracking-tight">A</span>
+          <div className="w-7 h-7 rounded-md bg-primary text-primary-foreground flex items-center justify-center flex-shrink-0">
+            <span className="font-bold text-sm tracking-tight">A</span>
           </div>
           {!sidebarCollapsed && (
             <div className="min-w-0">
-              <p className="text-white font-semibold text-sm tracking-tight leading-none">Atomberg</p>
-              <p className="text-slate-500 text-[10px] mt-0.5 leading-none">Performance Portal</p>
+              <p className="text-sidebar-foreground font-semibold text-sm tracking-tight leading-none">Atomberg</p>
             </div>
           )}
         </Link>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
+      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
         {links.map((link) => {
           const active = pathname === link.href || pathname.startsWith(link.href + "/");
           const Icon = link.icon;
@@ -91,45 +90,42 @@ export function Sidebar() {
               href={link.href}
               title={sidebarCollapsed ? link.label : undefined}
               className={cn(
-                "flex items-center gap-3 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-colors duration-150",
+                "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150",
                 active
-                  ? "bg-white/[0.08] text-white"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]",
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50",
                 sidebarCollapsed && "justify-center px-2"
               )}
             >
               <Icon
                 className={cn(
                   "w-4 h-4 flex-shrink-0 transition-colors",
-                  active ? "text-indigo-400" : "text-slate-500"
+                  active ? "text-foreground" : "text-muted-foreground"
                 )}
               />
               {!sidebarCollapsed && <span className="truncate">{link.label}</span>}
-              {!sidebarCollapsed && active && (
-                <span className="ml-auto w-1 h-1 rounded-full bg-indigo-400" />
-              )}
             </Link>
           );
         })}
       </nav>
 
       {/* Role pill + collapse */}
-      <div className="p-2 border-t border-white/[0.06] space-y-1 shrink-0">
+      <div className="p-3 border-t border-sidebar-border space-y-2 shrink-0">
         {!sidebarCollapsed && role && (
-          <div className="px-2.5 py-1.5 rounded-lg bg-white/[0.04]">
-            <p className="text-[10px] text-slate-500 uppercase tracking-wider">Signed in as</p>
-            <p className="text-xs text-slate-300 font-medium mt-0.5 truncate">{session?.user?.name}</p>
-            <p className="text-[10px] text-indigo-400 mt-0.5">{ROLE_LABEL[role] ?? role}</p>
+          <div className="px-3 py-2 rounded-md bg-sidebar-accent">
+            <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">Signed in as</p>
+            <p className="text-sm text-foreground font-medium mt-1 truncate">{session?.user?.name}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{ROLE_LABEL[role] ?? role}</p>
           </div>
         )}
         <button
           onClick={toggleSidebar}
-          className="w-full flex items-center justify-center gap-2 px-2 py-2 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/[0.04] transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
         >
           {sidebarCollapsed
             ? <PanelLeftOpen  className="w-4 h-4" />
             : <PanelLeftClose className="w-4 h-4" />}
-          {!sidebarCollapsed && <span className="text-xs">Collapse</span>}
+          {!sidebarCollapsed && <span className="text-sm font-medium">Collapse</span>}
         </button>
       </div>
     </aside>

@@ -12,7 +12,6 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Bell, Sun, Moon, LogOut, ChevronDown, Shuffle, Circle } from "lucide-react";
 import { getInitials, formatRelativeTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -52,7 +51,7 @@ export function Header() {
   const { theme, setTheme }  = useTheme();
   const { sidebarCollapsed } = useAppStore();
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  useEffect(() => { setMounted(true); }, []);
 
   const pageTitle = usePageTitle();
   const { data: notifData } = useNotifications();
@@ -65,28 +64,28 @@ export function Header() {
     <header
       className={cn(
         "sticky top-0 z-30 h-14 flex items-center justify-between px-6",
-        "bg-white/90 dark:bg-[#0d1117]/90 backdrop-blur-md",
-        "border-b border-slate-200/80 dark:border-white/[0.06]",
+        "bg-background",
+        "border-b border-border",
         "transition-all duration-300",
         sidebarCollapsed ? "ml-[60px]" : "ml-60"
       )}
     >
       {/* Page title */}
-      <h1 className="text-sm font-semibold text-slate-800 dark:text-slate-200 tracking-tight">
+      <h1 className="text-sm font-semibold text-foreground tracking-tight">
         {pageTitle}
       </h1>
 
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-2">
         {/* Demo Role Switcher */}
         {process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
           <DropdownMenu>
-            <DropdownMenuTrigger className="hidden md:inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-[11px] font-medium border border-slate-200 dark:border-white/10 bg-transparent hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors text-slate-500 dark:text-slate-400">
-              <Shuffle className="w-3 h-3" />
+            <DropdownMenuTrigger className="hidden md:inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-xs font-medium border border-border bg-transparent hover:bg-accent hover:text-accent-foreground transition-colors text-muted-foreground">
+              <Shuffle className="w-3.5 h-3.5" />
               {session?.user?.role}
               <ChevronDown className="w-3 h-3 opacity-50" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <p className="px-2 py-1.5 text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Switch Demo Role</p>
+              <p className="px-2 py-1.5 text-xs text-muted-foreground font-semibold uppercase tracking-wider">Switch Demo Role</p>
               <DropdownMenuSeparator />
               {[
                 { label: "Admin",              email: "admin@atomberg.com",       password: "Admin@123" },
@@ -113,46 +112,46 @@ export function Header() {
         {/* Theme toggle */}
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="w-8 h-8 flex items-center justify-center rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-slate-200 dark:hover:bg-white/[0.06] transition-colors"
+          className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
         >
-          {mounted && theme === "dark" ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+          {mounted && theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
 
         {/* Notifications */}
         <DropdownMenu>
-          <DropdownMenuTrigger className="relative w-8 h-8 flex items-center justify-center rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-slate-200 dark:hover:bg-white/[0.06] transition-colors">
-            <Bell className="w-3.5 h-3.5" />
+          <DropdownMenuTrigger className="relative w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
+            <Bell className="w-4 h-4" />
             {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-[#0d1117]" />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full ring-2 ring-background" />
             )}
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto">
-            <div className="flex items-center justify-between px-3 py-2.5 border-b dark:border-white/[0.06]">
-              <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">Notifications</span>
+            <div className="flex items-center justify-between px-3 py-2.5 border-b border-border">
+              <span className="text-sm font-semibold text-foreground">Notifications</span>
               {unreadCount > 0 && (
                 <button
                   onClick={() => markAllRead.mutate()}
-                  className="text-[11px] text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 font-medium"
+                  className="text-xs text-primary hover:underline font-medium"
                 >
                   Mark all read
                 </button>
               )}
             </div>
             {notifications.length === 0 ? (
-              <div className="py-8 text-center text-sm text-slate-400">No notifications</div>
+              <div className="py-8 text-center text-sm text-muted-foreground">No notifications</div>
             ) : (
               notifications.slice(0, 10).map((n: Record<string, unknown>) => (
                 <DropdownMenuItem key={n.id as string} className="px-3 py-3 cursor-pointer items-start gap-2.5">
                   <Circle
                     className={cn("w-1.5 h-1.5 mt-1.5 flex-shrink-0 fill-current",
-                      n.read ? "text-transparent" : "text-indigo-500")}
+                      n.read ? "text-transparent" : "text-primary")}
                   />
-                  <div className="space-y-0.5 min-w-0">
-                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200 leading-snug">
+                  <div className="space-y-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground leading-snug">
                       {n.title as string}
                     </p>
-                    <p className="text-xs text-slate-500 leading-snug line-clamp-2">{n.message as string}</p>
-                    <p className="text-[10px] text-slate-400">{formatRelativeTime(n.createdAt as string)}</p>
+                    <p className="text-xs text-muted-foreground leading-snug line-clamp-2">{n.message as string}</p>
+                    <p className="text-[10px] text-muted-foreground/70">{formatRelativeTime(n.createdAt as string)}</p>
                   </div>
                 </DropdownMenuItem>
               ))
@@ -162,28 +161,28 @@ export function Header() {
 
         {/* User menu */}
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex items-center gap-2 ml-1 pl-2 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors">
+          <DropdownMenuTrigger className="flex items-center gap-2 ml-1 pl-2 h-8 rounded-md hover:bg-accent transition-colors">
             <Avatar className="w-6 h-6">
-              <AvatarFallback className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 text-[10px] font-semibold">
+              <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-semibold">
                 {session?.user?.name ? getInitials(session.user.name) : "?"}
               </AvatarFallback>
             </Avatar>
-            <span className="text-xs font-medium text-slate-700 dark:text-slate-300 hidden sm:block">
+            <span className="text-sm font-medium text-foreground hidden sm:block">
               {session?.user?.name?.split(" ")[0]}
             </span>
-            <ChevronDown className="w-3 h-3 text-slate-400" />
+            <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44">
-            <div className="px-2 py-2 border-b dark:border-white/[0.06]">
-              <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{session?.user?.name}</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">{session?.user?.email}</p>
+          <DropdownMenuContent align="end" className="w-48">
+            <div className="px-3 py-2 border-b border-border">
+              <p className="text-sm font-medium text-foreground">{session?.user?.name}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{session?.user?.email}</p>
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              className="gap-2 text-red-500 dark:text-red-400 cursor-pointer"
+              className="gap-2 text-destructive cursor-pointer"
               onClick={() => signOut({ callbackUrl: "/login" })}
             >
-              <LogOut className="w-3.5 h-3.5" /> Sign Out
+              <LogOut className="w-4 h-4" /> Sign Out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

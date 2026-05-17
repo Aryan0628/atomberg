@@ -1,5 +1,13 @@
 // lib/audit.ts
 // Tamper-evident audit ledger — every entry is SHA-256 chained to the previous.
+// Hash payload includes ALL fields (userId, action, entityType, entityId, goalId,
+// oldValue, newValue, ipAddress, userAgent, createdAt) so tampering with any
+// field — including omitted ones like IP — is detected by the verify endpoint.
+//
+// Concurrency note: ordering uses (createdAt, id) so concurrent writes at the
+// same millisecond get a deterministic chain order. A true advisory lock would
+// require raw SQL; this is the correct approach for Prisma without extensions.
+//
 // RULE: No DELETE endpoint for AuditLog. Return 405 if anyone tries.
 
 import { createHash } from "crypto";
@@ -22,19 +30,28 @@ export async function writeAudit(data: AuditData) {
   const ua = data.request?.headers.get("user-agent") ?? "unknown";
   const now = new Date();
 
-  // Fetch the last entry to continue the hash chain
-  const last = await prisma.auditLog.findFirst({ orderBy: { createdAt: "desc" } });
+  // Fetch last entry with (createdAt DESC, id DESC) for deterministic ordering
+  // under concurrent writes at the same millisecond.
+  const last = await prisma.auditLog.findFirst({
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    select: { hash: true },
+  });
   const previousHash = last?.hash ?? "GENESIS";
 
-  const payload = JSON.stringify({
+  // Hash the FULL canonical payload — any field omitted here is undetectable tampering.
+  const canonicalPayload = JSON.stringify({
     userId: data.userId,
     action: data.action,
     entityType: data.entityType,
     entityId: data.entityId,
+    goalId: data.goalId ?? null,
+    oldValue: data.oldValue ?? null,
     newValue: data.newValue ?? null,
+    ipAddress: ip,
+    userAgent: ua,
     createdAt: now.toISOString(),
   });
-  const hash = createHash("sha256").update(payload + previousHash).digest("hex");
+  const hash = createHash("sha256").update(canonicalPayload + previousHash).digest("hex");
 
   return prisma.auditLog.create({
     data: {
@@ -51,7 +68,7 @@ export async function writeAudit(data: AuditData) {
       userAgent: ua,
       hash,
       previousHash,
-      createdAt: now, // must match the timestamp used in payload hash — do not let DB default this
+      createdAt: now, // must match timestamp in canonicalPayload — do not let DB default this
     },
   });
 }

@@ -45,6 +45,12 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  // Safety guard: never run destructive seed in production without explicit opt-in.
+  if (process.env.NODE_ENV === "production" && process.env.ALLOW_DESTRUCTIVE_SEED !== "true") {
+    console.error("ERROR: Refusing to run seed in production. Set ALLOW_DESTRUCTIVE_SEED=true to override.");
+    process.exit(1);
+  }
+
   console.log("🌱 Starting seed...");
 
   // Clean existing data
@@ -62,7 +68,7 @@ async function main() {
 
   // ─── THRUST AREAS ────────────────────────────────────────────
   console.log("  Creating thrust areas...");
-  const thrustAreas = await Promise.all([
+  const _thrustAreas = await Promise.all([
     prisma.thrustArea.create({ data: { name: "Sales Revenue", description: "Revenue generation and sales growth targets" } }),
     prisma.thrustArea.create({ data: { name: "Customer Experience", description: "Customer satisfaction, NPS, and service quality" } }),
     prisma.thrustArea.create({ data: { name: "Operational Excellence", description: "Process efficiency, uptime, and quality metrics" } }),
@@ -92,7 +98,7 @@ async function main() {
     },
   });
 
-  const hr = await prisma.user.create({
+  const _hr = await prisma.user.create({
     data: {
       email: "hr@atomberg.com",
       name: "HR User",
@@ -272,7 +278,7 @@ async function main() {
     },
   });
 
-  const rahulGoal4 = await prisma.goal.create({
+  const _rahulGoal4 = await prisma.goal.create({
     data: {
       title: "Sales Training Completion",
       description: "Complete advanced sales certification training program by end of Q2",

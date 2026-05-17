@@ -31,24 +31,24 @@ function useActionItems() {
 const SEVERITY_CONFIG = {
   high: {
     icon: AlertTriangle,
-    containerClass: "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-900",
-    iconClass: "text-red-500",
-    textClass: "text-red-800 dark:text-red-300",
-    badgeClass: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
+    containerClass: "bg-destructive/10 border-destructive/20",
+    iconClass: "text-destructive",
+    textClass: "text-destructive font-medium",
+    badgeClass: "bg-destructive/20 text-destructive",
   },
   medium: {
     icon: AlertTriangle,
-    containerClass: "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-900",
-    iconClass: "text-amber-500",
-    textClass: "text-amber-800 dark:text-amber-300",
-    badgeClass: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+    containerClass: "bg-amber-500/10 border-amber-500/20",
+    iconClass: "text-amber-600 dark:text-amber-400",
+    textClass: "text-amber-800 dark:text-amber-300 font-medium",
+    badgeClass: "bg-amber-500/20 text-amber-700 dark:text-amber-300",
   },
   low: {
     icon: Info,
-    containerClass: "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-900",
-    iconClass: "text-blue-500",
-    textClass: "text-blue-800 dark:text-blue-300",
-    badgeClass: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+    containerClass: "bg-primary/5 border-primary/10",
+    iconClass: "text-primary",
+    textClass: "text-foreground font-medium",
+    badgeClass: "bg-primary/10 text-primary",
   },
 };
 
@@ -59,8 +59,8 @@ export function ActionCenter() {
   if (isLoading || items.length === 0) {
     if (!isLoading && items.length === 0) {
       return (
-        <div className="flex items-center gap-2 p-3 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-900 text-sm text-green-700 dark:text-green-300">
-          <CheckCircle className="w-4 h-4 flex-shrink-0" />
+        <div className="flex items-center gap-2 p-4 rounded-xl border border-border bg-card text-sm text-muted-foreground shadow-sm">
+          <CheckCircle className="w-4 h-4 flex-shrink-0 text-emerald-500" />
           <span>All clear — no action required right now.</span>
         </div>
       );
@@ -71,25 +71,25 @@ export function ActionCenter() {
   const highCount = items.filter((i) => i.severity === "high").length;
 
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+    <div className="rounded-xl border border-border overflow-hidden bg-card shadow-sm">
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+        className="w-full flex items-center justify-between px-6 py-4 border-b border-border hover:bg-muted/50 transition-colors"
       >
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Action Required</span>
+          <span className="text-sm font-semibold text-foreground">Action Required</span>
           {highCount > 0 && (
-            <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-red-500 text-white">
+            <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-destructive text-destructive-foreground">
               {highCount}
             </span>
           )}
-          <span className="text-xs text-slate-400">{items.length} item{items.length !== 1 ? "s" : ""}</span>
+          <span className="text-xs text-muted-foreground">{items.length} item{items.length !== 1 ? "s" : ""}</span>
         </div>
-        {collapsed ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronUp className="w-4 h-4 text-slate-400" />}
+        {collapsed ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronUp className="w-4 h-4 text-muted-foreground" />}
       </button>
 
       {!collapsed && (
-        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+        <div className="divide-y divide-border">
           {items.map((item, i) => {
             const config = SEVERITY_CONFIG[item.severity];
             const Icon = config.icon;
@@ -97,13 +97,13 @@ export function ActionCenter() {
               <Link
                 key={i}
                 href={item.link}
-                className={cn("flex items-start gap-3 px-4 py-3 hover:opacity-80 transition-opacity", config.containerClass)}
+                className={cn("flex items-start gap-4 px-6 py-4 hover:bg-muted/50 transition-colors group", config.containerClass)}
               >
                 <Icon className={cn("w-4 h-4 flex-shrink-0 mt-0.5", config.iconClass)} />
                 <div className="flex-1 min-w-0">
                   <span className={cn("text-sm", config.textClass)}>{item.message}</span>
                 </div>
-                <span className={cn("text-[10px] px-1.5 py-0.5 rounded flex-shrink-0", config.badgeClass)}>
+                <span className={cn("text-[10px] px-2 py-1 rounded-md flex-shrink-0 font-medium", config.badgeClass)}>
                   {item.category}
                 </span>
               </Link>
