@@ -10,7 +10,7 @@ import { getActiveCycle } from "@/lib/cycle";
 import { writeAudit } from "@/lib/audit";
 import { createNotification, sendGoalSubmittedEmail } from "@/lib/notifications";
 import { sendTeamsCard } from "@/lib/teams";
-import { kafkaProduce, isKafkaConfigured } from "@/lib/kafka";
+import { publishEvent, isEventBusConfigured } from "@/lib/events";
 import { invalidateCache } from "@/lib/cache";
 import { parseJson } from "@/lib/utils";
 import { NextResponse } from "next/server";
@@ -84,10 +84,10 @@ export async function POST(req: Request) {
   });
   if (employee?.manager) {
     void invalidateCache(`action-items:${employee.manager.id}`);
-    // Kafka: enqueue event so the cron consumer handles email + Teams + in-app.
-    // Fallback: fire directly (void — never blocks response) if Kafka is not configured.
-    if (isKafkaConfigured()) {
-      void kafkaProduce({
+    // QStash: publish event — QStash immediately POSTs to /api/events/consumer with retries.
+    // Fallback: fire directly (void — never blocks response) if event bus is not configured.
+    if (isEventBusConfigured()) {
+      void publishEvent({
         type: "goal.submitted",
         managerId: employee.manager.id,
         managerName: employee.manager.name,

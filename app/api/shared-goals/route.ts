@@ -9,7 +9,7 @@ import { writeAudit } from "@/lib/audit";
 import { getActiveCycle } from "@/lib/cycle";
 import { parseJson } from "@/lib/utils";
 import { createNotification } from "@/lib/notifications";
-import { kafkaProduce, isKafkaConfigured } from "@/lib/kafka";
+import { publishEvent, isEventBusConfigured } from "@/lib/events";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -130,8 +130,8 @@ export async function POST(req: Request) {
 
   // Kafka: single event fans out to all recipient notifications in the consumer.
   // Fallback: direct parallel inserts if Kafka is not configured.
-  if (isKafkaConfigured()) {
-    void kafkaProduce({
+  if (isEventBusConfigured()) {
+    void publishEvent({
       type: "goal.shared",
       recipientIds: recipientIds as string[],
       goalTitle: parsed.data.title,

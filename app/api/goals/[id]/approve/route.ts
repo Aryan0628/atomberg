@@ -9,7 +9,7 @@ import { prisma } from "@/lib/db";
 import { ManagerApprovalSchema } from "@/lib/validations";
 import { writeAudit } from "@/lib/audit";
 import { createNotification, sendGoalApprovedEmail, sendGoalRejectedEmail } from "@/lib/notifications";
-import { kafkaProduce, isKafkaConfigured } from "@/lib/kafka";
+import { publishEvent, isEventBusConfigured } from "@/lib/events";
 import { invalidateCache } from "@/lib/cache";
 import { parseJson } from "@/lib/utils";
 import { NextResponse } from "next/server";
@@ -107,15 +107,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     invalidateCache(`analytics:manager-effectiveness:${goal.cycleId}`),
   ]);
 
-  // Kafka: enqueue side-effects so the consumer handles email + in-app notification.
-  // Fallback: fire directly if Kafka is not configured.
-  if (isKafkaConfigured()) {
+  // QStash: publish event — QStash immediately POSTs to /api/events/consumer with retries.
+  // Fallback: fire directly if event bus is not configured.
+  if (isEventBusConfigured()) {
     if (action === "APPROVE") {
-      void kafkaProduce({ type: "goal.approved", ownerId: goal.ownerId, ownerName: goal.owner.name, ownerEmail: goal.owner.email, goalId: goal.id, goalTitle: goal.title });
+      void publishEvent({ type: "goal.approved", ownerId: goal.ownerId, ownerName: goal.owner.name, ownerEmail: goal.owner.email, goalId: goal.id, goalTitle: goal.title });
     } else if (action === "REJECT") {
-      void kafkaProduce({ type: "goal.rejected", ownerId: goal.ownerId, ownerName: goal.owner.name, ownerEmail: goal.owner.email, goalId: goal.id, goalTitle: goal.title, reason: rejectReason! });
+      void publishEvent({ type: "goal.rejected", ownerId: goal.ownerId, ownerName: goal.owner.name, ownerEmail: goal.owner.email, goalId: goal.id, goalTitle: goal.title, reason: rejectReason! });
     } else {
-      void kafkaProduce({ type: "goal.returned", ownerId: goal.ownerId, goalId: goal.id, goalTitle: goal.title, reason: returnReason! });
+      void publishEvent({ type: "goal.returned", ownerId: goal.ownerId, goalId: goal.id, goalTitle: goal.title, reason: returnReason! });
     }
   } else {
     Promise.allSettled([
