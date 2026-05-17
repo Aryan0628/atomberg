@@ -3,16 +3,15 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { formatScore } from "@/lib/utils";
 import { getScoreColor } from "@/lib/scoring";
-import { ClipboardCheck, Star, CheckCircle, Clock } from "lucide-react";
+import { ClipboardCheck, CheckCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 

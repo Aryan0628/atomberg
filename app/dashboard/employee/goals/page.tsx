@@ -19,11 +19,10 @@ import { Plus, Search, Send, Target, ArrowRight, BookTemplate, ChevronRight, Bar
 import { AiAnalysisPanel, type AiResult } from "@/components/goals/AiAnalysisPanel";
 import { RedundancyWarning } from "@/components/goals/RedundancyWarning";
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import type { RedundancyMatch } from "@/lib/ai-client";
 import { getGoalStatusColor, getUoMLabel, getUoMColor, formatScore } from "@/lib/utils";
 import { getScoreColor } from "@/lib/scoring";
-import { suggestRebalance } from "@/lib/weightage";
 
 const THRUST_AREAS = [
   "Sales Revenue", "Customer Experience", "Operational Excellence",
@@ -124,13 +123,15 @@ export default function EmployeeGoalsPage() {
   // Weightage rebalancer — proportionally distributes remaining % across other draft goals
   const rebalanceMutation = useMutation({
     mutationFn: async (updates: { id: string; weightage: number }[]) => {
-      await Promise.all(updates.map(({ id, weightage }) =>
+      const results = await Promise.all(updates.map(({ id, weightage }) =>
         fetch(`/api/goals/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ weightage }),
         })
       ));
+      const failed = results.filter((r) => !r.ok);
+      if (failed.length > 0) throw new Error(`${failed.length} update(s) failed during rebalance`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["goals"] });

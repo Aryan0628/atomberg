@@ -13,15 +13,20 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  // Order matches writeAudit's (createdAt DESC, id DESC) reversed — same tiebreaker
   const logs = await prisma.auditLog.findMany({
-    orderBy: { createdAt: "asc" },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     select: {
       id: true,
       userId: true,
       action: true,
       entityType: true,
       entityId: true,
+      goalId: true,
+      oldValue: true,
       newValue: true,
+      ipAddress: true,
+      userAgent: true,
       createdAt: true,
       hash: true,
       previousHash: true,
@@ -35,12 +40,17 @@ export async function GET() {
   let runningPreviousHash = "GENESIS";
 
   for (const log of logs) {
+    // Must exactly mirror the canonicalPayload in lib/audit.ts writeAudit()
     const payload = JSON.stringify({
       userId: log.userId,
       action: log.action,
       entityType: log.entityType,
       entityId: log.entityId,
+      goalId: log.goalId ?? null,
+      oldValue: log.oldValue ?? null,
       newValue: log.newValue ?? null,
+      ipAddress: log.ipAddress ?? "unknown",
+      userAgent: log.userAgent ?? "unknown",
       createdAt: log.createdAt.toISOString(),
     });
     const expectedHash = createHash("sha256")

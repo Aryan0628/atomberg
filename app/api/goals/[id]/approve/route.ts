@@ -9,6 +9,7 @@ import { prisma } from "@/lib/db";
 import { ManagerApprovalSchema } from "@/lib/validations";
 import { writeAudit } from "@/lib/audit";
 import { createNotification, sendGoalApprovedEmail, sendGoalRejectedEmail } from "@/lib/notifications";
+import { invalidateCache } from "@/lib/cache";
 import { parseJson } from "@/lib/utils";
 import { NextResponse } from "next/server";
 
@@ -60,7 +61,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
   }
 
-  // All DB writes in one transaction
+  const auditAction = action === "APPROVE" ? "GOAL_APPROVED" : action === "REJECT" ? "GOAL_REJECTED" : "GOAL_RETURNED";
+  const newValue = action === "APPROVE"
+    ? { status: "APPROVED", targetOverride, weightageOverride }
+    : action === "REJECT"
+    ? { status: "REJECTED", rejectReason }
+    : { status: "RETURNED", returnReason };
+
+  // All DB writes + audit in one transaction so neither can succeed without the other
   await prisma.$transaction(async (tx) => {
     if (action === "APPROVE") {
       await tx.goal.update({
@@ -82,18 +90,22 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         data: { status: "RETURNED", returnedAt: now, returnReason, reworkCount: { increment: 1 } },
       });
     }
+    await writeAudit({ userId: session.user.id, action: auditAction, entityType: "Goal", entityId: goal.id, goalId: goal.id, oldValue, newValue }, tx);
   });
 
-  // Audit + notifications after commit (failures don't roll back the approval)
-  const auditAction = action === "APPROVE" ? "GOAL_APPROVED" : action === "REJECT" ? "GOAL_REJECTED" : "GOAL_RETURNED";
-  const newValue = action === "APPROVE"
-    ? { status: "APPROVED", targetOverride, weightageOverride }
-    : action === "REJECT"
-    ? { status: "REJECTED", rejectReason }
-    : { status: "RETURNED", returnReason };
+  // Invalidate caches — synchronous so next request is fresh
+  await Promise.all([
+    invalidateCache(`goal:${id}`),
+    invalidateCache(`goals:${goal.ownerId}:${goal.cycleId}`),
+    invalidateCache(`goals:team:${session.user.id}:${goal.cycleId}`),
+    invalidateCache(`action-items:${goal.ownerId}`),
+    invalidateCache(`action-items:${session.user.id}`),
+    invalidateCache(`analytics:overview:${goal.cycleId}`),
+    invalidateCache(`analytics:manager-effectiveness:${goal.cycleId}`),
+  ]);
 
-  await Promise.allSettled([
-    writeAudit({ userId: session.user.id, action: auditAction, entityType: "Goal", entityId: goal.id, goalId: goal.id, oldValue, newValue }),
+  // Notifications fire in background after commit
+  Promise.allSettled([
     action === "APPROVE"
       ? Promise.all([
           createNotification({ userId: goal.ownerId, type: "GOAL_APPROVED", title: "Goal approved!", message: `"${goal.title}" approved by your manager.`, link: `/dashboard/employee/goals/${goal.id}` }),

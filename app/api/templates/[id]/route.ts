@@ -6,6 +6,8 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { GoalTemplateSchema } from "@/lib/validations";
+import { parseJson } from "@/lib/utils";
+import { invalidateCache } from "@/lib/cache";
 import { NextResponse } from "next/server";
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -15,11 +17,13 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   }
 
   const { id } = await params;
-  const body = await req.json();
-  const parsed = GoalTemplateSchema.safeParse(body);
+  const bodyResult = await parseJson(req);
+  if (!bodyResult.ok) return bodyResult.error;
+  const parsed = GoalTemplateSchema.safeParse(bodyResult.data);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
 
   const template = await prisma.goalTemplate.update({ where: { id }, data: parsed.data });
+  void invalidateCache("templates:list");
   return NextResponse.json(template);
 }
 
@@ -31,6 +35,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
   const { id } = await params;
   await prisma.goalTemplate.update({ where: { id }, data: { isActive: false } });
+  void invalidateCache("templates:list");
   return NextResponse.json({ success: true });
 }
 

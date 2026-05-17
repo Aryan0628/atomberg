@@ -3,8 +3,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,7 +52,6 @@ function useTeamMembers() {
 }
 
 export default function ManagerSharedGoalsPage() {
-  const { data: session } = useSession();
   const { data: sharedGoals, isLoading } = useSharedGoals();
   const { data: teamMembers } = useTeamMembers();
   const [showCreate, setShowCreate] = useState(false);

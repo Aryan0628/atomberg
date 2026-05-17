@@ -1,10 +1,14 @@
 // app/api/goals/route.ts
 // GET (filtered list), POST (create)
+// CACHE: employee's unfiltered goal list cached 30s (most frequent page load).
+// Filtered requests (status/search/thrustArea) bypass cache — results are dynamic.
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { GoalCreateSchema } from "@/lib/validations";
 import { writeAudit } from "@/lib/audit";
+import { withCache, invalidateCache } from "@/lib/cache";
+import { parseJson } from "@/lib/utils";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
@@ -33,16 +37,13 @@ export async function GET(req: Request) {
     });
     const reportIds = reports.map((r) => r.id);
     const allowedIds = [...reportIds, session.user.id];
-    // If ownerId param is provided, validate it's within team scope
     if (ownerId && !allowedIds.includes(ownerId)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     where.ownerId = ownerId ? ownerId : { in: allowedIds };
   } else if (ownerId) {
-    // ADMIN/HR can filter by any ownerId
     where.ownerId = ownerId;
   }
-  // ADMIN/HR with no ownerId see all
 
   if (search) {
     where.OR = [
@@ -51,42 +52,63 @@ export async function GET(req: Request) {
     ];
   }
 
-  const goals = await prisma.goal.findMany({
-    where,
-    include: {
-      owner: { select: { id: true, name: true, email: true, department: true, avatarUrl: true } },
-      approver: { select: { id: true, name: true } },
-      checkins: { orderBy: { quarter: "asc" } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const fetchGoals = () =>
+    prisma.goal.findMany({
+      where,
+      include: {
+        owner: { select: { id: true, name: true, email: true, department: true, avatarUrl: true } },
+        approver: { select: { id: true, name: true } },
+        checkins: { orderBy: { quarter: "asc" } },
+        cycle: { select: { id: true, name: true, fiscalYear: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
 
-  return NextResponse.json(goals);
+  // Cache only the unfiltered employee page load (no status/search/thrustArea/ownerId filters)
+  const hasFilters = !!(status || thrustArea || search || ownerId);
+  if (!hasFilters && session.user.role === "EMPLOYEE") {
+    const goals = await withCache(
+      `goals:${session.user.id}:${cycleId || "all"}`,
+      30,
+      fetchGoals
+    );
+    return NextResponse.json(goals);
+  }
+
+  // Manager unfiltered team view — cache by manager scope
+  if (!hasFilters && session.user.role === "MANAGER" && !ownerId) {
+    const goals = await withCache(
+      `goals:team:${session.user.id}:${cycleId || "all"}`,
+      30,
+      fetchGoals
+    );
+    return NextResponse.json(goals);
+  }
+
+  return NextResponse.json(await fetchGoals());
 }
 
 export async function POST(req: Request) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json();
-  const parsed = GoalCreateSchema.safeParse(body);
+  const bodyResult = await parseJson(req);
+  if (!bodyResult.ok) return bodyResult.error;
+  const parsed = GoalCreateSchema.safeParse(bodyResult.data);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
   }
 
-  // Get active cycle
   const activeCycle = await prisma.cycle.findFirst({ where: { isActive: true } });
   if (!activeCycle) {
     return NextResponse.json({ error: "No active cycle found" }, { status: 400 });
   }
 
-  // Check goal-setting window
   const now = new Date();
   if (now < activeCycle.goalSettingOpen || now > activeCycle.goalSettingClose) {
     return NextResponse.json({ error: "Goal setting window is closed" }, { status: 403 });
   }
 
-  // Check max 8 goals per employee per cycle
   const existingCount = await prisma.goal.count({
     where: { ownerId: session.user.id, cycleId: activeCycle.id },
   });
@@ -103,6 +125,13 @@ export async function POST(req: Request) {
       status: "DRAFT",
     },
   });
+
+  // Invalidate the employee's goals list and action items
+  void Promise.all([
+    invalidateCache(`goals:${session.user.id}:${activeCycle.id}`),
+    invalidateCache(`goals:${session.user.id}:all`),
+    invalidateCache(`action-items:${session.user.id}`),
+  ]);
 
   await writeAudit({
     userId: session.user.id,

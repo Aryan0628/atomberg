@@ -6,6 +6,8 @@ import { prisma } from "@/lib/db";
 import { CheckinSchema } from "@/lib/validations";
 import { computeScore } from "@/lib/scoring";
 import { writeAudit } from "@/lib/audit";
+import { invalidateCache } from "@/lib/cache";
+import { parseJson } from "@/lib/utils";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -13,8 +15,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const body = await req.json();
-  const parsed = CheckinSchema.safeParse({ ...body, goalId: id });
+  const bodyResult = await parseJson(req);
+  if (!bodyResult.ok) return bodyResult.error;
+  const parsed = CheckinSchema.safeParse({ ...(bodyResult.data as object), goalId: id });
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
 
   const { quarter, actualValue, actualDate, progressStatus, employeeNote, selfRating, whatWentWell, blockers } = parsed.data;
@@ -43,42 +46,59 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     actualDate: actualDate ? new Date(actualDate) : null,
   });
 
-  const checkin = await prisma.checkin.upsert({
-    where: { goalId_quarter_cycleId_employeeId: { goalId: id, quarter, cycleId: activeCycle.id, employeeId: session.user.id } },
-    create: {
-      goalId: id, quarter, cycleId: activeCycle.id, employeeId: session.user.id,
-      actualValue, actualDate, progressStatus, employeeNote, selfRating, whatWentWell, blockers,
-      progressScore: score / 100, scorePercentage: score, submittedAt: new Date(),
-    },
-    update: {
-      actualValue, actualDate, progressStatus, employeeNote, selfRating, whatWentWell, blockers,
-      progressScore: score / 100, scorePercentage: score, submittedAt: new Date(),
-    },
-  });
+  // Atomic: checkin upsert + goal latestScore + shared sync + audit in one transaction
+  const now = new Date();
+  const checkin = await prisma.$transaction(async (tx) => {
+    const c = await tx.checkin.upsert({
+      where: { goalId_quarter_cycleId_employeeId: { goalId: id, quarter, cycleId: activeCycle.id, employeeId: session.user.id } },
+      create: {
+        goalId: id, quarter, cycleId: activeCycle.id, employeeId: session.user.id,
+        actualValue, actualDate, progressStatus, employeeNote, selfRating, whatWentWell, blockers,
+        progressScore: score / 100, scorePercentage: score, submittedAt: now,
+      },
+      update: {
+        actualValue, actualDate, progressStatus, employeeNote, selfRating, whatWentWell, blockers,
+        progressScore: score / 100, scorePercentage: score, submittedAt: now,
+      },
+    });
 
-  await prisma.goal.update({ where: { id }, data: { latestScore: score, latestStatus: progressStatus } });
+    await tx.goal.update({ where: { id }, data: { latestScore: score, latestStatus: progressStatus } });
 
-  // Sync score to each other shared recipient's own checkin row
-  if (goal.isShared) {
-    const recipients = goal.sharedWith.filter((u) => u.id !== session.user.id);
-    for (const recipient of recipients) {
-      await prisma.checkin.upsert({
-        where: { goalId_quarter_cycleId_employeeId: { goalId: id, quarter, cycleId: activeCycle.id, employeeId: recipient.id } },
-        create: {
-          goalId: id, quarter, cycleId: activeCycle.id, employeeId: recipient.id,
-          actualValue, actualDate, progressStatus, progressScore: score / 100, scorePercentage: score,
-          submittedAt: new Date(),
-        },
-        update: { actualValue, actualDate, progressScore: score / 100, scorePercentage: score },
-      });
+    // Sync score to each other shared recipient's own checkin row
+    if (goal.isShared) {
+      const recipients = goal.sharedWith.filter((u) => u.id !== session.user.id);
+      for (const recipient of recipients) {
+        await tx.checkin.upsert({
+          where: { goalId_quarter_cycleId_employeeId: { goalId: id, quarter, cycleId: activeCycle.id, employeeId: recipient.id } },
+          create: {
+            goalId: id, quarter, cycleId: activeCycle.id, employeeId: recipient.id,
+            actualValue, actualDate, progressStatus, progressScore: score / 100, scorePercentage: score,
+            submittedAt: now,
+          },
+          update: { actualValue, actualDate, progressScore: score / 100, scorePercentage: score },
+        });
+      }
     }
-  }
 
-  await writeAudit({
-    userId: session.user.id, action: "CHECKIN_SUBMITTED", entityType: "Checkin",
-    entityId: checkin.id, goalId: id,
-    newValue: { quarter, score, progressStatus },
+    await writeAudit({
+      userId: session.user.id, action: "CHECKIN_SUBMITTED", entityType: "Checkin",
+      entityId: c.id, goalId: id,
+      newValue: { quarter, score, progressStatus },
+    }, tx);
+
+    return c;
   });
+
+  // Invalidate goal detail + list + analytics — checkin changes latestScore
+  void Promise.all([
+    invalidateCache(`goal:${id}`),
+    invalidateCache(`goals:${session.user.id}:${activeCycle.id}`),
+    invalidateCache(`goals:${session.user.id}:all`),
+    invalidateCache(`action-items:${session.user.id}`),
+    invalidateCache(`analytics:overview:${activeCycle.id}`),
+    invalidateCache(`analytics:heatmap:${activeCycle.id}`),
+    invalidateCache(`analytics:qoq:${activeCycle.id}`),
+  ]);
 
   return NextResponse.json({ success: true, score, checkin });
 }

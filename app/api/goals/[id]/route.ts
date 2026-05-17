@@ -1,10 +1,14 @@
 // app/api/goals/[id]/route.ts
 // GET, PUT, DELETE single goal
+// CACHE: full goal (including all comments) cached 30s at key `goal:{id}`.
+// Role-based comment filtering is applied after cache read — never stored filtered.
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { GoalUpdateSchema } from "@/lib/validations";
 import { writeAudit } from "@/lib/audit";
+import { withCache, invalidateCache } from "@/lib/cache";
+import { parseJson } from "@/lib/utils";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -12,30 +16,31 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const goal = await prisma.goal.findUnique({
-    where: { id },
-    include: {
-      owner: { select: { id: true, name: true, email: true, department: true, avatarUrl: true } },
-      approver: { select: { id: true, name: true } },
-      cycle: true,
-      checkins: { orderBy: { quarter: "asc" } },
-      comments: {
-        include: { author: { select: { id: true, name: true, role: true } } },
-        orderBy: { createdAt: "asc" },
+
+  const goal = await withCache(`goal:${id}`, 30, () =>
+    prisma.goal.findUnique({
+      where: { id },
+      include: {
+        owner: { select: { id: true, name: true, email: true, department: true, avatarUrl: true } },
+        approver: { select: { id: true, name: true } },
+        cycle: true,
+        checkins: { orderBy: { quarter: "asc" } },
+        comments: {
+          include: { author: { select: { id: true, name: true, role: true } } },
+          orderBy: { createdAt: "asc" },
+        },
+        sharedWith: { select: { id: true, name: true } },
       },
-      sharedWith: { select: { id: true, name: true } },
-    },
-  });
+    })
+  );
 
   if (!goal) return NextResponse.json({ error: "Goal not found" }, { status: 404 });
 
-  // Role-based access: employees can only see their own goals
+  // Access control
   if (session.user.role === "EMPLOYEE" && goal.ownerId !== session.user.id) {
-    // Allow if it's a shared goal they're a recipient of
     const isRecipient = goal.sharedWith.some((u) => u.id === session.user.id);
     if (!isRecipient) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-  // Managers can only see their reports' goals
   if (session.user.role === "MANAGER" && goal.owner.id !== session.user.id) {
     const report = await prisma.user.findFirst({
       where: { id: goal.owner.id, managerId: session.user.id },
@@ -43,12 +48,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     if (!report) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Filter internal comments for employees
-  if (session.user.role === "EMPLOYEE") {
-    goal.comments = goal.comments.filter((c) => !c.isInternal);
-  }
+  // Filter internal comments for employees — applied after cache read, not stored back
+  const visible = session.user.role === "EMPLOYEE"
+    ? { ...goal, comments: goal.comments.filter((c) => !c.isInternal) }
+    : goal;
 
-  return NextResponse.json(goal);
+  return NextResponse.json(visible);
 }
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -59,10 +64,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const goal = await prisma.goal.findUnique({ where: { id } });
   if (!goal) return NextResponse.json({ error: "Goal not found" }, { status: 404 });
 
-  const body = await req.json();
+  const bodyResult = await parseJson(req);
+  if (!bodyResult.ok) return bodyResult.error;
+  const body = bodyResult.data as Record<string, unknown>;
 
-  // Shared goal recipients (non-primary-owners) can only edit their own weightage.
-  // Also catches isShared=true with null primaryOwnerId (data anomaly) — falls through to owner check.
   if (goal.isShared && goal.primaryOwnerId !== null && goal.primaryOwnerId !== session.user.id) {
     const fullGoal = await prisma.goal.findUnique({
       where: { id },
@@ -76,10 +81,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       return NextResponse.json({ error: "Shared goal recipients can only edit weightage (10–100)" }, { status: 400 });
     }
     const updated = await prisma.goal.update({ where: { id }, data: { weightage } });
+    void invalidateCache(`goal:${id}`);
     return NextResponse.json(updated);
   }
 
-  // Only the primary owner can fully edit, and only in DRAFT or RETURNED status
   if (goal.ownerId !== session.user.id) {
     return NextResponse.json({ error: "Only goal owner can edit" }, { status: 403 });
   }
@@ -103,6 +108,14 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       status: goal.status === "RETURNED" ? "DRAFT" : goal.status,
     },
   });
+
+  // Invalidate goal + list caches
+  void Promise.all([
+    invalidateCache(`goal:${id}`),
+    invalidateCache(`goals:${goal.ownerId}:${goal.cycleId}`),
+    invalidateCache(`goals:${goal.ownerId}:all`),
+    invalidateCache(`action-items:${goal.ownerId}`),
+  ]);
 
   if (parsed.data.weightage && parsed.data.weightage !== goal.weightage) {
     await writeAudit({
@@ -136,5 +149,13 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   }
 
   await prisma.goal.delete({ where: { id } });
+
+  void Promise.all([
+    invalidateCache(`goal:${id}`),
+    invalidateCache(`goals:${goal.ownerId}:${goal.cycleId}`),
+    invalidateCache(`goals:${goal.ownerId}:all`),
+    invalidateCache(`action-items:${goal.ownerId}`),
+  ]);
+
   return NextResponse.json({ success: true });
 }

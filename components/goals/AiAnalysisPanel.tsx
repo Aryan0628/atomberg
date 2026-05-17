@@ -66,7 +66,7 @@ export function AiAnalysisPanel({ result, onApplyTitle, currentTitle }: Props) {
         <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
           <TrendingUp className="w-3 h-3" /> SMART Criteria
         </p>
-        {(Object.entries(result.smart_scores) as [string, number][]).map(([key, val]) => (
+        {(Object.entries(result.smart_scores ?? {}) as [string, number][]).map(([key, val]) => (
           <div key={key} className="flex items-center gap-3">
             <span className="text-xs text-muted-foreground w-20 shrink-0">{SMART_LABELS[key] ?? key}</span>
             <Progress value={val * 10} className={`flex-1 h-1.5 ${smartBarColor(val)}`} />

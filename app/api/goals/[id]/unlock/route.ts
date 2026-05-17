@@ -5,6 +5,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { writeAudit } from "@/lib/audit";
 import { createNotification } from "@/lib/notifications";
+import { invalidateCache } from "@/lib/cache";
+import { parseJson } from "@/lib/utils";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -14,7 +16,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
 
   const { id } = await params;
-  const { reason } = await req.json();
+  const bodyResult = await parseJson(req);
+  if (!bodyResult.ok) return bodyResult.error;
+  const { reason } = bodyResult.data as { reason?: string };
 
   if (!reason || String(reason).trim().length < 5) {
     return NextResponse.json({ error: "Unlock reason is required (min 5 chars)" }, { status: 422 });
@@ -46,6 +50,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     oldValue: { isLocked: true, status: goal.status },
     newValue: { isLocked: false, status: "APPROVED", reason },
   });
+
+  void Promise.all([
+    invalidateCache(`goal:${id}`),
+    invalidateCache(`goals:${goal.ownerId}:${goal.cycleId}`),
+    invalidateCache(`goals:${goal.ownerId}:all`),
+    invalidateCache(`action-items:${goal.ownerId}`),
+  ]);
 
   return NextResponse.json({ success: true });
 }

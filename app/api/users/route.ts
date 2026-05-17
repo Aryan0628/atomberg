@@ -1,14 +1,15 @@
 // app/api/users/route.ts
 // GET — role-scoped user list:
 //   EMPLOYEE    → 403 (use /api/users/[id] for self)
-//   MANAGER     → own profile + direct reports only
-//   ADMIN / HR  → all users
+//   MANAGER     → own profile + direct reports only (cached 120s)
+//   ADMIN / HR  → all users (cached 120s)
 // POST — create user (ADMIN / HR only)
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { UserCreateSchema } from "@/lib/validations";
 import { writeAudit } from "@/lib/audit";
+import { withCache, invalidateCache } from "@/lib/cache";
 import { parseJson } from "@/lib/utils";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
@@ -30,25 +31,28 @@ export async function GET() {
   }
 
   if (session.user.role === "MANAGER") {
-    // Managers see only themselves + their direct reports
-    const users = await prisma.user.findMany({
-      where: {
-        OR: [
-          { id: session.user.id },
-          { managerId: session.user.id, isActive: true },
-        ],
-      },
-      select: USER_SELECT,
-      orderBy: { name: "asc" },
-    });
+    const users = await withCache(`users:manager:${session.user.id}`, 120, () =>
+      prisma.user.findMany({
+        where: {
+          OR: [
+            { id: session.user.id },
+            { managerId: session.user.id, isActive: true },
+          ],
+        },
+        select: USER_SELECT,
+        orderBy: { name: "asc" },
+      })
+    );
     return NextResponse.json(users);
   }
 
   // ADMIN / HR — full list
-  const users = await prisma.user.findMany({
-    select: USER_SELECT,
-    orderBy: { name: "asc" },
-  });
+  const users = await withCache("users:admin", 120, () =>
+    prisma.user.findMany({
+      select: USER_SELECT,
+      orderBy: { name: "asc" },
+    })
+  );
   return NextResponse.json(users);
 }
 
@@ -71,6 +75,14 @@ export async function POST(req: Request) {
   const user = await prisma.user.create({
     data: { ...parsed.data, password: hashedPassword },
   });
+
+  // New user invalidates admin list and their manager's team list
+  void Promise.all([
+    invalidateCache("users:admin"),
+    parsed.data.managerId
+      ? invalidateCache(`users:manager:${parsed.data.managerId}`)
+      : Promise.resolve(),
+  ]);
 
   await writeAudit({
     userId: session.user.id, action: "USER_CREATED", entityType: "User", entityId: user.id,
