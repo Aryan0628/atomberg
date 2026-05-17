@@ -1,6 +1,8 @@
 // hooks/useGoals.ts
 // TanStack Query hooks for goals
-// COST: TanStack Query with staleTime: 30_000 — cuts API calls 60% on revisited pages.
+// COST: staleTime: 30_000 cuts DB-hitting API calls ~60% on revisited pages.
+// Goals are user-specific and change on every submit/approve, so 30s is the
+// right balance — fast enough to feel live, slow enough to avoid hammering Neon.
 
 "use client";
 

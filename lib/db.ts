@@ -1,6 +1,11 @@
 // lib/db.ts
 // COST: Neon PostgreSQL — $0/month, serverless, scales to zero between requests.
 // Sufficient for ~500 employees with 8 goals each = ~4000 goal rows.
+// CONNECTION POOLING: DATABASE_URL must include ?pgbouncer=true in production.
+// Without pgbouncer, each serverless invocation opens a new PG connection;
+// Neon's shared compute has a 100-connection cap — pgbouncer multiplexes all
+// serverless workers through a single pool, preventing exhaustion under load.
+// DIRECT_URL (no pgbouncer) is used only for Prisma migrations (npx prisma migrate).
 // Prisma 7 requires explicit driver adapter for PostgreSQL connections.
 
 import { PrismaClient } from "@/lib/generated/prisma/client";

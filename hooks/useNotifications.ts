@@ -1,4 +1,7 @@
 // hooks/useNotifications.ts
+// COST: Notifications polled every 60s (refetchInterval). staleTime matches
+// the poll interval so TanStack Query never fires a redundant background refetch
+// between polls — exactly 1 API call per minute per active browser tab.
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -11,8 +14,8 @@ export function useNotifications() {
       if (!res.ok) throw new Error("Failed to fetch notifications");
       return res.json();
     },
-    refetchInterval: 60_000, // Poll every 60 seconds
-    staleTime: 30_000,
+    refetchInterval: 60_000,
+    staleTime: 60_000, // matches poll interval — no redundant background refetch
   });
 }
 
