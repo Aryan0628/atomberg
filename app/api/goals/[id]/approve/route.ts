@@ -93,8 +93,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     await writeAudit({ userId: session.user.id, action: auditAction, entityType: "Goal", entityId: goal.id, goalId: goal.id, oldValue, newValue }, tx);
   });
 
-  // Invalidate caches — synchronous so next request is fresh
-  await Promise.all([
+  // Fire-and-forget — client re-fetches via TanStack Query onSuccess callback,
+  // by which time the DELs have landed. Awaiting 7 Upstash HTTP calls was
+  // adding 140-350ms to every approval response unnecessarily.
+  void Promise.all([
     invalidateCache(`goal:${id}`),
     invalidateCache(`goals:${goal.ownerId}:${goal.cycleId}`),
     invalidateCache(`goals:team:${session.user.id}:${goal.cycleId}`),

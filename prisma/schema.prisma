@@ -136,6 +136,7 @@ model Goal {
   @@index([ownerId, cycleId])
   @@index([approverId])
   @@index([status])
+  @@index([cycleId, status])   // analytics + action-items: WHERE cycleId=X AND status IN [...]
 }
 
 enum UoMType {
@@ -231,6 +232,7 @@ model AuditLog {
   @@index([userId])
   @@index([createdAt])
   @@index([action])
+  @@index([createdAt, id])    // writeAudit findFirst: ORDER BY createdAt DESC, id DESC
 }
 
 enum AuditAction {

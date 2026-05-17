@@ -7,6 +7,7 @@ import { CheckinSchema } from "@/lib/validations";
 import { computeScore } from "@/lib/scoring";
 import { writeAudit } from "@/lib/audit";
 import { invalidateCache } from "@/lib/cache";
+import { getActiveCycle } from "@/lib/cycle";
 import { parseJson } from "@/lib/utils";
 import { NextResponse } from "next/server";
 
@@ -22,7 +23,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const { quarter, actualValue, actualDate, progressStatus, employeeNote, selfRating, whatWentWell, blockers } = parsed.data;
 
-  const activeCycle = await prisma.cycle.findFirst({ where: { isActive: true } });
+  const activeCycle = await getActiveCycle();
   if (!activeCycle) return NextResponse.json({ error: "No active cycle" }, { status: 400 });
   if (!isWindowOpen(activeCycle, quarter)) {
     return NextResponse.json({ error: `${quarter} check-in window is not open` }, { status: 403 });
@@ -64,20 +65,23 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     await tx.goal.update({ where: { id }, data: { latestScore: score, latestStatus: progressStatus } });
 
-    // Sync score to each other shared recipient's own checkin row
+    // Sync score to each other shared recipient's own checkin row.
+    // Promise.all runs all upserts over the same tx connection — no sequential blocking.
     if (goal.isShared) {
       const recipients = goal.sharedWith.filter((u) => u.id !== session.user.id);
-      for (const recipient of recipients) {
-        await tx.checkin.upsert({
-          where: { goalId_quarter_cycleId_employeeId: { goalId: id, quarter, cycleId: activeCycle.id, employeeId: recipient.id } },
-          create: {
-            goalId: id, quarter, cycleId: activeCycle.id, employeeId: recipient.id,
-            actualValue, actualDate, progressStatus, progressScore: score / 100, scorePercentage: score,
-            submittedAt: now,
-          },
-          update: { actualValue, actualDate, progressScore: score / 100, scorePercentage: score },
-        });
-      }
+      await Promise.all(
+        recipients.map((recipient) =>
+          tx.checkin.upsert({
+            where: { goalId_quarter_cycleId_employeeId: { goalId: id, quarter, cycleId: activeCycle.id, employeeId: recipient.id } },
+            create: {
+              goalId: id, quarter, cycleId: activeCycle.id, employeeId: recipient.id,
+              actualValue, actualDate, progressStatus, progressScore: score / 100, scorePercentage: score,
+              submittedAt: now,
+            },
+            update: { actualValue, actualDate, progressScore: score / 100, scorePercentage: score },
+          })
+        )
+      );
     }
 
     await writeAudit({

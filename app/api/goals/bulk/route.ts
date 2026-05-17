@@ -6,6 +6,7 @@
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getActiveCycle } from "@/lib/cycle";
 import { writeAudit } from "@/lib/audit";
 import { createNotification, sendGoalSubmittedEmail } from "@/lib/notifications";
 import { sendTeamsCard } from "@/lib/teams";
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
   if (!cycleId) return NextResponse.json({ error: "cycleId is required" }, { status: 400 });
 
   // Verify this is the active cycle and goal-setting window is open
-  const activeCycle = await prisma.cycle.findFirst({ where: { isActive: true } });
+  const activeCycle = await getActiveCycle();
   if (!activeCycle || activeCycle.id !== cycleId) {
     return NextResponse.json({ error: "Can only submit goals for the active cycle" }, { status: 400 });
   }

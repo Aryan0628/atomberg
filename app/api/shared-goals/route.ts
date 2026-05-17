@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { GoalCreateSchema } from "@/lib/validations";
 import { writeAudit } from "@/lib/audit";
+import { getActiveCycle } from "@/lib/cycle";
 import { parseJson } from "@/lib/utils";
 import { createNotification } from "@/lib/notifications";
 import { NextResponse } from "next/server";
@@ -27,18 +28,14 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
   } else if (session.user.role === "MANAGER") {
-    const reports = await prisma.user.findMany({
-      where: { managerId: session.user.id },
-      select: { id: true },
-    });
-    const reportIds = reports.map((r) => r.id);
-
+    // JOIN: goals owned by this manager OR shared with any of their direct reports.
+    // Eliminates the separate report-ID fetch query.
     goals = await prisma.goal.findMany({
       where: {
         isShared: true,
         OR: [
           { ownerId: session.user.id },
-          { sharedWith: { some: { id: { in: reportIds } } } },
+          { sharedWith: { some: { managerId: session.user.id } } },
         ],
       },
       include: {
@@ -78,15 +75,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "At least one recipient is required" }, { status: 400 });
   }
 
-  // Managers can only assign shared goals to their own direct reports
+  // Managers can only assign shared goals to their own direct reports.
+  // Validate all recipientIds in one query instead of fetching all reports first.
   if (session.user.role === "MANAGER") {
-    const reports = await prisma.user.findMany({
-      where: { managerId: session.user.id },
-      select: { id: true },
+    const validReports = await prisma.user.count({
+      where: { id: { in: recipientIds as string[] }, managerId: session.user.id },
     });
-    const reportIds = new Set(reports.map((r) => r.id));
-    const invalid = (recipientIds as string[]).filter((rid) => !reportIds.has(rid));
-    if (invalid.length > 0) {
+    if (validReports !== (recipientIds as string[]).length) {
       return NextResponse.json(
         { error: "Managers can only assign shared goals to their direct reports" },
         { status: 403 }
@@ -97,7 +92,7 @@ export async function POST(req: Request) {
   const parsed = GoalCreateSchema.safeParse(goalData);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
 
-  const activeCycle = await prisma.cycle.findFirst({ where: { isActive: true } });
+  const activeCycle = await getActiveCycle();
   if (!activeCycle) return NextResponse.json({ error: "No active cycle" }, { status: 400 });
 
   const now = new Date();
@@ -132,16 +127,18 @@ export async function POST(req: Request) {
     },
   });
 
-  // Notify all recipients
-  for (const recipientId of recipientIds) {
-    await createNotification({
-      userId: recipientId,
-      type: "GOAL_SHARED_WITH_YOU",
-      title: `Shared goal assigned: "${parsed.data.title}"`,
-      message: `${session.user.name} assigned a departmental goal to you. Adjust your weightage to include it.`,
-      link: `/dashboard/employee/goals`,
-    });
-  }
+  // Notify all recipients in parallel — sequential loop was N × DB writes.
+  void Promise.all(
+    (recipientIds as string[]).map((recipientId) =>
+      createNotification({
+        userId: recipientId,
+        type: "GOAL_SHARED_WITH_YOU",
+        title: `Shared goal assigned: "${parsed.data.title}"`,
+        message: `${session.user.name} assigned a departmental goal to you. Adjust your weightage to include it.`,
+        link: `/dashboard/employee/goals`,
+      })
+    )
+  );
 
   await writeAudit({
     userId: session.user.id,
