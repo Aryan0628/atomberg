@@ -8,7 +8,8 @@
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Architecture Diagram](#architecture-diagram)
+2. [Screenshots](#screenshots)
+3. [Architecture Diagram](#architecture-diagram)
 3. [Tech Stack](#tech-stack)
 4. [Project Structure](#project-structure)
 5. [Database Schema](#database-schema)
@@ -39,6 +40,34 @@ AtomQuest digitises the entire annual goal lifecycle at Atomberg Technologies. E
 - **Employee** — set goals, manage weightage, submit for approval, run quarterly check-ins, track scores live
 - **Manager** — approve/reject/return goals, run team check-ins, view AI quality scores, generate annual reviews
 - **Admin / HR** — manage org, configure fiscal cycles, view tamper-evident audit trails, export reports, view 7-chart analytics
+
+---
+
+## Screenshots
+
+### Login — Quick-access demo cards for all 4 roles + Azure SSO button
+![Login page](docs/screenshots/login.png)
+
+### Employee Dashboard — Live countdown, Action Required center, weighted score & forecast
+![Employee dashboard](docs/screenshots/employee-dashboard.png)
+
+### Employee Goals — Weightage meter at 100%, UoM badges, score per goal
+![Employee goals](docs/screenshots/employee-goals.png)
+
+### AI Goal Coach — SMART criteria breakdown, policy issues, suggested title
+![AI Goal Coach panel](docs/screenshots/ai-goal-coach.png)
+
+### Manager Approvals — Per-goal AI quality score (8/10), SMART bars, policy issues, suggestions
+![Manager approvals with AI analysis](docs/screenshots/manager-approvals.png)
+
+### Admin Analytics — Stat cards, goal status distribution, thrust area breakdown
+![Admin analytics overview](docs/screenshots/analytics-overview.png)
+
+### Commitment vs Achievement Quadrant — Every employee plotted by commitment × achievement
+![Performance quadrant chart](docs/screenshots/performance-quadrant.png)
+
+### Cryptographic Audit Trail — Full lifecycle log with color-coded action badges
+![Audit trail](docs/screenshots/audit-trail.png)
 
 ---
 
