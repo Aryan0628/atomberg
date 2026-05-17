@@ -8,6 +8,7 @@
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getActiveCycle } from "@/lib/cycle";
 import { withCache } from "@/lib/cache";
 import { NextResponse } from "next/server";
 import type { Session } from "next-auth";
@@ -15,7 +16,7 @@ import type { Session } from "next-auth";
 type ActionItem = { severity: "high" | "medium" | "low"; message: string; link: string; category: string };
 
 async function computeActionItems(session: Session): Promise<ActionItem[]> {
-  const activeCycle = await prisma.cycle.findFirst({ where: { isActive: true } });
+  const activeCycle = await getActiveCycle();
   const items: ActionItem[] = [];
 
   if (!activeCycle) {

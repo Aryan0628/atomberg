@@ -7,6 +7,7 @@
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getActiveCycle } from "@/lib/cycle";
 import { withCache } from "@/lib/cache";
 import { NextResponse } from "next/server";
 
@@ -16,7 +17,7 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const activeCycle = await prisma.cycle.findFirst({ where: { isActive: true } });
+  const activeCycle = await getActiveCycle();
   if (!activeCycle) return NextResponse.json([]);
 
   const result = await withCache(`analytics:manager-effectiveness:${activeCycle.id}`, 60, async () => {
