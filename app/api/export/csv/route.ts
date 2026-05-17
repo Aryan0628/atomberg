@@ -16,8 +16,18 @@ export async function GET() {
   const activeCycle = await prisma.cycle.findFirst({ where: { isActive: true } });
   if (!activeCycle) return NextResponse.json({ error: "No active cycle" }, { status: 400 });
 
+  // Managers can only export their team's goals
+  const goalWhere: Record<string, unknown> = { cycleId: activeCycle.id };
+  if (session.user.role === "MANAGER") {
+    const reports = await prisma.user.findMany({
+      where: { managerId: session.user.id },
+      select: { id: true },
+    });
+    goalWhere.ownerId = { in: reports.map((r) => r.id) };
+  }
+
   const goals = await prisma.goal.findMany({
-    where: { cycleId: activeCycle.id },
+    where: goalWhere,
     include: {
       owner: { select: { name: true, email: true, department: true } },
       approver: { select: { name: true } },

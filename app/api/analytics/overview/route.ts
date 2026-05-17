@@ -5,7 +5,9 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session || !["ADMIN", "HR", "MANAGER"].includes(session.user.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const cycle = await prisma.cycle.findFirst({ where: { isActive: true } });
   if (!cycle) return NextResponse.json({ error: "No active cycle" }, { status: 404 });

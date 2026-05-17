@@ -7,7 +7,8 @@ import { writeAudit } from "@/lib/audit";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
-  if (req.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`) {
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret || req.headers.get("authorization") !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -25,13 +26,20 @@ export async function GET(req: Request) {
   });
 
   if (result.count > 0) {
-    await writeAudit({
-      userId: "SYSTEM",
-      action: "GOALS_AUTO_LOCKED",
-      entityType: "Cycle",
-      entityId: cycle.id,
-      newValue: { lockedCount: result.count, triggeredBy: "cron", at: now },
+    // Use first admin user as actor for system-triggered audit entries
+    const systemActor = await prisma.user.findFirst({
+      where: { role: "ADMIN", isActive: true },
+      select: { id: true },
     });
+    if (systemActor) {
+      await writeAudit({
+        userId: systemActor.id,
+        action: "GOALS_AUTO_LOCKED",
+        entityType: "Cycle",
+        entityId: cycle.id,
+        newValue: { lockedCount: result.count, triggeredBy: "cron", at: now },
+      });
+    }
   }
 
   return NextResponse.json({ locked: result.count, cycleId: cycle.id });

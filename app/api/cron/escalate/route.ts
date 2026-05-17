@@ -5,7 +5,8 @@ import { runEscalationEngine } from "@/lib/escalation";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
-  if (req.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`) {
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret || req.headers.get("authorization") !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

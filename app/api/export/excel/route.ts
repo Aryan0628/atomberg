@@ -26,19 +26,19 @@ export async function GET(req: Request) {
   const rows = goals.map((g) => ({
     "Employee Name": g.owner.name,
     "Email": g.owner.email,
-    "Department": g.owner.department || "—",
+    "Department": g.owner.department ?? "—",
     "Goal Title": g.title,
     "Thrust Area": g.thrustArea,
     "UoM Type": g.uomType,
-    "Target": g.target || "—",
+    "Target": g.target ?? "—",
     "Weightage %": g.weightage,
     "Status": g.status,
-    "Score": g.latestScore || "—",
-    "Approved By": g.approver?.name || "—",
-    "Q1 Score": g.checkins.find((c) => c.quarter === "Q1")?.scorePercentage || "—",
-    "Q2 Score": g.checkins.find((c) => c.quarter === "Q2")?.scorePercentage || "—",
-    "Q3 Score": g.checkins.find((c) => c.quarter === "Q3")?.scorePercentage || "—",
-    "Q4 Score": g.checkins.find((c) => c.quarter === "Q4")?.scorePercentage || "—",
+    "Score": g.latestScore ?? "—",
+    "Approved By": g.approver?.name ?? "—",
+    "Q1 Score": g.checkins.find((c) => c.quarter === "Q1")?.scorePercentage ?? "—",
+    "Q2 Score": g.checkins.find((c) => c.quarter === "Q2")?.scorePercentage ?? "—",
+    "Q3 Score": g.checkins.find((c) => c.quarter === "Q3")?.scorePercentage ?? "—",
+    "Q4 Score": g.checkins.find((c) => c.quarter === "Q4")?.scorePercentage ?? "—",
   }));
 
   const buffer = generateExcel(rows, `Goals_${cycle.fiscalYear}`);

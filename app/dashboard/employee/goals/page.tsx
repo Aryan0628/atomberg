@@ -15,10 +15,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Plus, Search, Send, Target, ArrowRight, BookTemplate, ChevronRight, Sparkles, Loader2 } from "lucide-react";
+import { Plus, Search, Send, Target, ArrowRight, BookTemplate, ChevronRight, BarChart2, Loader2 } from "lucide-react";
 import { AiAnalysisPanel, type AiResult } from "@/components/goals/AiAnalysisPanel";
+import { RedundancyWarning } from "@/components/goals/RedundancyWarning";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import type { RedundancyMatch } from "@/lib/ai-client";
 import { getGoalStatusColor, getUoMLabel, getUoMColor, formatScore } from "@/lib/utils";
 import { getScoreColor } from "@/lib/scoring";
 import { suggestRebalance } from "@/lib/weightage";
@@ -68,6 +70,32 @@ export default function EmployeeGoalsPage() {
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [aiResult, setAiResult] = useState<AiResult | null>(null);
+  const [redundancyMatches, setRedundancyMatches] = useState<RedundancyMatch[]>([]);
+  const [redundancyDismissed, setRedundancyDismissed] = useState(false);
+  const redundancyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounced redundancy check — fires 1.5s after the user stops typing the title
+  function triggerRedundancyCheck(title: string, thrustArea: string) {
+    if (redundancyTimer.current) clearTimeout(redundancyTimer.current);
+    if (!title || title.length < 10 || !cycle?.id) return;
+    redundancyTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/ai/redundancy", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, description: form.description, thrustArea, cycleId: cycle.id }),
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.has_redundancy && data.matches?.length) {
+          setRedundancyMatches(data.matches);
+          setRedundancyDismissed(false);
+        } else {
+          setRedundancyMatches([]);
+        }
+      } catch { /* silent — redundancy check is advisory only */ }
+    }, 1500);
+  }
 
   const aiEvaluate = useMutation({
     mutationFn: async () => {
@@ -84,7 +112,7 @@ export default function EmployeeGoalsPage() {
       return res.json();
     },
     onSuccess: (data) => setAiResult(data),
-    onError: () => toast.error("AI Coach unavailable — please try again"),
+    onError: () => toast.error("Quality check unavailable — please try again"),
   });
 
   const incrementUsage = useMutation({
@@ -265,7 +293,7 @@ export default function EmployeeGoalsPage() {
         <Button disabled={allGoals.length >= 8} onClick={() => setDialogOpen(true)}>
           <Plus className="w-4 h-4 mr-1" /> New Goal
         </Button>
-        <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setForm(EMPTY_FORM); }}>
+        <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) { setForm(EMPTY_FORM); setAiResult(null); setRedundancyMatches([]); setRedundancyDismissed(false); } }}>
           <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Goal</DialogTitle>
@@ -273,16 +301,34 @@ export default function EmployeeGoalsPage() {
             <form onSubmit={handleCreateGoal} className="space-y-4">
               <div className="space-y-2">
                 <Label>Title *</Label>
-                <Input required minLength={3} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g., Quarterly Sales Revenue" />
+                <Input
+                  required
+                  minLength={3}
+                  value={form.title}
+                  onChange={(e) => {
+                    const title = e.target.value;
+                    setForm({ ...form, title });
+                    triggerRedundancyCheck(title, form.thrustArea);
+                  }}
+                  placeholder="e.g., Quarterly Sales Revenue"
+                />
               </div>
               <div className="space-y-2">
                 <Label>Description</Label>
                 <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Describe the goal..." rows={2} />
               </div>
+              {/* Redundancy warning — appears automatically after typing the title */}
+              {redundancyMatches.length > 0 && !redundancyDismissed && (
+                <RedundancyWarning
+                  matches={redundancyMatches}
+                  onDismiss={() => setRedundancyDismissed(true)}
+                />
+              )}
+
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>Thrust Area *</Label>
-                  <Select required value={form.thrustArea} onValueChange={(v) => v && setForm({ ...form, thrustArea: v })}>
+                  <Select required value={form.thrustArea} onValueChange={(v) => { if (v) { setForm({ ...form, thrustArea: v }); triggerRedundancyCheck(form.title, v); } }}>
                     <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
                     <SelectContent>{THRUST_AREAS.map((ta) => <SelectItem key={ta} value={ta}>{ta}</SelectItem>)}</SelectContent>
                   </Select>
@@ -318,26 +364,25 @@ export default function EmployeeGoalsPage() {
                 <Input type="number" min={10} max={100} step={5} required value={form.weightage} onChange={(e) => setForm({ ...form, weightage: e.target.value })} />
                 <p className="text-xs text-slate-400">Remaining: {Math.max(0, 100 - totalWeightage)}% · All goals must total 100%</p>
               </div>
-              {/* AI Goal Coach */}
-              <div className="border border-purple-200 dark:border-purple-800/60 rounded-lg overflow-hidden">
-                <div className="flex items-center justify-between px-3 py-2.5 bg-purple-50 dark:bg-purple-950/30">
-                  <span className="text-xs font-semibold text-purple-700 dark:text-purple-300 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5" /> AI Goal Coach
-                    <span className="text-purple-400 font-normal">— Gemini</span>
+              {/* Quality Check */}
+              <div className="border border-slate-200 dark:border-white/[0.08] rounded-lg overflow-hidden">
+                <div className="flex items-center justify-between px-3 py-2.5 bg-slate-50 dark:bg-white/[0.03]">
+                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                    <BarChart2 className="w-3.5 h-3.5" /> Quality Check
                   </span>
                   <Button type="button" size="sm" variant="outline"
-                    className="h-7 text-xs gap-1.5 border-purple-300 text-purple-700 hover:bg-purple-100 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-900/50"
+                    className="h-7 text-xs gap-1.5 border-slate-200 dark:border-white/[0.1] text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.05]"
                     onClick={() => aiEvaluate.mutate()}
                     disabled={aiEvaluate.isPending || !form.title || !form.thrustArea}>
                     {aiEvaluate.isPending
-                      ? <><Loader2 className="w-3 h-3 animate-spin" /> Analyzing…</>
-                      : aiResult ? "Re-analyze" : "Analyze with AI"}
+                      ? <><Loader2 className="w-3 h-3 animate-spin" /> Checking…</>
+                      : aiResult ? "Re-check" : "Check quality"}
                   </Button>
                 </div>
                 {aiEvaluate.isPending && (
-                  <div className="flex items-center gap-2 px-4 py-6 text-xs text-slate-500">
-                    <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
-                    Evaluating your goal against SMART criteria…
+                  <div className="flex items-center gap-2 px-4 py-6 text-xs text-slate-400">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Evaluating against SMART criteria…
                   </div>
                 )}
                 {aiResult && !aiEvaluate.isPending && (
@@ -351,7 +396,7 @@ export default function EmployeeGoalsPage() {
                 )}
                 {!aiResult && !aiEvaluate.isPending && (
                   <p className="px-4 py-3 text-xs text-slate-400">
-                    Fill in title and thrust area, then click &ldquo;Analyze with AI&rdquo; for SMART scoring, improvement suggestions, and a better title.
+                    Enter a title and thrust area, then run a quality check for SMART scoring and improvement suggestions.
                   </p>
                 )}
               </div>

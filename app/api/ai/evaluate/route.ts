@@ -4,6 +4,7 @@
 
 import { auth } from "@/lib/auth";
 import { evaluateGoal } from "@/lib/ai-client";
+import { rateLimit } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -19,6 +20,12 @@ const EvalSchema = z.object({
 export async function POST(req: Request) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Rate limit: 10 AI evaluations per user per minute
+  const limit = await rateLimit(`ai:${session.user.id}`, 10, 60);
+  if (!limit.success) {
+    return NextResponse.json({ error: "Too many requests — wait a moment and try again" }, { status: 429 });
+  }
 
   const body = await req.json();
   const parsed = EvalSchema.safeParse(body);
