@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { CycleCreateSchema } from "@/lib/validations";
 import { writeAudit } from "@/lib/audit";
+import { parseJson } from "@/lib/utils";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -22,8 +23,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json();
-  const parsed = CycleCreateSchema.safeParse(body);
+  const bodyResult = await parseJson(req);
+  if (!bodyResult.ok) return bodyResult.error;
+  const parsed = CycleCreateSchema.safeParse(bodyResult.data);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
 
   const cycle = await prisma.cycle.create({

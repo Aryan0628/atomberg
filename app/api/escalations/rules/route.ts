@@ -5,6 +5,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { EscalationRuleSchema } from "@/lib/validations";
+import { parseJson } from "@/lib/utils";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -30,8 +31,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json();
-  const parsed = EscalationRuleSchema.safeParse(body);
+  const bodyResult = await parseJson(req);
+  if (!bodyResult.ok) return bodyResult.error;
+  const parsed = EscalationRuleSchema.safeParse(bodyResult.data);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
 
   const activeCycle = await prisma.cycle.findFirst({ where: { isActive: true } });

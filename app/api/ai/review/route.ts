@@ -11,6 +11,8 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { synthesizeReview, type ReviewRequest } from "@/lib/ai-client";
+import { rateLimit } from "@/lib/rate-limit";
+import { parseJson } from "@/lib/utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -26,8 +28,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Forbidden — managers and HR only" }, { status: 403 });
   }
 
-  const body = await req.json();
-  const parsed = RequestSchema.safeParse(body);
+  const limit = await rateLimit(`ai:${session.user.id}`, 10, 60);
+  if (!limit.success) {
+    return NextResponse.json({ error: "Too many requests — wait a moment and try again" }, { status: 429 });
+  }
+
+  const bodyResult = await parseJson(req);
+  if (!bodyResult.ok) return bodyResult.error;
+  const parsed = RequestSchema.safeParse(bodyResult.data);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
   }

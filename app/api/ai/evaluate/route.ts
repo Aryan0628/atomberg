@@ -5,6 +5,7 @@
 import { auth } from "@/lib/auth";
 import { evaluateGoal } from "@/lib/ai-client";
 import { rateLimit } from "@/lib/rate-limit";
+import { parseJson } from "@/lib/utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -27,8 +28,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Too many requests — wait a moment and try again" }, { status: 429 });
   }
 
-  const body = await req.json();
-  const parsed = EvalSchema.safeParse(body);
+  const bodyResult = await parseJson(req);
+  if (!bodyResult.ok) return bodyResult.error;
+  const parsed = EvalSchema.safeParse(bodyResult.data);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
   }

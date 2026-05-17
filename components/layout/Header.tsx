@@ -2,7 +2,6 @@
 
 import { useSession, signOut } from "next-auth/react";
 import { useTheme } from "next-themes";
-import { useAppStore } from "@/store/useAppStore";
 import { useNotifications, useMarkAllRead } from "@/hooks/useNotifications";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
@@ -49,7 +48,6 @@ function usePageTitle() {
 export function Header() {
   const { data: session }    = useSession();
   const { theme, setTheme }  = useTheme();
-  const { sidebarCollapsed } = useAppStore();
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
@@ -66,8 +64,6 @@ export function Header() {
         "sticky top-0 z-30 h-14 flex items-center justify-between px-6",
         "bg-background",
         "border-b border-border",
-        "transition-all duration-300",
-        sidebarCollapsed ? "ml-[60px]" : "ml-60"
       )}
     >
       {/* Page title */}
@@ -112,6 +108,7 @@ export function Header() {
         {/* Theme toggle */}
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          aria-label={mounted && theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
           className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
         >
           {mounted && theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -119,7 +116,7 @@ export function Header() {
 
         {/* Notifications */}
         <DropdownMenu>
-          <DropdownMenuTrigger className="relative w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
+          <DropdownMenuTrigger aria-label="Notifications" className="relative w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
             <Bell className="w-4 h-4" />
             {unreadCount > 0 && (
               <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full ring-2 ring-background" />

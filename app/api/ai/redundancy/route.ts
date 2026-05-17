@@ -11,6 +11,8 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { checkRedundancy, type RedundancyRequest } from "@/lib/ai-client";
+import { rateLimit } from "@/lib/rate-limit";
+import { parseJson } from "@/lib/utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -27,8 +29,14 @@ export async function POST(req: Request) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json();
-  const parsed = RequestSchema.safeParse(body);
+  const limit = await rateLimit(`ai:${session.user.id}`, 10, 60);
+  if (!limit.success) {
+    return NextResponse.json({ error: "Too many requests — wait a moment and try again" }, { status: 429 });
+  }
+
+  const bodyResult = await parseJson(req);
+  if (!bodyResult.ok) return bodyResult.error;
+  const parsed = RequestSchema.safeParse(bodyResult.data);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
   }
@@ -42,7 +50,13 @@ export async function POST(req: Request) {
   let ownerFilter: Record<string, unknown> = {};
   if (session.user.role === "EMPLOYEE") {
     const me = await prisma.user.findUnique({ where: { id: session.user.id }, select: { department: true } });
-    ownerFilter = { owner: { department: me?.department ?? undefined } };
+    // Fail closed: if department is null, scope to only this employee's goals so
+    // no cross-org goal content leaks to the AI.
+    if (!me?.department) {
+      ownerFilter = { ownerId: session.user.id };
+    } else {
+      ownerFilter = { owner: { department: me.department } };
+    }
   } else if (session.user.role === "MANAGER") {
     const reportIds = await prisma.user.findMany({
       where: { managerId: session.user.id, isActive: true },

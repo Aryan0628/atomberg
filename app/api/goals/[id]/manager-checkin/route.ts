@@ -6,6 +6,8 @@ import { prisma } from "@/lib/db";
 import { ManagerCheckinReviewSchema } from "@/lib/validations";
 import { writeAudit } from "@/lib/audit";
 import { createNotification } from "@/lib/notifications";
+import { parseJson } from "@/lib/utils";
+import { Quarter } from "@/lib/generated/prisma/client";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -15,10 +17,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
 
   const { id: goalId } = await params;
-  const body = await req.json();
-  const { quarter, ...rest } = body;
+  const bodyResult = await parseJson(req);
+  if (!bodyResult.ok) return bodyResult.error;
+  const { quarter, ...rest } = bodyResult.data as { quarter?: string; [key: string]: unknown };
 
-  if (!quarter) return NextResponse.json({ error: "Quarter is required" }, { status: 400 });
+  if (!quarter || !["Q1", "Q2", "Q3", "Q4"].includes(quarter)) {
+    return NextResponse.json({ error: "Valid quarter (Q1–Q4) is required" }, { status: 400 });
+  }
+  const checkinQuarter = quarter as Quarter;
 
   const parsed = ManagerCheckinReviewSchema.safeParse(rest);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
@@ -35,7 +41,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
 
   const checkin = await prisma.checkin.findFirst({
-    where: { goalId, quarter, cycleId: goal.cycle.id, employeeId: goal.owner.id },
+    where: { goalId, quarter: checkinQuarter, cycleId: goal.cycle.id, employeeId: goal.owner.id },
   });
   if (!checkin) return NextResponse.json({ error: "No check-in found for this quarter" }, { status: 404 });
 

@@ -4,6 +4,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { writeAudit } from "@/lib/audit";
+import { parseJson } from "@/lib/utils";
 import { NextResponse } from "next/server";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -26,18 +27,23 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   const { id } = await params;
-  const body = await req.json();
+  const bodyResult = await parseJson(req);
+  if (!bodyResult.ok) return bodyResult.error;
+  const body = bodyResult.data as Record<string, unknown>;
 
-  // Activate: deactivate all other cycles first
+  // Activate: deactivate all other cycles + audit in one transaction to enforce
+  // the single-active-cycle invariant — no window where two cycles are active.
   if (body.isActive === true) {
-    await prisma.cycle.updateMany({ data: { isActive: false } });
-    await prisma.cycle.update({ where: { id }, data: { isActive: true } });
-    await writeAudit({
-      userId: session.user.id,
-      action: "CYCLE_ACTIVATED",
-      entityType: "Cycle",
-      entityId: id,
-      newValue: { isActive: true },
+    await prisma.$transaction(async (tx) => {
+      await tx.cycle.updateMany({ data: { isActive: false } });
+      await tx.cycle.update({ where: { id }, data: { isActive: true } });
+      await writeAudit({
+        userId: session.user.id,
+        action: "CYCLE_ACTIVATED",
+        entityType: "Cycle",
+        entityId: id,
+        newValue: { isActive: true },
+      }, tx);
     });
     return NextResponse.json({ success: true, action: "activated" });
   }

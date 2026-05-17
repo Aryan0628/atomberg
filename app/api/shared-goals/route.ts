@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { GoalCreateSchema } from "@/lib/validations";
 import { writeAudit } from "@/lib/audit";
+import { parseJson } from "@/lib/utils";
 import { createNotification } from "@/lib/notifications";
 import { NextResponse } from "next/server";
 
@@ -69,8 +70,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json();
-  const { recipientIds, ...goalData } = body;
+  const bodyResult = await parseJson(req);
+  if (!bodyResult.ok) return bodyResult.error;
+  const { recipientIds, ...goalData } = bodyResult.data as { recipientIds?: unknown; [key: string]: unknown };
 
   if (!recipientIds || !Array.isArray(recipientIds) || recipientIds.length === 0) {
     return NextResponse.json({ error: "At least one recipient is required" }, { status: 400 });
@@ -97,6 +99,21 @@ export async function POST(req: Request) {
 
   const activeCycle = await prisma.cycle.findFirst({ where: { isActive: true } });
   if (!activeCycle) return NextResponse.json({ error: "No active cycle" }, { status: 400 });
+
+  const now = new Date();
+  if (now < activeCycle.goalSettingOpen || now > activeCycle.goalSettingClose) {
+    return NextResponse.json({ error: "Goal setting window is closed" }, { status: 403 });
+  }
+
+  // Validate all recipients are active employees
+  const recipientList = recipientIds as string[];
+  const validRecipients = await prisma.user.findMany({
+    where: { id: { in: recipientList }, isActive: true, role: { in: ["EMPLOYEE", "MANAGER"] } },
+    select: { id: true },
+  });
+  if (validRecipients.length !== recipientList.length) {
+    return NextResponse.json({ error: "One or more recipients are invalid or inactive" }, { status: 400 });
+  }
 
   const goal = await prisma.goal.create({
     data: {

@@ -55,13 +55,15 @@ export default function ManagerApprovalsPage() {
   // Bulk approve
   const bulkApproveMutation = useMutation({
     mutationFn: async (ids: string[]) => {
-      await Promise.all(ids.map((id) =>
+      const results = await Promise.all(ids.map((id) =>
         fetch(`/api/goals/${id}/approve`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "APPROVE" }),
         })
       ));
+      const failed = results.filter((r) => !r.ok);
+      if (failed.length > 0) throw new Error(`${failed.length} approval(s) failed`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["goals"] });
@@ -74,13 +76,15 @@ export default function ManagerApprovalsPage() {
   // Bulk return
   const bulkReturnMutation = useMutation({
     mutationFn: async ({ ids, returnReason }: { ids: string[]; returnReason: string }) => {
-      await Promise.all(ids.map((id) =>
+      const results = await Promise.all(ids.map((id) =>
         fetch(`/api/goals/${id}/approve`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "RETURN", returnReason }),
         })
       ));
+      const failed = results.filter((r) => !r.ok);
+      if (failed.length > 0) throw new Error(`${failed.length} return(s) failed`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["goals"] });
