@@ -5,7 +5,7 @@
 // Analytics routes are the biggest DB cost driver; caching them at 60-120s
 // reduces Neon compute time by ~90% in a typical demo session.
 
-import { redisGet, redisSetex } from "@/lib/redis";
+import { redisGet, redisSetex, redisDel } from "@/lib/redis";
 
 const LOCAL_CACHE = new Map<string, { value: unknown; expiresAt: number }>();
 
@@ -21,20 +21,25 @@ export async function withCache<T>(
   ttl: number,
   fn: () => Promise<T>
 ): Promise<T> {
-  // 1. Check Redis (or in-memory fallback)
-  const cached = await redisGet(`cache:${key}`);
-  if (cached) {
-    try {
-      return JSON.parse(cached) as T;
-    } catch {
-      // Corrupted cache entry — fall through to recompute
-    }
-  }
-
-  // 2. Check local in-process cache (zero latency, survives Redis hiccup)
+  // 1. Check local in-process cache FIRST — zero latency, no HTTP.
+  //    Useful in dev (long-lived process) and within a single SSR render
+  //    where the same key is requested multiple times in one invocation.
   const local = LOCAL_CACHE.get(key);
   if (local && Date.now() < local.expiresAt) {
     return local.value as T;
+  }
+
+  // 2. Check Redis — 20-50ms HTTP call, but beats a full DB query (~100-300ms).
+  const cached = await redisGet(`cache:${key}`);
+  if (cached) {
+    try {
+      const value = JSON.parse(cached) as T;
+      // Warm the local cache so subsequent hits in this invocation are free.
+      LOCAL_CACHE.set(key, { value, expiresAt: Date.now() + ttl * 1000 });
+      return value;
+    } catch {
+      // Corrupted cache entry — fall through to recompute
+    }
   }
 
   // 3. Cache miss — compute the real value
@@ -52,6 +57,5 @@ export async function withCache<T>(
  */
 export async function invalidateCache(key: string): Promise<void> {
   LOCAL_CACHE.delete(key);
-  // Upstash doesn't export a direct `del` wrapper in our redis.ts — set TTL=1s
-  redisSetex(`cache:${key}`, 1, "__invalidated__").catch(() => {});
+  redisDel(`cache:${key}`).catch(() => {});
 }

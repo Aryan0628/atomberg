@@ -21,7 +21,10 @@ function createPrismaClient() {
     throw new Error("DATABASE_URL environment variable is required but not set");
   }
   const connectionString = process.env.DATABASE_URL;
-  const pool = new pg.Pool({ connectionString });
+  // max:1 — each Vercel serverless invocation is a single-threaded process.
+  // Default (10) wastes connection slots; Neon shared compute caps at ~100 total.
+  // pgbouncer multiplexes all workers, so 1 connection per process is correct.
+  const pool = new pg.Pool({ connectionString, max: 1 });
   const adapter = new PrismaPg(pool);
 
   return new PrismaClient({

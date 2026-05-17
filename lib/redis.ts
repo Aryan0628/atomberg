@@ -66,4 +66,17 @@ export async function redisSetex(
   });
 }
 
+/**
+ * Delete a key from Redis or in-memory store.
+ * Use for cache invalidation — correct alternative to set-with-TTL-1 hacks.
+ */
+export async function redisDel(key: string): Promise<void> {
+  const redis = getRedis();
+  if (redis) {
+    await redis.del(key);
+    return;
+  }
+  memoryStore.delete(key);
+}
+
 export { getRedis as redis };
