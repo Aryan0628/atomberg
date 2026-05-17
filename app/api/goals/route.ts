@@ -8,6 +8,7 @@ import { prisma } from "@/lib/db";
 import { GoalCreateSchema } from "@/lib/validations";
 import { writeAudit } from "@/lib/audit";
 import { withCache, invalidateCache } from "@/lib/cache";
+import { getActiveCycle } from "@/lib/cycle";
 import { parseJson } from "@/lib/utils";
 import { NextResponse } from "next/server";
 
@@ -31,16 +32,19 @@ export async function GET(req: Request) {
   if (session.user.role === "EMPLOYEE") {
     where.ownerId = session.user.id;
   } else if (session.user.role === "MANAGER") {
-    const reports = await prisma.user.findMany({
-      where: { managerId: session.user.id },
-      select: { id: true },
-    });
-    const reportIds = reports.map((r) => r.id);
-    const allowedIds = [...reportIds, session.user.id];
-    if (ownerId && !allowedIds.includes(ownerId)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (ownerId) {
+      // Security check: is this ownerId the manager themselves or one of their reports?
+      // Single query with OR instead of fetching all report IDs first.
+      const allowed = await prisma.user.findFirst({
+        where: { id: ownerId, OR: [{ id: session.user.id }, { managerId: session.user.id }] },
+        select: { id: true },
+      });
+      if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      where.ownerId = ownerId;
+    } else {
+      // No extra query — Prisma JOIN: goals where owner is self or a direct report.
+      where.owner = { OR: [{ id: session.user.id }, { managerId: session.user.id }] };
     }
-    where.ownerId = ownerId ? ownerId : { in: allowedIds };
   } else if (ownerId) {
     where.ownerId = ownerId;
   }
@@ -58,7 +62,9 @@ export async function GET(req: Request) {
       include: {
         owner: { select: { id: true, name: true, email: true, department: true, avatarUrl: true } },
         approver: { select: { id: true, name: true } },
-        checkins: { orderBy: { quarter: "asc" } },
+        // checkins omitted — latestScore and latestStatus are denormalized on Goal.
+        // Loading up to 4 checkin rows per goal on a list view is wasteful.
+        // Use GET /api/goals/[id] for full checkins on the detail page.
         cycle: { select: { id: true, name: true, fiscalYear: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -99,7 +105,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
   }
 
-  const activeCycle = await prisma.cycle.findFirst({ where: { isActive: true } });
+  const activeCycle = await getActiveCycle();
   if (!activeCycle) {
     return NextResponse.json({ error: "No active cycle found" }, { status: 400 });
   }

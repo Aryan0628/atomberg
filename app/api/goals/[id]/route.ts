@@ -21,7 +21,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     prisma.goal.findUnique({
       where: { id },
       include: {
-        owner: { select: { id: true, name: true, email: true, department: true, avatarUrl: true } },
+        owner: { select: { id: true, name: true, email: true, department: true, avatarUrl: true, managerId: true } },
         approver: { select: { id: true, name: true } },
         cycle: true,
         checkins: { orderBy: { quarter: "asc" } },
@@ -36,16 +36,16 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
   if (!goal) return NextResponse.json({ error: "Goal not found" }, { status: 404 });
 
-  // Access control
+  // Access control — manager check uses owner.managerId already in the fetched object.
+  // No extra DB trip needed.
   if (session.user.role === "EMPLOYEE" && goal.ownerId !== session.user.id) {
     const isRecipient = goal.sharedWith.some((u) => u.id === session.user.id);
     if (!isRecipient) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   if (session.user.role === "MANAGER" && goal.owner.id !== session.user.id) {
-    const report = await prisma.user.findFirst({
-      where: { id: goal.owner.id, managerId: session.user.id },
-    });
-    if (!report) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if ((goal.owner as { managerId?: string | null }).managerId !== session.user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
   }
 
   // Filter internal comments for employees — applied after cache read, not stored back
@@ -117,16 +117,19 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     invalidateCache(`action-items:${goal.ownerId}`),
   ]);
 
-  if (parsed.data.weightage && parsed.data.weightage !== goal.weightage) {
+  // Merge both edits into a single audit entry — avoids 2× findFirst+create when
+  // both fields change at once (e.g. from the edit form).
+  const changedWeightage = parsed.data.weightage !== undefined && parsed.data.weightage !== goal.weightage;
+  const changedTarget = parsed.data.target !== undefined && parsed.data.target !== goal.target;
+  if (changedWeightage || changedTarget) {
+    const action = changedTarget ? "TARGET_EDITED" : "WEIGHTAGE_EDITED";
     await writeAudit({
-      userId: session.user.id, action: "WEIGHTAGE_EDITED", entityType: "Goal", entityId: id,
-      goalId: id, oldValue, newValue: { weightage: parsed.data.weightage },
-    });
-  }
-  if (parsed.data.target && parsed.data.target !== goal.target) {
-    await writeAudit({
-      userId: session.user.id, action: "TARGET_EDITED", entityType: "Goal", entityId: id,
-      goalId: id, oldValue, newValue: { target: parsed.data.target },
+      userId: session.user.id, action, entityType: "Goal", entityId: id,
+      goalId: id, oldValue,
+      newValue: {
+        ...(changedWeightage ? { weightage: parsed.data.weightage } : {}),
+        ...(changedTarget ? { target: parsed.data.target } : {}),
+      },
     });
   }
 

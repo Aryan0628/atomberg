@@ -1,6 +1,7 @@
 // app/api/export/excel/route.ts
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getActiveCycle } from "@/lib/cycle";
 import { generateExcel } from "@/lib/export";
 import { writeAudit } from "@/lib/audit";
 import { NextResponse } from "next/server";
@@ -11,7 +12,7 @@ export async function GET(_req: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const cycle = await prisma.cycle.findFirst({ where: { isActive: true } });
+  const cycle = await getActiveCycle();
   if (!cycle) return NextResponse.json({ error: "No active cycle" }, { status: 404 });
 
   const goals = await prisma.goal.findMany({

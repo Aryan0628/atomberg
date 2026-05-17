@@ -23,20 +23,18 @@ export async function GET(req: Request) {
   if (action) where.action = action;
   if (goalId) where.goalId = goalId;
 
-  // Managers can only view audit entries for their own direct reports and themselves
+  // Managers can only view audit entries for themselves and their direct reports.
+  // JOIN instead of fetching all report IDs first — one query not two.
   if (session.user.role === "MANAGER") {
-    const reports = await prisma.user.findMany({
-      where: { managerId: session.user.id },
-      select: { id: true },
-    });
-    const allowedIds = [...reports.map((r) => r.id), session.user.id];
     if (userId) {
-      if (!allowedIds.includes(userId)) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-      }
+      const allowed = await prisma.user.findFirst({
+        where: { id: userId, OR: [{ id: session.user.id }, { managerId: session.user.id }] },
+        select: { id: true },
+      });
+      if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       where.userId = userId;
     } else {
-      where.userId = { in: allowedIds };
+      where.user = { OR: [{ id: session.user.id }, { managerId: session.user.id }] };
     }
   } else {
     if (userId) where.userId = userId;
