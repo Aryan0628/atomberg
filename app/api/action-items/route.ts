@@ -1,23 +1,28 @@
 // app/api/action-items/route.ts
 // GET — role-scoped proactive action items (server-side, zero polling delay)
 // Returns: [{severity, message, link, category}]
+// COST: Runs 4-7 Prisma queries per role, called on every dashboard mount.
+// Cached 60s per user — keyed by userId so user A's items never leak to user B.
+// Employee: 60s TTL (goal state changes are infrequent within a minute).
+// Manager/Admin: 60s TTL (approval queue counts shift only on approval actions).
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { withCache } from "@/lib/cache";
 import { NextResponse } from "next/server";
+import type { Session } from "next-auth";
 
-export async function GET() {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+type ActionItem = { severity: "high" | "medium" | "low"; message: string; link: string; category: string };
 
+async function computeActionItems(session: Session): Promise<ActionItem[]> {
   const activeCycle = await prisma.cycle.findFirst({ where: { isActive: true } });
-  const items: { severity: "high" | "medium" | "low"; message: string; link: string; category: string }[] = [];
+  const items: ActionItem[] = [];
 
   if (!activeCycle) {
-    if (["ADMIN", "HR"].includes(session.user.role)) {
+    if (["ADMIN", "HR"].includes(session.user.role as string)) {
       items.push({ severity: "high", message: "No active cycle. Create and activate a cycle to start.", link: "/dashboard/admin/cycles", category: "Cycle" });
     }
-    return NextResponse.json(items);
+    return items;
   }
 
   const now = new Date();
@@ -49,7 +54,6 @@ export async function GET() {
       items.push({ severity: "high", message: `${returnedGoals.length} goal(s) returned for rework. Click to review reasons.`, link: "/dashboard/employee/goals", category: "Goals" });
     }
 
-    // Check open check-in windows
     const quarters = ["Q1", "Q2", "Q3", "Q4"] as const;
     const windowFields: Record<string, [Date, Date]> = {
       Q1: [activeCycle.q1Open, activeCycle.q1Close],
@@ -64,8 +68,7 @@ export async function GET() {
         const daysLeft = Math.ceil((close.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
         const pending = lockedGoals.filter((g) => !g.checkins.some((c) => c.quarter === q));
         if (pending.length > 0) {
-          const severity = daysLeft <= 3 ? "high" : "medium";
-          items.push({ severity, message: `${q} check-in due for ${pending.length} goal(s). Window closes in ${daysLeft}d.`, link: `/dashboard/employee/goals`, category: "Check-in" });
+          items.push({ severity: daysLeft <= 3 ? "high" : "medium", message: `${q} check-in due for ${pending.length} goal(s). Window closes in ${daysLeft}d.`, link: "/dashboard/employee/goals", category: "Check-in" });
         }
       }
     }
@@ -85,34 +88,21 @@ export async function GET() {
 
     const pendingApprovals = reports.flatMap((r) => r.ownedGoals);
     if (pendingApprovals.length > 0) {
-      const oldest = pendingApprovals.sort((a, b) =>
-        new Date(a.submittedAt!).getTime() - new Date(b.submittedAt!).getTime()
-      )[0];
+      const oldest = [...pendingApprovals].sort((a, b) => new Date(a.submittedAt!).getTime() - new Date(b.submittedAt!).getTime())[0];
       const daysWaiting = Math.floor((now.getTime() - new Date(oldest.submittedAt!).getTime()) / (1000 * 60 * 60 * 24));
-      const severity = daysWaiting >= 5 ? "high" : daysWaiting >= 2 ? "medium" : "low";
-      items.push({ severity, message: `${pendingApprovals.length} goal(s) awaiting approval. Oldest: ${daysWaiting}d ago.`, link: "/dashboard/manager/approvals", category: "Approvals" });
+      items.push({ severity: daysWaiting >= 5 ? "high" : daysWaiting >= 2 ? "medium" : "low", message: `${pendingApprovals.length} goal(s) awaiting approval. Oldest: ${daysWaiting}d ago.`, link: "/dashboard/manager/approvals", category: "Approvals" });
     }
 
     const notSubmitted = await prisma.user.findMany({
-      where: {
-        managerId: session.user.id,
-        isActive: true,
-        ownedGoals: { none: { cycleId: activeCycle.id, status: { in: ["SUBMITTED", "APPROVED", "LOCKED"] } } },
-      },
-      select: { id: true, name: true },
+      where: { managerId: session.user.id, isActive: true, ownedGoals: { none: { cycleId: activeCycle.id, status: { in: ["SUBMITTED", "APPROVED", "LOCKED"] } } } },
+      select: { id: true },
     });
     if (goalWindowOpen && notSubmitted.length > 0) {
       items.push({ severity: "medium", message: `${notSubmitted.length} report(s) haven't submitted goals. Window closes in ${goalWindowDaysLeft}d.`, link: "/dashboard/manager/team", category: "Team" });
     }
 
-    // Pending manager check-in reviews
     const pendingReviews = await prisma.checkin.count({
-      where: {
-        managerCheckedIn: false,
-        submittedAt: { not: null },
-        employee: { managerId: session.user.id },
-        cycleId: activeCycle.id,
-      },
+      where: { managerCheckedIn: false, submittedAt: { not: null }, employee: { managerId: session.user.id }, cycleId: activeCycle.id },
     });
     if (pendingReviews > 0) {
       items.push({ severity: "medium", message: `${pendingReviews} check-in(s) from your team need your review.`, link: "/dashboard/manager/checkins", category: "Check-in" });
@@ -120,30 +110,20 @@ export async function GET() {
   }
 
   // ─── ADMIN / HR ITEMS ─────────────────────────────────────
-  if (["ADMIN", "HR"].includes(session.user.role)) {
-    const totalEmployees = await prisma.user.count({ where: { role: "EMPLOYEE", isActive: true } });
+  if (["ADMIN", "HR"].includes(session.user.role as string)) {
+    const [totalEmployees, noGoals, pendingApprovals, lastEscalation] = await Promise.all([
+      prisma.user.count({ where: { role: "EMPLOYEE", isActive: true } }),
+      prisma.user.count({ where: { role: "EMPLOYEE", isActive: true, ownedGoals: { none: { cycleId: activeCycle.id } } } }),
+      prisma.goal.count({ where: { cycleId: activeCycle.id, status: "SUBMITTED" } }),
+      prisma.escalationLog.findFirst({ orderBy: { createdAt: "desc" } }),
+    ]);
 
-    const noGoals = await prisma.user.count({
-      where: {
-        role: "EMPLOYEE",
-        isActive: true,
-        ownedGoals: { none: { cycleId: activeCycle.id } },
-      },
-    });
     if (noGoals > 0 && goalWindowOpen) {
       items.push({ severity: "high", message: `${noGoals}/${totalEmployees} employees have no goals. Goal window closes in ${goalWindowDaysLeft}d.`, link: "/dashboard/admin/users", category: "Goals" });
     }
-
-    const pendingApprovals = await prisma.goal.count({
-      where: { cycleId: activeCycle.id, status: "SUBMITTED" },
-    });
     if (pendingApprovals > 0) {
       items.push({ severity: "medium", message: `${pendingApprovals} goal(s) awaiting manager approval across the org.`, link: "/dashboard/admin/audit", category: "Approvals" });
     }
-
-    const lastEscalation = await prisma.escalationLog.findFirst({
-      orderBy: { createdAt: "desc" },
-    });
     if (lastEscalation) {
       const hoursAgo = Math.floor((now.getTime() - lastEscalation.createdAt.getTime()) / (1000 * 60 * 60));
       items.push({ severity: "low", message: `Last escalation run: ${hoursAgo}h ago.`, link: "/dashboard/admin/escalations", category: "Escalation" });
@@ -152,8 +132,17 @@ export async function GET() {
     }
   }
 
-  return NextResponse.json(items.sort((a, b) => {
-    const order = { high: 0, medium: 1, low: 2 };
-    return order[a.severity] - order[b.severity];
-  }));
+  return items;
+}
+
+export async function GET() {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const result = await withCache(`action-items:${session.user.id}`, 60, () => computeActionItems(session));
+  const sorted = result.sort((a, b) => ({ high: 0, medium: 1, low: 2 }[a.severity] - { high: 0, medium: 1, low: 2 }[b.severity]));
+
+  return NextResponse.json(sorted, {
+    headers: { "Cache-Control": "private, max-age=60, stale-while-revalidate=30" },
+  });
 }
