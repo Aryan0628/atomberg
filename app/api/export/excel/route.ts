@@ -5,7 +5,7 @@ import { generateExcel } from "@/lib/export";
 import { writeAudit } from "@/lib/audit";
 import { NextResponse } from "next/server";
 
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
   const session = await auth();
   if (!session || !["ADMIN", "HR"].includes(session.user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

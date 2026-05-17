@@ -9,7 +9,7 @@ import { BarChart3 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, Legend, ScatterChart, Scatter,
-  ZAxis, ReferenceLine, AreaChart, Area,
+  ZAxis, ReferenceLine,
 } from "recharts";
 
 const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899", "#06B6D4", "#6366F1", "#EF4444"];
@@ -51,11 +51,7 @@ function useCommitmentAchievement() {
   return useQuery({
     queryKey: ["analytics", "commitment-achievement"],
     queryFn: async () => {
-      const [usersRes, checkinsRes] = await Promise.all([
-        fetch("/api/users"),
-        fetch("/api/analytics/heatmap"),
-      ]);
-      const users = usersRes.ok ? await usersRes.json() : [];
+      const checkinsRes = await fetch("/api/analytics/heatmap");
       const heatmap = checkinsRes.ok ? await checkinsRes.json() : { cells: [] };
 
       // Compute per-employee avg score and submission rate
@@ -101,8 +97,6 @@ export default function AdminAnalyticsPage() {
       </div>
     );
   }
-
-  const departments = qoq?.data ? [...new Set((qoq.data as Record<string, unknown>[]).flatMap((d) => [d.department]))] as string[] : [];
 
   return (
     <div className="space-y-6">

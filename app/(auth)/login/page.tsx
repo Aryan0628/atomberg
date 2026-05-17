@@ -65,8 +65,7 @@ export default function LoginPage() {
         toast.error("Login failed");
       } else {
         toast.success("Welcome to Atomberg");
-        // Force a full page reload to pick up session properly
-        window.location.href = "/dashboard";
+        router.push("/dashboard");
       }
     } catch {
       setError("Something went wrong");
@@ -98,7 +97,7 @@ export default function LoginPage() {
           cred.role === "HR" ? "HR" :
           cred.role === "Manager" ? "MANAGER" : "EMPLOYEE"
         );
-        window.location.href = dest;
+        router.push(dest);
       }
     } catch {
       setError("Something went wrong");

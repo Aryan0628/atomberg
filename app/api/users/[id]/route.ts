@@ -10,6 +10,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { writeAudit } from "@/lib/audit";
 import { UserUpdateSchema } from "@/lib/validations";
+import { withCache, invalidateCache } from "@/lib/cache";
 import { parseJson } from "@/lib/utils";
 import { NextResponse } from "next/server";
 
@@ -32,18 +33,20 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     if (!isReport) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id },
-    select: {
-      id: true, email: true, name: true, role: true, department: true,
-      designation: true, employeeCode: true, isActive: true, avatarUrl: true,
-      managerId: true, skipManagerId: true, lastLoginAt: true, createdAt: true,
-      manager: { select: { id: true, name: true, role: true } },
-      skipManager: { select: { id: true, name: true } },
-      reports: { select: { id: true, name: true, role: true, department: true } },
-      _count: { select: { ownedGoals: true, reports: true } },
-    },
-  });
+  const user = await withCache(`user:${id}`, 120, () =>
+    prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true, email: true, name: true, role: true, department: true,
+        designation: true, employeeCode: true, isActive: true, avatarUrl: true,
+        managerId: true, skipManagerId: true, lastLoginAt: true, createdAt: true,
+        manager: { select: { id: true, name: true, role: true } },
+        skipManager: { select: { id: true, name: true } },
+        reports: { select: { id: true, name: true, role: true, department: true } },
+        _count: { select: { ownedGoals: true, reports: true } },
+      },
+    })
+  );
   if (!user) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(user);
 }
@@ -86,6 +89,16 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     },
   });
 
+  // Invalidate user detail + both old and new manager team lists + admin list
+  void Promise.all([
+    invalidateCache(`user:${id}`),
+    invalidateCache("users:admin"),
+    existing.managerId ? invalidateCache(`users:manager:${existing.managerId}`) : Promise.resolve(),
+    data.managerId && data.managerId !== existing.managerId
+      ? invalidateCache(`users:manager:${data.managerId}`)
+      : Promise.resolve(),
+  ]);
+
   if (data.role && data.role !== oldRole) {
     await writeAudit({
       userId: session.user.id,
@@ -93,10 +106,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       entityType: "User",
       entityId: id,
       oldValue: { role: oldRole },
-      newValue: { role: body.role },
+      newValue: { role: data.role },
     });
   } else {
-    // USER_ROLE_CHANGED is the closest audit action for general profile updates (no USER_UPDATED in enum)
     await writeAudit({
       userId: session.user.id,
       action: "USER_ROLE_CHANGED",
@@ -122,7 +134,14 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   }
 
   // Soft delete — deactivate instead of remove to preserve audit history
+  const target = await prisma.user.findUnique({ where: { id }, select: { managerId: true } });
   await prisma.user.update({ where: { id }, data: { isActive: false } });
+
+  void Promise.all([
+    invalidateCache(`user:${id}`),
+    invalidateCache("users:admin"),
+    target?.managerId ? invalidateCache(`users:manager:${target.managerId}`) : Promise.resolve(),
+  ]);
 
   await writeAudit({
     userId: session.user.id,

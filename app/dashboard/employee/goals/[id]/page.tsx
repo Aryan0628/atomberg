@@ -248,7 +248,7 @@ function MetricCard({ icon: Icon, label, value, badge, badgeClass, valueClass }:
   );
 }
 
-function TimelineEvent({ icon: Icon, color, title, date, detail }: {
+function TimelineEvent({ icon: _Icon, color, title, date, detail }: {
   icon: React.ElementType; color: string; title: string; date: string; detail?: string;
 }) {
   const colorMap: Record<string, string> = {

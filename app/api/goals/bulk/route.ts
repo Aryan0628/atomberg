@@ -9,6 +9,7 @@ import { prisma } from "@/lib/db";
 import { writeAudit } from "@/lib/audit";
 import { createNotification, sendGoalSubmittedEmail } from "@/lib/notifications";
 import { sendTeamsCard } from "@/lib/teams";
+import { invalidateCache } from "@/lib/cache";
 import { parseJson } from "@/lib/utils";
 import { NextResponse } from "next/server";
 
@@ -47,26 +48,27 @@ export async function POST(req: Request) {
     );
   }
 
-  // Atomic: update goals + write audit in one transaction
-  const submittedAt = new Date();
+  // Atomic: update goals + write audit in one transaction via writeAudit(data, tx)
   await prisma.$transaction(async (tx) => {
     await tx.goal.updateMany({
       where: { ownerId: session.user.id, cycleId, status: "DRAFT" },
-      data: { status: "SUBMITTED", submittedAt },
+      data: { status: "SUBMITTED", submittedAt: new Date() },
     });
-    // Audit inside transaction so it rolls back if update fails
-    const last = await tx.auditLog.findFirst({ orderBy: { createdAt: "desc" } });
-    const { createHash } = await import("crypto");
-    const previousHash = last?.hash ?? "GENESIS";
-    const payload = JSON.stringify({ userId: session.user.id, action: "GOAL_SUBMITTED", entityType: "Goal", entityId: cycleId, newValue: { count: goals.length, cycleId }, createdAt: submittedAt.toISOString() });
-    const hash = createHash("sha256").update(payload + previousHash).digest("hex");
-    await tx.auditLog.create({
-      data: {
-        userId: session.user.id, action: "GOAL_SUBMITTED", entityType: "Goal", entityId: cycleId,
-        newValue: { count: goals.length, cycleId }, hash, previousHash, createdAt: submittedAt,
-      },
-    });
+    await writeAudit({
+      userId: session.user.id,
+      action: "GOAL_SUBMITTED",
+      entityType: "Goal",
+      entityId: cycleId,
+      newValue: { count: goals.length, cycleId },
+    }, tx);
   });
+
+  // Invalidate caches that the submission dirtied
+  await Promise.all([
+    invalidateCache(`goals:${session.user.id}:${cycleId}`),
+    invalidateCache(`action-items:${session.user.id}`),
+    invalidateCache(`analytics:overview:${activeCycle.id}`),
+  ]);
 
   // Side-effects after commit — failures here don't roll back the submission
   const employee = await prisma.user.findUnique({
@@ -74,7 +76,9 @@ export async function POST(req: Request) {
     include: { manager: true },
   });
   if (employee?.manager) {
-    await Promise.allSettled([
+    void invalidateCache(`action-items:${employee.manager.id}`);
+    // Fire notifications in background — response does not wait
+    Promise.allSettled([
       createNotification({
         userId: employee.manager.id, type: "GOAL_SUBMITTED_FOR_APPROVAL",
         title: `${employee.name} submitted goals for review`,

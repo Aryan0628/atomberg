@@ -63,7 +63,6 @@ export default function CheckinPage() {
       actualValue: actualValue !== "" ? parseFloat(actualValue) : null,
       actualDate: actualDate ? new Date(actualDate) : null,
     });
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLiveScore(actualValue !== "" || actualDate !== "" ? score : null);
   }, [actualValue, actualDate, goal]);
 
@@ -71,14 +70,12 @@ export default function CheckinPage() {
   useEffect(() => {
     if (!cycle) return;
     const open = QUARTERS.find((q) => isWindowOpen(cycle, q));
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (open) setSelectedQuarter(open);
   }, [cycle]);
 
   const existingCheckin = goal?.checkins?.find((c: Record<string, unknown>) => c.quarter === selectedQuarter);
 
   // Pre-fill from existing check-in if editing
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (existingCheckin) {
       setActualValue(existingCheckin.actualValue != null ? String(existingCheckin.actualValue) : "");

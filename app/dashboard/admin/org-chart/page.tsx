@@ -2,7 +2,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -63,7 +63,7 @@ const ROLE_COLORS: Record<string, string> = {
   EMPLOYEE: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700",
 };
 
-function OrgNode({ node, isLast }: { node: TreeNode; isLast: boolean }) {
+function OrgNode({ node, isLast: _isLast }: { node: TreeNode; isLast: boolean }) {
   const [collapsed, setCollapsed] = useState(false);
   const hasChildren = node.children.length > 0;
   const colorClass = ROLE_COLORS[node.user.role] || ROLE_COLORS.EMPLOYEE;
