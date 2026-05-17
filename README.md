@@ -1,36 +1,1024 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AtomQuest — In-House Goal Setting & Tracking Portal
+
+> **AtomQuest Hackathon 1.0 · Atomberg Technologies**
+> Production-grade internal HR portal for end-to-end OKR/goal management across Employee, Manager, and Admin roles.
+
+---
+
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Architecture Diagram](#architecture-diagram)
+3. [Tech Stack](#tech-stack)
+4. [Project Structure](#project-structure)
+5. [Database Schema](#database-schema)
+6. [Authentication & Authorization](#authentication--authorization)
+7. [Core Features](#core-features)
+8. [AI Goal Coach Microservice](#ai-goal-coach-microservice)
+9. [Cryptographic Audit Ledger](#cryptographic-audit-ledger)
+10. [Scoring Engine](#scoring-engine)
+11. [Escalation Engine](#escalation-engine)
+12. [Notification System](#notification-system)
+13. [Analytics & Reporting](#analytics--reporting)
+14. [Unique Differentiators](#unique-differentiators)
+15. [API Reference](#api-reference)
+16. [Demo Journeys](#demo-journeys)
+17. [Environment Variables](#environment-variables)
+18. [Getting Started](#getting-started)
+19. [Deployment](#deployment)
+20. [Demo Credentials](#demo-credentials)
+
+---
+
+## Overview
+
+AtomQuest digitises the entire annual goal lifecycle at Atomberg Technologies. Every business rule is enforced at **three levels**: the UI (instant feedback), the API route (Zod + auth guards), and the database (Prisma constraints + indexes).
+
+**Three roles, three dashboards:**
+
+- **Employee** — set goals, manage weightage, submit for approval, run quarterly check-ins, track scores live
+- **Manager** — approve/reject/return goals, run team check-ins, view AI quality scores, generate annual reviews
+- **Admin / HR** — manage org, configure fiscal cycles, view tamper-evident audit trails, export reports, view 7-chart analytics
+
+---
+
+## Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        BROWSER (Client)                         │
+│                                                                 │
+│  ┌─────────────┐   ┌─────────────┐   ┌─────────────────────┐  │
+│  │  Employee   │   │   Manager   │   │     Admin / HR      │  │
+│  │  Dashboard  │   │  Dashboard  │   │     Dashboard       │  │
+│  └──────┬──────┘   └──────┬──────┘   └──────────┬──────────┘  │
+│         │                 │                      │             │
+│  React + TanStack Query + Zustand + shadcn/ui + Recharts + D3  │
+└─────────┼─────────────────┼──────────────────────┼─────────────┘
+          │ HTTPS           │                      │
+          ▼                 ▼                      ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                  NEXT.JS 15  (Vercel Edge)                      │
+│                                                                 │
+│  middleware.ts                                                  │
+│  ├── JWT verification (NextAuth v5)                             │
+│  ├── Role-based route guard                                     │
+│  └── Rate limiting (Upstash)                                    │
+│                                                                 │
+│  App Router Pages                                               │
+│  ├── /dashboard/employee/*                                      │
+│  ├── /dashboard/manager/*                                       │
+│  └── /dashboard/admin/*                                         │
+│                                                                 │
+│  API Routes (/api/*)                                            │
+│  ├── goals/        cycles/       users/                         │
+│  ├── analytics/    audit/        notifications/                 │
+│  ├── ai/           export/       templates/                     │
+│  └── cron/escalate + cron/lock-goals (Vercel Cron)             │
+│                                                                 │
+│  Core Library (lib/)                                            │
+│  ├── auth.ts       db.ts         scoring.ts                     │
+│  ├── audit.ts      escalation.ts notifications.ts               │
+│  ├── ai-client.ts  redis.ts      export.ts                      │
+│  └── validations.ts weightage.ts teams.ts                       │
+└──────────────┬──────────────────────────┬───────────────────────┘
+               │                          │
+    ┌──────────┴──────────┐    ┌──────────┴──────────────────┐
+    │                     │    │                              │
+    ▼                     ▼    ▼                              ▼
+┌──────────┐   ┌──────────────────┐            ┌─────────────────────┐
+│PostgreSQL│   │  Upstash Redis   │            │ Python AI Service   │
+│(Neon.tech│   │                  │            │ (Railway · Docker)  │
+│          │   │ · Rate limiting  │            │                     │
+│ Prisma 5 │   │ · Escalation     │            │ FastAPI + LangGraph │
+│ SHA-256  │   │   dedup (24h)    │            │                     │
+│ hash     │   │ · Cache keys     │            │ /evaluate           │
+│ chain on │   │                  │            │  brd_enforcer       │
+│ AuditLog │   └──────────────────┘            │  smart_analyzer     │
+│          │                                   │  semantic_matcher   │
+│ 13 models│                                   │  output_formatter   │
+└──────────┘                                   │                     │
+                                               │ /review/synthesize  │
+                                               │  review_analyzer    │
+                                               │  review_enricher    │
+                                               │  review_scorer      │
+                                               │  review_composer    │
+                                               │                     │
+                                               │ /goals/check-       │
+                                               │  redundancy         │
+                                               │  redundancy_embedder│
+                                               │  redundancy_ranker  │
+                                               │  redundancy_recomm. │
+                                               │                     │
+                                               │ HMAC-SHA256 auth    │
+                                               │ Circuit breaker     │
+                                               │ Gemini fallback     │
+                                               └─────────────────────┘
+
+┌──────────────────────┐       ┌──────────────────────────┐
+│  Resend + React Email│       │  Microsoft Teams Webhook │
+│                      │       │                          │
+│  6 templates:        │       │  · Goal submitted        │
+│  · Goal submitted    │       │  · Checkin window open   │
+│  · Goal approved     │       │  · Escalation alerts     │
+│  · Goal rejected     │       │                          │
+│  · Checkin reminder  │       │  No-op if env var unset  │
+│  · Escalation alert  │       └──────────────────────────┘
+│  · Welcome email     │
+└──────────────────────┘
+```
+
+### Request Lifecycle
+
+```
+Browser
+  → middleware.ts  (JWT verify + role guard)
+  → API Route      (Zod validation + auth check)
+  → Prisma query
+  → writeAudit()   (SHA-256 hash chain)
+  → invalidateCache()
+  → Response
+  → TanStack Query cache update
+  → UI re-render
+```
+
+### Cron Jobs (Vercel)
+
+```
+02:30 UTC daily  →  /api/cron/escalate    →  runEscalationEngine()
+                                               Redis dedup (24h TTL)
+                                               Email + Teams notify
+
+00:00 UTC hourly →  /api/cron/lock-goals  →  Auto-lock APPROVED goals
+                                               when goalSettingClose passes
+```
+
+---
+
+## Tech Stack
+
+| Layer | Technology | Reason |
+|---|---|---|
+| Framework | Next.js 15 (App Router) | SSR + API routes + Edge middleware in one repo |
+| Language | TypeScript 5 strict | Zero `any`, zero runtime surprises |
+| Database | PostgreSQL via Neon.tech | Serverless, scales to zero, pgbouncer built-in |
+| ORM | Prisma 5 | Type-safe queries, migration history, Neon adapter |
+| Auth | NextAuth.js v5 | JWT sessions, role-aware, Credentials + Azure AD SSO |
+| Styling | Tailwind CSS v4 + shadcn/ui | Full component library, dark mode via `dark:` classes |
+| Charts | Recharts + D3 | Recharts for standard; D3 for achievement heatmap |
+| Email | Resend + React Email | HTML emails rendered from React components |
+| State | Zustand + TanStack Query | Zustand for UI state; TanStack Query for server state |
+| Forms | React Hook Form + Zod | End-to-end type-safe, shared frontend ↔ API schemas |
+| Export | xlsx (SheetJS) | Excel export with proper formatting |
+| Toasts | Sonner | In-app toasts for every mutation |
+| Rate Limiting | Upstash Redis | API protection + escalation deduplication |
+| Cron | Vercel Cron Jobs | Escalation engine + auto-lock goals |
+| AI Service | FastAPI + LangGraph + Gemini | Multi-agent goal evaluation pipeline |
+| AI Deploy | Railway (Docker) | Zero-config Python container deploy |
+| Fonts | Geist Sans + Geist Mono | Mono for scores and audit log values |
+
+---
+
+## Project Structure
+
+```
+atomberg/
+│
+├── app/
+│   ├── (auth)/
+│   │   └── login/page.tsx              # Login with demo credential hints table
+│   ├── api/
+│   │   ├── action-items/route.ts       # Role-scoped proactive alerts (server-rendered)
+│   │   ├── ai/
+│   │   │   ├── evaluate/route.ts       # Goal quality coach proxy → Python service
+│   │   │   ├── redundancy/route.ts     # Semantic redundancy detection proxy
+│   │   │   └── review/route.ts         # Annual review synthesis proxy
+│   │   ├── analytics/
+│   │   │   ├── overview/route.ts
+│   │   │   ├── qoq/route.ts
+│   │   │   ├── heatmap/route.ts
+│   │   │   ├── distribution/route.ts
+│   │   │   └── manager-effectiveness/route.ts
+│   │   ├── audit/
+│   │   │   ├── route.ts                # Paginated, filterable audit trail
+│   │   │   └── verify/route.ts         # SHA-256 chain integrity verification
+│   │   ├── cycles/
+│   │   │   ├── route.ts
+│   │   │   ├── [id]/route.ts
+│   │   │   ├── [id]/clone/route.ts     # Clone cycle, shift dates +1 year
+│   │   │   └── current/route.ts
+│   │   ├── escalations/
+│   │   │   ├── route.ts
+│   │   │   └── rules/route.ts
+│   │   ├── export/
+│   │   │   ├── csv/route.ts
+│   │   │   └── excel/route.ts
+│   │   ├── goals/
+│   │   │   ├── route.ts                # GET filtered list, POST create
+│   │   │   ├── bulk/route.ts           # Atomic bulk submit (validates active weightage = 100%)
+│   │   │   └── [id]/
+│   │   │       ├── route.ts
+│   │   │       ├── approve/route.ts    # Approve / Reject / Return
+│   │   │       ├── checkin/route.ts    # Quarterly check-in (validates window open)
+│   │   │       ├── comments/route.ts   # Role-aware thread (isInternal filter)
+│   │   │       ├── history/route.ts
+│   │   │       ├── manager-checkin/route.ts
+│   │   │       └── unlock/route.ts     # Admin unlock post-lock
+│   │   ├── notifications/route.ts
+│   │   ├── shared-goals/route.ts
+│   │   ├── templates/route.ts
+│   │   ├── users/route.ts
+│   │   └── cron/
+│   │       ├── escalate/route.ts       # Daily 02:30 UTC
+│   │       └── lock-goals/route.ts     # Hourly — locks APPROVED goals after close
+│   └── dashboard/
+│       ├── employee/
+│       │   ├── goals/page.tsx          # Goals list, weightage meter, rebalancer, submit
+│       │   ├── goals/[id]/page.tsx     # Goal detail + timeline + comment thread
+│       │   ├── goals/[id]/checkin/     # Quarterly check-in with live score preview
+│       │   └── history/page.tsx
+│       ├── manager/
+│       │   ├── approvals/page.tsx      # Bulk queue + AI badges + per-goal comments
+│       │   ├── team/page.tsx           # All reports × goals × scores + AI review
+│       │   ├── checkins/page.tsx       # Manager check-in review hub
+│       │   ├── shared-goals/page.tsx
+│       │   └── escalations/page.tsx
+│       └── admin/
+│           ├── dashboard/page.tsx      # OrgPulseTicker + stat cards
+│           ├── analytics/page.tsx      # 7 charts
+│           ├── audit/page.tsx          # Audit trail + chain integrity button
+│           ├── cycles/page.tsx         # Cycle manager + clone
+│           ├── escalations/page.tsx    # Config + manual trigger
+│           ├── org-chart/page.tsx
+│           ├── reports/page.tsx        # Export center (CSV + Excel)
+│           ├── templates/page.tsx      # Goal template CRUD
+│           └── users/page.tsx
+│
+├── ai/                                 # Python microservice (Railway)
+│   ├── main.py                         # FastAPI entry point, 3 endpoints
+│   ├── auth.py                         # HMAC-SHA256 middleware
+│   ├── graph.py                        # LangGraph: 4-node goal eval pipeline
+│   ├── review_graph.py                 # LangGraph: 4-node annual review pipeline
+│   ├── redundancy_graph.py             # LangGraph: 3-node redundancy pipeline
+│   ├── golden_goals.py                 # 20 curated exemplar goals + cached embeddings
+│   ├── nodes/
+│   │   ├── brd_enforcer.py             # Deterministic BRD rule checks (no LLM)
+│   │   ├── smart_analyzer.py           # Gemini Flash — SMART criteria scoring
+│   │   ├── semantic_matcher.py         # Gemini embeddings + cosine similarity
+│   │   ├── output_formatter.py         # Weighted aggregation → final score
+│   │   ├── redundancy_embedder.py
+│   │   ├── redundancy_ranker.py
+│   │   ├── redundancy_recommender.py
+│   │   ├── review_analyzer.py
+│   │   ├── review_enricher.py
+│   │   ├── review_scorer.py
+│   │   └── review_composer.py          # Gemini Flash — narrative review draft
+│   ├── Dockerfile
+│   ├── railway.toml
+│   └── requirements.txt
+│
+├── components/
+│   ├── goals/
+│   │   ├── AiAnalysisPanel.tsx         # SMART score bars + suggestions UI
+│   │   ├── AnnualReviewModal.tsx        # AI-generated review modal (manager)
+│   │   └── RedundancyWarning.tsx        # Near-duplicate warning in goal form
+│   ├── layout/
+│   │   ├── Header.tsx                   # Notification bell + role switcher
+│   │   └── Sidebar.tsx                  # Collapsible role-aware nav
+│   └── shared/
+│       ├── ActionCenter.tsx             # Proactive action banners (all dashboards)
+│       └── GoalCommentThread.tsx        # Employee ↔ Manager discussion thread
+│
+├── lib/
+│   ├── ai-client.ts                     # HMAC signer + circuit breaker + Gemini fallback
+│   ├── audit.ts                         # SHA-256 hash-chained audit writer
+│   ├── auth.ts                          # NextAuth v5 config
+│   ├── cache.ts                         # Redis-backed cache invalidation helpers
+│   ├── db.ts                            # Prisma client singleton
+│   ├── escalation.ts                    # Escalation engine business logic
+│   ├── export.ts                        # CSV + Excel generation (SheetJS)
+│   ├── notifications.ts                 # In-app + Resend email helpers
+│   ├── rate-limit.ts                    # Upstash sliding window rate limiter
+│   ├── redis.ts                         # Upstash Redis client
+│   ├── scoring.ts                       # All 5 UoM formulas + Wellness Score + Forecast
+│   ├── teams.ts                         # Microsoft Teams webhook (graceful no-op)
+│   ├── utils.ts                         # Date helpers, formatters, cn()
+│   ├── validations.ts                   # Zod schemas shared frontend ↔ API
+│   └── weightage.ts                     # Auto-rebalancer suggestion logic
+│
+├── hooks/
+│   ├── useGoals.ts                      # TanStack Query hooks for goals + mutations
+│   ├── useCycle.ts
+│   ├── useNotifications.ts
+│   └── useGsap.ts
+│
+├── emails/
+│   ├── GoalSubmittedEmail.tsx
+│   ├── GoalApprovedEmail.tsx
+│   ├── GoalRejectedEmail.tsx
+│   ├── CheckinReminderEmail.tsx
+│   ├── EscalationEmail.tsx
+│   └── WelcomeEmail.tsx
+│
+├── prisma/
+│   ├── schema.prisma                    # 13 models, full schema
+│   └── seed.ts                          # Rich demo data for all 3 roles
+│
+├── store/useAppStore.ts                 # Zustand: sidebar collapse, role switcher
+├── types/index.ts                       # All shared TS interfaces + enums
+├── middleware.ts                        # Auth + role routing
+└── vercel.json                          # 2 cron job configs
+```
+
+---
+
+## Database Schema
+
+### Entity Relationship Overview
+
+```
+User
+ ├── managerId      → User (self-referential — direct manager)
+ ├── skipManagerId  → User (self-referential — skip-level manager)
+ │
+ ├──< Goal (ownedGoals)
+ │     ├── cycleId    → Cycle
+ │     ├── approverId → User
+ │     │
+ │     ├──< Checkin
+ │     │     ├── employeeId → User
+ │     │     └── cycleId    → Cycle
+ │     │
+ │     ├──< AuditLog (goalId)
+ │     │     └── hash + previousHash  ← SHA-256 chain
+ │     │
+ │     └──< GoalComment
+ │           ├── authorId   → User
+ │           └── isInternal (manager-only notes, filtered at API)
+ │
+ ├──< Notification
+ ├──< AuditLog (userId)
+ └──< EscalationLog
+
+Cycle
+ ├── goalSettingOpen / goalSettingClose
+ ├── q1Open / q1Close  ...  q4Open / q4Close
+ ├──< Goal
+ ├──< Checkin
+ └──< EscalationRule
+       ├── trigger: GOAL_NOT_SUBMITTED | GOAL_NOT_APPROVED | CHECKIN_NOT_COMPLETED
+       ├── escalateTo: EMPLOYEE | MANAGER | SKIP_LEVEL | HR
+       └── daysAfterTrigger: Int
+```
+
+### All 13 Models
+
+| Model | Purpose |
+|---|---|
+| `User` | Org hierarchy, roles, avatar, last login |
+| `Cycle` | Fiscal year with 9 configurable date windows |
+| `Goal` | Central entity — full lifecycle, UoM, weightage, shared flag |
+| `Checkin` | Quarterly actuals, score, self-assessment, manager review |
+| `AuditLog` | Immutable log with SHA-256 hash chain |
+| `Notification` | In-app notifications with deep links |
+| `EscalationRule` | Configurable per cycle — trigger + target + days |
+| `EscalationLog` | Record of every escalation email sent |
+| `ThrustArea` | Admin-configurable org thrust areas |
+| `GoalTemplate` | Reusable templates with usage count |
+| `GoalComment` | Employee ↔ Manager discussion thread per goal |
+
+### Goal Status Machine
+
+```
+DRAFT
+  └──► SUBMITTED (bulk submit — atomic Prisma transaction)
+         └──► UNDER_REVIEW
+               ├──► APPROVED
+               │      └──► LOCKED (auto-lock cron or admin manual)
+               ├──► REJECTED  (employee can create replacement, slot freed)
+               └──► RETURNED  (employee edits → back to DRAFT → resubmit)
+```
+
+---
+
+## Authentication & Authorization
+
+### NextAuth v5
+
+- **Strategy:** JWT, 8-hour session expiry
+- **Providers:** Credentials (email + bcrypt, 10 rounds) + Microsoft Entra ID (Azure AD — button shown in demo, grayed if env vars absent)
+- **JWT callback:** Embeds `role`, `userId`, `managerId`, `department` into the token
+- **Session callback:** Surfaces these fields on `session.user` for API routes and components
+
+### Role Routing (middleware.ts)
+
+```
+/dashboard/employee/*  →  EMPLOYEE, MANAGER, ADMIN, HR
+/dashboard/manager/*   →  MANAGER, ADMIN
+/dashboard/admin/*     →  ADMIN, HR
+
+Unauthenticated → redirect to /login
+Wrong role      → redirect to role's home dashboard
+```
+
+### API Authorization Pattern
+
+Every API route starts with:
+```typescript
+const session = await auth();
+if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+if (!["MANAGER", "ADMIN"].includes(session.user.role))
+  return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+```
+
+Manager routes additionally verify goal ownership belongs to one of their direct reports.
+
+---
+
+## Core Features
+
+### 1. Goal Creation & Lifecycle
+
+**Business rules enforced at API level:**
+- Max 8 active (non-REJECTED) goals per employee per cycle
+- Total active goal weightage must equal exactly 100% before bulk submit
+- Minimum 10% weightage per goal
+- Goal-setting window must be open to create or submit
+- Check-in window must be open to submit a check-in
+- Goals lock automatically when `goalSettingClose` passes (hourly cron)
+- REJECTED goals are excluded from weightage and goal count — their slot is freed
+
+### 2. Unit-of-Measure (UoM) Types
+
+Five types with distinct scoring formulas, computed in `lib/scoring.ts`:
+
+| Type | Formula | Use Case |
+|---|---|---|
+| `NUMERIC_MIN` | `(actual / target) × 100` | Revenue, unit counts — higher is better |
+| `NUMERIC_MAX` | `(target / actual) × 100` | TAT, error rates — lower is better |
+| `PERCENTAGE` | `(actual / target) × 100` | Uptime %, satisfaction scores |
+| `TIMELINE` | `100 if on-time; −5% per day overdue` | Project completion, training |
+| `ZERO` | `actual === 0 ? 100 : 0` | Safety incidents, zero-defect targets |
+
+### 3. Quarterly Check-ins
+
+Each check-in captures:
+- Actual value or actual completion date
+- Progress status (NOT_STARTED / ON_TRACK / AT_RISK / COMPLETED / OVERDUE)
+- Employee note, self-rating (1–5 stars)
+- "What went well this quarter" and "Blockers faced"
+
+Score is computed live on the client (optimistic preview) using the same `computeScore()` function as the server — no discrepancy possible.
+
+### 4. Manager Approval Queue
+
+- Bulk select → "Approve Selected" or "Return Selected" with shared reason
+- Inline AI quality score badge (1–10) per goal, fetched on-demand
+- Full employee ↔ manager comment thread visible per goal card
+- Return requires reason ≥ 10 chars; Reject requires reason ≥ 10 chars
+- Manager can override target and weightage during approval
+
+### 5. Weightage Auto-Rebalancer
+
+When active goal weightages don't sum to 100%:
+
+```
+remaining = 100% − sum(approved/submitted goal weightages)
+per_draft_goal = remaining / count(draft_goals)
+
+Last draft goal absorbs rounding remainder to guarantee exact 100%.
+```
+
+One click proportionally distributes only the unclaimed percentage across draft goals, leaving already-approved goals untouched.
+
+### 6. Goal Templates Library
+
+Admin creates templates per thrust area. Employee picks one in the creation form:
+- Title, thrust area, UoM, suggested target, weightage pre-fill
+- `usageCount` increments on use (admin popularity signal)
+- Employee can override any field before saving
+
+### 7. Shared / Departmental Goals
+
+Manager creates a goal and assigns it to multiple employees. Rules:
+- Recipients can only adjust their own weightage
+- Title and target are read-only for recipients
+- When the primary owner submits a check-in, actuals sync to all recipients
+
+### 8. Cycle Clone
+
+Admin clones the current cycle with one click:
+- All 9 date windows shift forward exactly 1 year
+- All EscalationRules are cloned for the new cycle
+- New cycle starts as `isActive: false` — admin activates manually
+
+---
+
+## AI Goal Coach Microservice
+
+### Architecture
+
+A separate Python service on Railway, called from Next.js via HMAC-signed HTTP. This isolates LLM cost, latency, and failure from the core app.
+
+```
+Next.js /api/ai/evaluate
+  │
+  ├─ HMAC sign: SHA-256(timestamp + body, AI_SERVICE_SECRET)
+  │  Headers: X-Service-Token, X-Timestamp
+  │
+  ├─ Circuit breaker (module-level state, survives warm instances)
+  │   ├─ failures < 3  → call Python service (8s timeout)
+  │   └─ failures ≥ 3  → direct Gemini call (bypass Python service)
+  │
+  └─ Python FastAPI on Railway
+       ├─ HMAC middleware (rejects tokens > 30s stale)
+       └─ LangGraph StateGraph
+            ├─ brd_enforcer     (pure Python, zero LLM cost)
+            ├─ smart_analyzer   (Gemini 1.5 Flash)
+            ├─ semantic_matcher (Gemini text-embedding-004)
+            └─ output_formatter (weighted aggregation)
+```
+
+### Pipeline 1 — Goal Quality Evaluation
+
+**brd_enforcer** (no LLM): checks title length, UoM-target consistency, weightage bounds → `brd_issues[]`
+
+**smart_analyzer** (Gemini Flash): scores each SMART dimension 1–10, generates suggestions and an improved title
+
+**semantic_matcher** (Gemini embeddings): embeds goal against 20 pre-cached golden goals, returns closest match + cosine similarity
+
+**output_formatter**: `score = (avg_SMART × 0.6) + (similarity × 30) − brd_penalty` → clamped 1–10, verdict assigned
+
+```json
+{
+  "overall_score": 7,
+  "verdict": "acceptable",
+  "smart_scores": {
+    "specific": 8, "measurable": 9,
+    "achievable": 6, "relevant": 8, "time_bound": 5
+  },
+  "suggestions": ["Add a deadline to make this time-bound"],
+  "improved_title": "Achieve 50L direct sales revenue by Q1 end",
+  "semantic_match": { "title": "Quarterly Revenue Achievement", "similarity": 0.94 },
+  "brd_issues": []
+}
+```
+
+### Pipeline 2 — Annual Review Synthesis
+
+Manager/HR triggers for any employee. Four nodes:
+
+1. **review_analyzer** — computes weighted annual score, grade (A+ to D), checkin completion rate
+2. **review_enricher** — Gemini extracts sentiment, recurring blockers, self-rating trends
+3. **review_scorer** — recommended performance rating (Exceeds / Meets / Below Expectations)
+4. **review_composer** — Gemini Flash writes a professional narrative paragraph
+
+Output shown in `AnnualReviewModal` — copyable, includes quarterly narratives, strengths, and development areas.
+
+### Pipeline 3 — Semantic Redundancy Detection
+
+Debounced 1.5s after employee stops typing a goal title. Three nodes:
+
+1. **redundancy_embedder** — embeds new goal + all existing submitted/approved goals
+2. **redundancy_ranker** — cosine similarity; near-duplicate ≥ 0.85, highly-similar ≥ 0.70
+3. **redundancy_recommender** — returns match list with level and recommendation
+
+`RedundancyWarning` banner appears inline in the creation form — dismissible, advisory only, never blocks.
+
+### Zero-Trust Service Auth
+
+```
+timestamp    = Unix epoch seconds
+HMAC token   = SHA-256(timestamp + request_body, AI_SERVICE_SECRET)
+
+Python rejects if:
+  · timestamp > 30s old (replay attack protection)
+  · HMAC mismatch (tampered body or wrong secret)
+```
+
+---
+
+## Cryptographic Audit Ledger
+
+Standard audit logs can be silently edited by anyone with DB access. Every `AuditLog` entry has a SHA-256 `hash` computed from its full payload chained to `previousHash`.
+
+### Hash Chain
+
+```
+Entry 1 — GENESIS:
+  previousHash = null
+  hash = SHA256(JSON.stringify(payload) + "GENESIS")
+
+Entry 2:
+  previousHash = Entry1.hash
+  hash = SHA256(JSON.stringify(payload) + Entry1.hash)
+
+Entry N:
+  previousHash = Entry(N-1).hash
+  hash = SHA256(JSON.stringify(payload) + Entry(N-1).hash)
+```
+
+Payload includes every field: `userId, action, entityType, entityId, goalId, oldValue, newValue, ipAddress, userAgent, createdAt`. Changing any single character — including IP — invalidates the chain from that point forward.
+
+### Tamper Detection — `/api/audit/verify`
+
+- Admin / HR only
+- Re-derives every hash from its payload + previousHash in sequence
+- Returns `{ valid: boolean, totalEntries: number, firstTamperedId?: string }`
+- Admin audit page shows the "Verify Chain Integrity" button; green or red banner on result
+
+### Rules
+
+- No DELETE endpoint for `AuditLog` — returns **405 Method Not Allowed** intentionally
+- Concurrent writes at the same millisecond use `(createdAt DESC, id DESC)` ordering for deterministic chain order
+
+---
+
+## Scoring Engine
+
+All logic in `lib/scoring.ts`, shared between server and client for consistency.
+
+### Goal Wellness Score
+
+```typescript
+computeGoalWellness({
+  goalsCount, weightageTotal,
+  checkinCompletionRate, avgScore, reworkCount
+}): { score: number; grade: "A"|"B"|"C"|"D"; issues: string[] }
+
+// Deductions from 100:
+//   No goals set:         −40
+//   Weightage ≠ 100%:     −20
+//   Check-ins < 50%:      −20
+//   Avg score < 50%:      −10
+//   Reworks > 2:           −5
+
+// Grades: A ≥ 85 | B ≥ 70 | C ≥ 55 | D < 55
+```
+
+Shown as a letter badge per employee on Manager and Admin dashboards. Tooltip expands to the issues list.
+
+### Annual Score Forecasting
+
+```typescript
+forecastAnnualScore(quarterScores: number[]): number
+// Running average of available quarters
+// Trend: up (≥ target+5%), flat (within 5%), down (< target−5%)
+```
+
+Shown on the employee dashboard "Forecast" card with a trend arrow.
+
+---
+
+## Escalation Engine
+
+`lib/escalation.ts` runs daily at 02:30 UTC via Vercel Cron.
+
+### Flow
+
+```
+1. Fetch active cycle + all escalation rules
+2. For each rule:
+   a. Find users matching the trigger condition
+   b. Check Redis: key = esc:{userId}:{trigger}:{cycleId}:{escalateTo}
+   c. Key exists  → skip (24h dedup, prevents spam)
+   d. Key absent  →
+        · Send email via Resend
+        · Create EscalationLog
+        · writeAudit(ESCALATION_SENT)
+        · Set Redis key, TTL = 86400s
+3. Return { processed: N }
+```
+
+### Triggers
+
+| Trigger | Condition |
+|---|---|
+| `GOAL_NOT_SUBMITTED` | 0 submitted/approved/locked goals after N days since cycle open |
+| `GOAL_NOT_APPROVED` | Goals submitted but manager hasn't approved after N days |
+| `CHECKIN_NOT_COMPLETED` | Check-in window open but no check-in after N days |
+
+Admin can also trigger manually from `/admin/escalations` → "Run Now" button.
+
+---
+
+## Notification System
+
+### In-App Notifications
+
+- Stored in `Notification` model, fetched every 60s
+- Bell icon in Header with unread count badge
+- Dropdown: last 10 notifications with color-coded icons, timestamps, deep-links
+- "Mark all read" button
+
+### Email Triggers
+
+| Event | Recipient |
+|---|---|
+| Employee bulk submits goals | Manager |
+| Goal approved | Employee |
+| Goal rejected (with reason) | Employee |
+| Goal returned for rework | Employee |
+| Escalation fires | Employee / Manager / Skip-level / HR |
+| New user created | New user (welcome + temp password) |
+
+### Microsoft Teams (Optional)
+
+`lib/teams.ts` — sends MessageCard via incoming webhook alongside emails for:
+- Goal submission → manager's channel
+- Check-in window opens → team channel
+- Escalation run summary → HR/Admin channel
+
+Gracefully skips (no error, no log) if `TEAMS_WEBHOOK_URL` is not set.
+
+---
+
+## Analytics & Reporting
+
+### 7 Charts on Admin Analytics Page
+
+| # | Name | Library | Data |
+|---|---|---|---|
+| 1 | QoQ Achievement Trend | Recharts LineChart | Avg weighted score per dept Q1–Q4 |
+| 2 | Achievement Heatmap | D3 SVG | Employee × Quarter grid, RdYlGn color scale |
+| 3 | Goal Distribution | Recharts BarChart | By thrust area + UoM type breakdown |
+| 4 | Manager Effectiveness | Recharts BarChart | Team check-in completion % per manager |
+| 5 | Org Completion Funnel | Recharts FunnelChart | Employees → Goals set → Submitted → Approved → Checked in |
+| 6 | Score Distribution | Recharts AreaChart | Distribution of quarterly scores |
+| 7 | Commitment vs Achievement | Recharts ScatterChart | Each dot = employee; X = commitment rate, Y = achievement; 4-quadrant |
+
+### OrgPulseTicker
+
+Admin dashboard top banner, auto-refreshes every 30s:
+
+```
+Goal Setting: ████████░░ 78% employees submitted
+Q1 Check-in:  ██████░░░░ 61% completed
+Manager SLA:  ████████░░ 82% approved within 5 days
+```
+
+### Export
+
+- **CSV** — `/api/export/csv`
+- **Excel** — `/api/export/excel` (SheetJS, judges can open directly)
+- Both write an `EXPORT_GENERATED` audit entry
+
+---
+
+## Unique Differentiators
+
+| # | Feature | Location |
+|---|---|---|
+| 1 | SHA-256 cryptographic audit ledger | `lib/audit.ts`, `/api/audit/verify` |
+| 2 | Multi-agent LangGraph AI Goal Coach | `ai/graph.py`, `ai/nodes/` |
+| 3 | Semantic redundancy detection | `ai/redundancy_graph.py` |
+| 4 | AI annual review synthesis | `ai/review_graph.py` |
+| 5 | HMAC zero-trust service auth + circuit breaker | `lib/ai-client.ts`, `ai/auth.py` |
+| 6 | Goal Wellness Score (A/B/C/D grade) | `lib/scoring.ts` |
+| 7 | Commitment vs Achievement quadrant chart | Admin analytics Chart 7 |
+| 8 | Smart weightage auto-rebalancer | Employee goals page, `lib/weightage.ts` |
+| 9 | Proactive Action Required center | `components/shared/ActionCenter.tsx` |
+| 10 | Live countdown timer in cycle banner | Dashboard layout |
+| 11 | Role switcher for demo mode | Header dropdown |
+| 12 | Cycle clone (shift all dates +1 year) | `/api/cycles/[id]/clone` |
+| 13 | Goal lifecycle timeline | Employee goal detail page |
+| 14 | Manager ↔ employee comment thread per goal | `GoalCommentThread.tsx` |
+| 15 | Annual score forecasting with trend arrow | Employee dashboard |
+| 16 | REJECTED goals excluded from weightage + count | Goals page + bulk submit API |
+
+---
+
+## API Reference
+
+### Goals
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/goals` | Any | Goals filtered by role (employees see own, managers see team) |
+| POST | `/api/goals` | Employee | Create goal — validates window, max 8, min 10% weightage |
+| GET | `/api/goals/:id` | Owner/Manager | Goal detail with checkins and comments |
+| PUT | `/api/goals/:id` | Owner (DRAFT) | Update goal fields |
+| DELETE | `/api/goals/:id` | Owner (DRAFT) | Delete draft goal |
+| POST | `/api/goals/bulk` | Employee | Atomic bulk submit — validates active weightage = 100% |
+| POST | `/api/goals/:id/approve` | Manager/Admin | Approve / Reject / Return with reason |
+| POST | `/api/goals/:id/checkin` | Owner | Submit check-in — validates window open + goal locked |
+| POST | `/api/goals/:id/unlock` | Admin | Unlock locked goal with reason |
+| GET | `/api/goals/:id/comments` | Owner+Manager | Comments — internal notes filtered for employees |
+| POST | `/api/goals/:id/comments` | Owner+Manager | Add comment; `isInternal` toggle for managers |
+
+### Cycles
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/cycles` | Any | All cycles |
+| POST | `/api/cycles` | Admin | Create with 9 date windows |
+| GET | `/api/cycles/current` | Any | Active cycle |
+| PUT | `/api/cycles/:id` | Admin | Update / activate / deactivate |
+| POST | `/api/cycles/:id/clone` | Admin | Clone + shift dates +1 year |
+
+### Analytics (all Admin/HR, 60s revalidation cache)
+
+| Endpoint | Data |
+|---|---|
+| `/api/analytics/overview` | Org-wide completion stats |
+| `/api/analytics/qoq` | Quarter-on-quarter trend per department |
+| `/api/analytics/heatmap` | Employee × Quarter achievement grid |
+| `/api/analytics/distribution` | By thrust area and UoM type |
+| `/api/analytics/manager-effectiveness` | Team check-in completion per manager |
+
+### AI (rate limited — 10 req/user/min)
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| POST | `/api/ai/evaluate` | Any authenticated | Goal quality score + SMART breakdown |
+| POST | `/api/ai/redundancy` | Any authenticated | Semantic duplicate detection |
+| POST | `/api/ai/review` | Manager/Admin/HR | Annual review synthesis for an employee |
+
+### Audit
+
+| Method | Endpoint | Auth | Notes |
+|---|---|---|---|
+| GET | `/api/audit` | Admin/HR | Paginated 15/page, filterable by action |
+| GET | `/api/audit/verify` | Admin/HR | Re-derives full chain, returns tamper result |
+| DELETE | `/api/audit` | — | **405 — intentional, no delete ever** |
+
+---
+
+## Demo Journeys
+
+### Journey 1 — Employee (Sneha Roy)
+
+1. Login with `sneha.roy@atomberg.com` / `Employee@123`
+2. Goals page — 2 draft goals at 140% total (one approved already claims 60%)
+3. Click "Auto-balance" → draft goals redistributed to fill remaining 40% → meter hits 100%
+4. "Submit All Goals" button enables → click → manager notified
+5. Create a new goal → type title → redundancy warning fires if similar goal exists
+6. "Check quality" → AI panel shows SMART scores, suggestions, improved title → apply it
+
+### Journey 2 — Manager (Vikram Singh)
+
+1. Login with `vikram.singh@atomberg.com` / `Manager@123`
+2. Approvals — see pending goals with AI score badges
+3. Expand AI analysis inline → SMART breakdown per dimension
+4. Add a comment on a goal → employee sees it on their goal detail page
+5. Approve one, return one with reason, reject one
+6. Team page → Goal Wellness grade per report → click "Generate Annual Review" → AI review modal
+
+### Journey 3 — Admin
+
+1. Login with `admin@atomberg.com` / `Admin@123`
+2. Dashboard — OrgPulseTicker refreshing every 30s, live countdown in cycle banner
+3. Analytics — all 7 charts; hover Commitment vs Achievement scatter chart
+4. Audit Trail → "Verify Chain Integrity" → green banner
+5. Escalations → "Run Now" → log entry appears instantly
+6. Cycles → "Clone as next FY" → new cycle with dates shifted 1 year
+7. Reports → Export Excel → file downloads with all goal data
+
+---
+
+## Environment Variables
+
+```bash
+# Database (Neon.tech)
+DATABASE_URL="postgresql://user:pass@host/db?sslmode=require&pgbouncer=true"
+DIRECT_URL="postgresql://user:pass@host/db?sslmode=require"
+
+# Auth
+NEXTAUTH_SECRET=""           # openssl rand -base64 32
+NEXTAUTH_URL="http://localhost:3000"
+
+# Email
+RESEND_API_KEY="re_..."
+
+# Redis (Upstash)
+UPSTASH_REDIS_REST_URL="https://..."
+UPSTASH_REDIS_REST_TOKEN="..."
+
+# Azure AD SSO (optional — grayed button in demo if absent)
+AZURE_AD_CLIENT_ID=""
+AZURE_AD_CLIENT_SECRET=""
+AZURE_AD_TENANT_ID=""
+
+# AI Microservice
+GEMINI_API_KEY=""            # Google AI Studio — free tier
+AI_SERVICE_URL=""            # Railway service URL after deploy
+AI_SERVICE_SECRET=""         # openssl rand -hex 32 — same in Vercel + Railway
+
+# Cron security
+CRON_SECRET=""               # openssl rand -base64 32
+
+# Demo mode (enables role switcher)
+NEXT_PUBLIC_DEMO_MODE="true"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+
+# Teams (optional — silently skipped if empty)
+TEAMS_WEBHOOK_URL=""
+```
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 20+
+- Python 3.11+ (AI service only)
+- Neon.tech PostgreSQL (or any PostgreSQL)
+- Upstash Redis (free tier)
+- Resend account (free tier)
+- Google AI Studio API key (free)
+
+### Install & Run
 
 ```bash
+# Install dependencies
+npm install
+
+# Configure environment
+cp .env.example .env.local
+# Fill in DATABASE_URL, NEXTAUTH_SECRET, RESEND_API_KEY at minimum
+
+# Push schema and seed
+npx prisma db push
+npx prisma generate
+npx prisma db seed
+
+# Start dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### AI Service (Local)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cd ai
+pip install -r requirements.txt
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+export GEMINI_API_KEY=your_key
+export AI_SERVICE_SECRET=your_shared_secret
+export ALLOWED_ORIGINS=http://localhost:3000
 
-## Learn More
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
 
-To learn more about Next.js, take a look at the following resources:
+Set `AI_SERVICE_URL=http://localhost:8000` in `.env.local`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Verify
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npx prisma studio    # Inspect seeded data in browser
+npm run build        # TypeScript check — must return 0 errors
+```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Next.js → Vercel
+
+```bash
+vercel --prod
+```
+
+Add all environment variables in the Vercel dashboard. The two cron jobs in `vercel.json` activate automatically.
+
+### AI Service → Railway
+
+```bash
+cd ai
+railway up
+```
+
+Copy the Railway service URL → set as `AI_SERVICE_URL` in Vercel. Set the same `AI_SERVICE_SECRET` in both.
+
+### Cost Profile
+
+| Service | Tier | Cost/month |
+|---|---|---|
+| Vercel | Hobby | $0 |
+| Neon PostgreSQL | Free | $0 |
+| Upstash Redis | Free (10k cmd/day) | $0 |
+| Resend | Free (100 emails/day) | $0 |
+| Google Gemini | Free tier | $0 |
+| Railway (AI service) | Starter, scales to zero | ~$5 |
+| **Total** | | **~$0–5/month** |
+
+---
+
+## Demo Credentials
+
+| Name | Email | Password | Role | Department |
+|---|---|---|---|---|
+| Admin User | admin@atomberg.com | Admin@123 | ADMIN | — |
+| HR User | hr@atomberg.com | Hr@123 | HR | HR |
+| Vikram Singh | vikram.singh@atomberg.com | Manager@123 | MANAGER | Sales |
+| Deepa Nair | deepa.nair@atomberg.com | Manager@123 | MANAGER | Operations |
+| Rahul Sharma | rahul.sharma@atomberg.com | Employee@123 | EMPLOYEE | Sales |
+| Priya Mehta | priya.mehta@atomberg.com | Employee@123 | EMPLOYEE | Sales |
+| Arjun Patel | arjun.patel@atomberg.com | Employee@123 | EMPLOYEE | Operations |
+| Sneha Roy | sneha.roy@atomberg.com | Employee@123 | EMPLOYEE | Engineering |
+
+> **Tip:** Use the role switcher dropdown in the top-right header to switch between any user without logging out. Enabled when `NEXT_PUBLIC_DEMO_MODE=true`.
+
+---
+
+*AtomQuest Hackathon 1.0 · Atomberg Technologies · First place or nothing.*
