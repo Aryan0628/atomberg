@@ -74,14 +74,14 @@ AtomQuest digitises the entire annual goal lifecycle at Atomberg Technologies. E
 │  ├── goals/        cycles/       users/                         │
 │  ├── analytics/    audit/        notifications/                 │
 │  ├── ai/           export/       templates/                     │
-│  ├── kafka/consumer              qstash/setup                   │
+│  ├── events/consumer             (QStash push receiver)         │
 │  └── cron/escalate + cron/lock-goals (Vercel Cron — 2 slots)  │
 │                                                                 │
 │  Core Library (lib/)                                            │
 │  ├── auth.ts       db.ts         scoring.ts                     │
 │  ├── audit.ts      escalation.ts notifications.ts               │
 │  ├── ai-client.ts  redis.ts      export.ts                      │
-│  ├── kafka.ts      cycle.ts      cache.ts                       │
+│  ├── events.ts     cycle.ts      cache.ts                       │
 │  └── validations.ts weightage.ts teams.ts                       │
 └──────────────┬──────────────────────────┬───────────────────────┘
                │                          │
@@ -99,33 +99,34 @@ AtomQuest digitises the entire annual goal lifecycle at Atomberg Technologies. E
 │ AuditLog │   └──────────────────────┘       │  smart_analyzer     │
 │          │                                  │  semantic_matcher   │
 │ 13 models│   ┌──────────────────────┐       │  output_formatter   │
-└──────────┘   │  Upstash Kafka       │       │                     │
-               │  (goal-events topic) │       │ /review/synthesize  │
+└──────────┘   │  Upstash QStash      │       │                     │
+               │  (push event bus)    │       │ /review/synthesize  │
                │                      │       │  review_analyzer    │
-               │  Producer: API routes│       │  review_enricher    │
+               │  API publishes event │       │  review_enricher    │
                │  · goal.submitted    │       │  review_scorer      │
                │  · goal.approved     │       │  review_composer    │
                │  · goal.rejected     │       │                     │
                │  · goal.returned     │       │ /goals/check-       │
                │  · goal.shared       │       │  redundancy         │
                │                      │       │  redundancy_embedder│
-               │  Consumer: every 10m │       │  redundancy_ranker  │
-               │  triggered by QStash │       │  redundancy_recomm. │
-               └──────────┬───────────┘       │                     │
-                          │                   │ HMAC-SHA256 auth    │
-               ┌──────────┴───────────┐       │ Circuit breaker     │
-               │  Upstash QStash      │       │ Gemini fallback     │
-               │                      │       └─────────────────────┘
-               │  Schedules consumer  │
-               │  every 10 minutes    │
-               │  Free: 500 msgs/day  │
-               │  Independent of      │
-               │  Vercel cron quota   │
+               │  QStash immediately  │       │  redundancy_ranker  │
+               │  POSTs to consumer   │       │  redundancy_recomm. │
+               │  (3 retries on fail) │       │                     │
+               └──────────┬───────────┘       │ HMAC-SHA256 auth    │
+                          │                   │ Circuit breaker     │
+                          ▼                   │ Gemini fallback     │
+               ┌──────────────────────┐       └─────────────────────┘
+               │  /api/events/consumer│
+               │  (push receiver)     │
+               │                      │
+               │  · createNotification│
+               │  · sendEmail (Resend)│
+               │  · sendTeamsCard     │
                └──────────────────────┘
 
 ┌──────────────────────┐       ┌──────────────────────────┐
 │  Resend + React Email│       │  Microsoft Teams Webhook │
-│  (via Kafka consumer)│       │  (via Kafka consumer)    │
+│  (via QStash consumer│       │  (via QStash consumer)   │
 │                      │       │                          │
 │  6 templates:        │       │  · Goal submitted        │
 │  · Goal submitted    │       │  · Checkin window open   │
@@ -145,15 +146,15 @@ Browser
   → API Route          (Zod validation + auth check)
   → Prisma transaction (DB write + writeAudit in one commit)
   → invalidateCache()  (Redis + in-memory)
-  → kafkaProduce()     (fire-and-forget — never blocks response)
-  → Response           (← returned here, ~5ms after kafkaProduce enqueues)
+  → publishEvent()     (fire-and-forget — never blocks response)
+  → Response           (← returned immediately)
 
-   ↓ async, up to 10 min later
-  Upstash QStash triggers /api/kafka/consumer
-  → kafkaConsume()     (reads batch from Upstash Kafka REST API)
+   ↓ async, seconds later (QStash push — no polling delay)
+  Upstash QStash POSTs to /api/events/consumer
   → createNotification() (DB insert per user)
-  → sendEmail()        (Resend)
-  → sendTeamsCard()    (optional webhook)
+  → sendEmail()          (Resend)
+  → sendTeamsCard()      (optional webhook)
+  ← 200 OK tells QStash delivery succeeded; 500 triggers retry
 ```
 
 ### Cron Jobs (Vercel Hobby — 2 slots used)
@@ -167,18 +168,20 @@ Browser
                                                when goalSettingClose passes
 ```
 
-### Kafka Consumer (QStash — independent of Vercel cron quota)
+### Event Consumer (QStash push — no Vercel cron slot used)
 
 ```
-every 10 minutes  →  Upstash QStash  →  /api/kafka/consumer
-                                          Reads goal-events topic
-                                          Fans out: email + Teams + in-app
+Goal lifecycle event
+  → publishEvent()  (API route, fire-and-forget void)
+  → QStash receives event, immediately POSTs to /api/events/consumer
+  → consumer handles: createNotification + sendEmail + sendTeamsCard
+  → returns 200 OK (success) or 500 (QStash retries up to 3×)
 
 Auth: QStash cryptographic signature (Upstash-Signature header)
-      OR CRON_SECRET bearer token (manual admin trigger)
+      OR CRON_SECRET bearer token (manual trigger / local testing)
 
-Fallback: if UPSTASH_KAFKA_REST_URL is unset, API routes call
-          email/notification directly (identical to pre-Kafka behaviour)
+Fallback: if QSTASH_TOKEN is unset, isEventBusConfigured() returns false
+          and API routes call email/notification directly inline — nothing breaks
 ```
 
 ---
@@ -200,8 +203,7 @@ Fallback: if UPSTASH_KAFKA_REST_URL is unset, API routes call
 | Export | xlsx (SheetJS) | Excel export with proper formatting |
 | Toasts | Sonner | In-app toasts for every mutation |
 | Rate Limiting | Upstash Redis | API protection + escalation deduplication |
-| Async Events | Upstash Kafka | Durable event bus for goal lifecycle side-effects |
-| HTTP Scheduler | Upstash QStash | Triggers Kafka consumer every 10 min, no Vercel cron slot |
+| Async Events | Upstash QStash | Push-based event bus — publishes goal events, delivers to consumer with retries |
 | Cron | Vercel Cron Jobs | Escalation engine + auto-lock goals (2 slots on Hobby) |
 | AI Service | FastAPI + LangGraph + Gemini | Multi-agent goal evaluation pipeline |
 | AI Deploy | Railway (Docker) | Zero-config Python container deploy |
@@ -258,10 +260,8 @@ atomberg/
 │   │   ├── shared-goals/route.ts
 │   │   ├── templates/route.ts
 │   │   ├── users/route.ts
-│   │   ├── kafka/
-│   │   │   └── consumer/route.ts       # Kafka consumer — triggered by QStash every 10 min
-│   │   ├── qstash/
-│   │   │   └── setup/route.ts          # One-time admin endpoint to register QStash schedule
+│   │   ├── events/
+│   │   │   └── consumer/route.ts       # QStash push receiver — handles all goal lifecycle events
 │   │   └── cron/
 │   │       ├── escalate/route.ts       # Daily 02:30 UTC
 │   │       └── lock-goals/route.ts     # Hourly — locks APPROVED goals after close
@@ -332,7 +332,7 @@ atomberg/
 │   ├── db.ts                            # Prisma client singleton (pg.Pool max:1 for Neon serverless)
 │   ├── escalation.ts                    # Escalation engine business logic
 │   ├── export.ts                        # CSV + Excel generation (SheetJS)
-│   ├── kafka.ts                         # Upstash Kafka typed event producer + consumer
+│   ├── events.ts                        # QStash push event bus — typed events + publishEvent()
 │   ├── notifications.ts                 # In-app + Resend email helpers
 │   ├── rate-limit.ts                    # Upstash sliding window rate limiter
 │   ├── redis.ts                         # Upstash Redis client (get / set / del)
@@ -740,23 +740,23 @@ Admin can also trigger manually from `/admin/escalations` → "Run Now" button.
 
 ## Notification System
 
-### Event Bus (Upstash Kafka)
+### Event Bus (QStash Push)
 
-Goal lifecycle side-effects (email, Teams, in-app notifications) are decoupled from the API response via Kafka. The API route commits the DB write and publishes one event — then returns immediately. The consumer processes it asynchronously up to 10 minutes later.
+Goal lifecycle side-effects (email, Teams, in-app notifications) are decoupled from the API response via QStash. The API route commits the DB write, publishes one typed event to QStash — then returns immediately. QStash delivers it to the consumer within seconds with up to 3 automatic retries on failure.
 
 ```
-API Route  →  DB commit  →  kafkaProduce()  →  respond (done)
+API Route  →  DB commit  →  publishEvent()  →  respond (done)
                                   ↓
-                          Upstash Kafka
-                          goal-events topic
-                                  ↓  (every 10 min, via QStash)
-                          /api/kafka/consumer
+                          Upstash QStash
+                          (push delivery — no polling)
+                                  ↓  immediately
+                          /api/events/consumer
                           ├── createNotification()  (DB)
                           ├── sendEmail()           (Resend)
                           └── sendTeamsCard()       (optional webhook)
 ```
 
-**Fallback:** if `UPSTASH_KAFKA_REST_URL` is not set, `isKafkaConfigured()` returns false and API routes call email/notification directly in the same request (identical to pre-Kafka behaviour — nothing breaks).
+**Fallback:** if `QSTASH_TOKEN` is not set, `isEventBusConfigured()` returns false and API routes call email/notification directly inline — nothing breaks, same end result.
 
 ### In-App Notifications
 
@@ -769,16 +769,16 @@ API Route  →  DB commit  →  kafkaProduce()  →  respond (done)
 
 | Event | Recipient | Path |
 |---|---|---|
-| Employee bulk submits goals | Manager | Kafka `goal.submitted` event |
-| Goal approved | Employee | Kafka `goal.approved` event |
-| Goal rejected (with reason) | Employee | Kafka `goal.rejected` event |
-| Goal returned for rework | Employee | Kafka `goal.returned` event |
+| Employee bulk submits goals | Manager | QStash `goal.submitted` event |
+| Goal approved | Employee | QStash `goal.approved` event |
+| Goal rejected (with reason) | Employee | QStash `goal.rejected` event |
+| Goal returned for rework | Employee | QStash `goal.returned` event |
 | Escalation fires | Employee / Manager / Skip-level / HR | Direct (escalation cron) |
 | New user created | New user (welcome + temp password) | Direct |
 
 ### Microsoft Teams (Optional)
 
-`lib/teams.ts` — sends MessageCard via incoming webhook. Triggered by the Kafka consumer alongside email for:
+`lib/teams.ts` — sends MessageCard via incoming webhook. Triggered by the QStash consumer alongside email for:
 - Goal submission → manager's channel
 - Escalation run summary → HR/Admin channel
 
@@ -947,16 +947,12 @@ RESEND_API_KEY="re_..."
 UPSTASH_REDIS_REST_URL="https://..."
 UPSTASH_REDIS_REST_TOKEN="..."
 
-# ── Upstash Kafka (free: 10K msgs/day) ──────────────────────────
-# Create a topic named "goal-events" in the Upstash Kafka dashboard.
-# Leave all three empty to skip Kafka — API routes fall back to direct calls.
-UPSTASH_KAFKA_REST_URL="https://..."
-UPSTASH_KAFKA_REST_USERNAME="..."
-UPSTASH_KAFKA_REST_PASSWORD="..."
-
 # ── Upstash QStash (free: 500 msgs/day) ─────────────────────────
-# Used to trigger /api/kafka/consumer every 10 min (no Vercel cron slot needed).
-# After first deploy: call POST /api/qstash/setup once to register the schedule.
+# Push-based event bus: API routes publish goal events, QStash delivers them
+# immediately to /api/events/consumer with up to 3 retries on failure.
+# Get all four values from console.upstash.com → QStash → your instance → API Keys.
+# Leave QSTASH_TOKEN empty to skip — API routes fall back to direct inline calls.
+QSTASH_URL="https://qstash-us-east-1.upstash.io"
 QSTASH_TOKEN="..."
 QSTASH_CURRENT_SIGNING_KEY="..."
 QSTASH_NEXT_SIGNING_KEY="..."
@@ -1049,32 +1045,15 @@ vercel --prod
 
 Add all environment variables in the Vercel dashboard. The two cron jobs in `vercel.json` (`/api/cron/escalate` and `/api/cron/lock-goals`) activate automatically on Vercel Hobby.
 
-### Register the QStash Schedule (one time after deploy)
+### Set NEXT_PUBLIC_APP_URL on Vercel
 
-```bash
-# Replace with your deployed URL
-curl -X POST https://your-app.vercel.app/api/qstash/setup \
-  -H "Cookie: <your-admin-session-cookie>"
+Make sure `NEXT_PUBLIC_APP_URL` is set to your real Vercel deployment URL (not localhost). QStash uses this to know where to deliver events:
+
+```
+NEXT_PUBLIC_APP_URL=https://your-app.vercel.app
 ```
 
-Or log in as Admin → open browser DevTools → run:
-```js
-fetch('/api/qstash/setup', { method: 'POST' }).then(r => r.json()).then(console.log)
-```
-
-Expected response:
-```json
-{ "message": "QStash schedule created", "scheduleId": "...", "cron": "*/10 * * * *" }
-```
-
-This registers a persistent QStash schedule that calls `/api/kafka/consumer` every 10 minutes. You only need to do this once per deployment URL. If you redeploy to a different URL, call `DELETE /api/qstash/setup` first, then `POST` again.
-
-### Create the Kafka Topic
-
-In the [Upstash Console](https://console.upstash.com/kafka):
-1. Create a Kafka cluster (free tier)
-2. Create a topic named **`goal-events`** (1 partition, retention: 1 day)
-3. Copy `REST URL`, `Username`, and `Password` → set as `UPSTASH_KAFKA_REST_URL`, `UPSTASH_KAFKA_REST_USERNAME`, `UPSTASH_KAFKA_REST_PASSWORD` in Vercel
+No one-time setup call needed — QStash push is stateless. Every `publishEvent()` call includes the destination URL directly.
 
 ### AI Service → Railway
 
@@ -1092,7 +1071,6 @@ Copy the Railway service URL → set as `AI_SERVICE_URL` in Vercel. Set the same
 | Vercel | Hobby | $0 |
 | Neon PostgreSQL | Free | $0 |
 | Upstash Redis | Free (10K cmd/day) | $0 |
-| Upstash Kafka | Free (10K msg/day) | $0 |
 | Upstash QStash | Free (500 msg/day) | $0 |
 | Resend | Free (100 emails/day) | $0 |
 | Google Gemini | Free tier | $0 |
