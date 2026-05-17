@@ -141,8 +141,14 @@ export default function EmployeeGoalsPage() {
   });
 
   const allGoals = goals || [];
-  const totalWeightage = allGoals.reduce((sum: number, g: Record<string, unknown>) => sum + (g.weightage as number || 0), 0);
-  const draftGoals = allGoals.filter((g: Record<string, unknown>) => g.status === "DRAFT");
+  // REJECTED goals are excluded from weightage — they're dead and the slot is freed up
+  const activeGoals = allGoals.filter((g: Record<string, unknown>) => g.status !== "REJECTED");
+  const totalWeightage = activeGoals.reduce((sum: number, g: Record<string, unknown>) => sum + (g.weightage as number || 0), 0);
+  const draftGoals = activeGoals.filter((g: Record<string, unknown>) => g.status === "DRAFT");
+  const nonDraftWeightage = activeGoals
+    .filter((g: Record<string, unknown>) => g.status !== "DRAFT")
+    .reduce((sum: number, g: Record<string, unknown>) => sum + (g.weightage as number || 0), 0);
+  const remainingForDraft = Math.max(0, 100 - nonDraftWeightage);
   const canSubmit = draftGoals.length > 0 && Math.abs(totalWeightage - 100) < 0.01;
 
   const filteredGoals = allGoals.filter((g: Record<string, unknown>) => {
@@ -227,24 +233,23 @@ export default function EmployeeGoalsPage() {
           </div>
           <Progress value={Math.min(totalWeightage, 100)} className="h-2" />
           <div className="flex items-center gap-3 mt-4 flex-wrap">
-            <span className="text-xs font-medium text-muted-foreground">{allGoals.length}/8 goals</span>
-            {draftGoals.length >= 2 && Math.abs(totalWeightage - 100) > 0.01 && (
+            <span className="text-xs font-medium text-muted-foreground">{activeGoals.length}/8 goals</span>
+            {draftGoals.length >= 1 && Math.abs(totalWeightage - 100) > 0.01 && remainingForDraft > 0 && (
               <>
                 <span className="text-xs text-amber-600 dark:text-amber-400 font-medium ml-2">
-                  Auto-balance {draftGoals.length} draft goals equally?
+                  Auto-balance {draftGoals.length} draft goal{draftGoals.length > 1 ? "s" : ""} to fill remaining {remainingForDraft}%?
                 </span>
                 <Button
                   size="sm" variant="outline"
                   className="h-7 text-xs px-3 border-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
                   disabled={rebalanceMutation.isPending}
                   onClick={() => {
-                    // Distribute 100% equally across all draft goals
-                    const perGoal = Math.round((100 / draftGoals.length) * 10) / 10;
+                    // Distribute only the remaining % (after non-draft goals) across draft goals
+                    const perGoal = Math.round((remainingForDraft / draftGoals.length) * 10) / 10;
                     const updates = draftGoals.map((g: Record<string, unknown>, i: number) => ({
                       id: g.id as string,
-                      // Last goal gets the remainder to ensure exact 100%
                       weightage: i === draftGoals.length - 1
-                        ? Math.round((100 - perGoal * (draftGoals.length - 1)) * 10) / 10
+                        ? Math.round((remainingForDraft - perGoal * (draftGoals.length - 1)) * 10) / 10
                         : perGoal,
                     }));
                     rebalanceMutation.mutate(updates);
@@ -254,12 +259,21 @@ export default function EmployeeGoalsPage() {
                 </Button>
               </>
             )}
-            {canSubmit && (
-              <Button size="sm" onClick={handleBulkSubmit} disabled={bulkSubmit.isPending} className="ml-auto">
-                <Send className="w-3.5 h-3.5 mr-1.5" />
-                {bulkSubmit.isPending ? "Submitting..." : "Submit All Goals"}
-              </Button>
+            {nonDraftWeightage > 100 && (
+              <span className="text-xs text-red-500 font-medium ml-2">
+                Approved/submitted goals already exceed 100% — contact your manager to adjust.
+              </span>
             )}
+            <Button
+              size="sm"
+              onClick={handleBulkSubmit}
+              disabled={bulkSubmit.isPending || !canSubmit}
+              className="ml-auto"
+              title={!canSubmit ? (draftGoals.length === 0 ? "No draft goals to submit" : `Total weightage must be 100% (currently ${totalWeightage}%)`) : ""}
+            >
+              <Send className="w-3.5 h-3.5 mr-1.5" />
+              {bulkSubmit.isPending ? "Submitting..." : "Submit All Goals"}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -286,12 +300,12 @@ export default function EmployeeGoalsPage() {
         </Select>
 
         {/* Browse Templates */}
-        <Button variant="outline" onClick={() => setTemplateDialogOpen(true)} disabled={allGoals.length >= 8} className="gap-2">
+        <Button variant="outline" onClick={() => setTemplateDialogOpen(true)} disabled={activeGoals.length >= 8} className="gap-2">
           <BookTemplate className="w-4 h-4" /> Browse Templates
         </Button>
 
         {/* New Goal (blank form) */}
-        <Button disabled={allGoals.length >= 8} onClick={() => setDialogOpen(true)}>
+        <Button disabled={activeGoals.length >= 8} onClick={() => setDialogOpen(true)}>
           <Plus className="w-4 h-4 mr-1" /> New Goal
         </Button>
         <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) { setForm(EMPTY_FORM); setAiResult(null); setRedundancyMatches([]); setRedundancyDismissed(false); } }}>

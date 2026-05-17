@@ -7,11 +7,54 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Shield, ChevronLeft, ChevronRight, ShieldCheck, ShieldAlert, Loader2 } from "lucide-react";
+import { Shield, ChevronLeft, ChevronRight, ShieldCheck, ShieldAlert, Loader2, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { formatDateTime } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+
+const FIELD_LABELS: Record<string, string> = {
+  status: "Status", score: "Score", quarter: "Quarter", progressStatus: "Progress",
+  count: "Count", title: "Title", weightage: "Weightage", target: "Target",
+  rejectReason: "Reject Reason", returnReason: "Return Reason", trigger: "Trigger",
+  escalateTo: "Escalate To", lockedCount: "Locked", content: "Content",
+  isInternal: "Internal", cycleId: "Cycle", templateId: "Template",
+};
+
+function formatValue(key: string, val: unknown): string {
+  if (val === null || val === undefined) return "—";
+  if (typeof val === "boolean") return val ? "Yes" : "No";
+  if (typeof val === "number") return String(val);
+  if (typeof val === "string") return val.replace(/_/g, " ");
+  return String(val);
+}
+
+function AuditDetails({ value }: { value: unknown }) {
+  const [expanded, setExpanded] = useState(false);
+  if (!value || typeof value !== "object") return <span className="text-slate-400">—</span>;
+
+  const entries = Object.entries(value as Record<string, unknown>).filter(
+    ([k]) => !["cycleId", "entityId"].includes(k)
+  );
+  const visible = expanded ? entries : entries.slice(0, 2);
+
+  return (
+    <div className="flex flex-wrap items-center gap-1">
+      {visible.map(([k, v]) => (
+        <span key={k} className="inline-flex items-center gap-1 rounded-md bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-xs">
+          <span className="text-slate-400">{FIELD_LABELS[k] ?? k}:</span>
+          <span className="font-medium text-slate-700 dark:text-slate-200 max-w-[120px] truncate">{formatValue(k, v)}</span>
+        </span>
+      ))}
+      {entries.length > 2 && (
+        <button onClick={() => setExpanded(e => !e)} className="text-xs text-blue-500 hover:underline flex items-center gap-0.5">
+          {expanded ? "less" : `+${entries.length - 2} more`}
+          <ChevronDown className={`w-3 h-3 transition-transform ${expanded ? "rotate-180" : ""}`} />
+        </button>
+      )}
+    </div>
+  );
+}
 
 const actionColors: Record<string, string> = {
   GOAL_CREATED: "bg-blue-100 text-blue-700",
@@ -154,8 +197,8 @@ export default function AdminAuditPage() {
                           <span className="text-xs text-slate-400 ml-1">({String((log.goal as Record<string, unknown>).title)})</span>
                         )}
                       </td>
-                      <td className="p-4 text-xs text-slate-500 max-w-[200px] truncate">
-                        {log.newValue ? JSON.stringify(log.newValue).slice(0, 80) : "—"}
+                      <td className="p-4 max-w-[260px]">
+                        <AuditDetails value={log.newValue ?? log.oldValue} />
                       </td>
                     </tr>
                   ))

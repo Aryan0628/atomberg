@@ -13,8 +13,16 @@ async function seedAudit(
   const last = await prisma.auditLog.findFirst({ orderBy: { createdAt: "desc" } });
   const previousHash = last?.hash ?? "GENESIS";
   const payload = JSON.stringify({
-    userId: entry.userId, action: entry.action, entityType: entry.entityType,
-    entityId: entry.entityId, newValue: entry.newValue ?? null, createdAt: entry.createdAt.toISOString(),
+    userId: entry.userId,
+    action: entry.action,
+    entityType: entry.entityType,
+    entityId: entry.entityId,
+    goalId: entry.goalId ?? null,
+    oldValue: entry.oldValue ?? null,
+    newValue: entry.newValue ?? null,
+    ipAddress: "unknown",
+    userAgent: "unknown",
+    createdAt: entry.createdAt.toISOString(),
   });
   const hash = createHash("sha256").update(payload + previousHash).digest("hex");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -199,8 +207,8 @@ async function main() {
       createdBy: admin.id,
       goalSettingOpen: new Date("2026-05-01T00:00:00Z"),
       goalSettingClose: new Date("2026-05-31T23:59:59Z"),
-      q1Open: new Date("2026-07-01T00:00:00Z"),
-      q1Close: new Date("2026-07-31T23:59:59Z"),
+      q1Open: new Date("2026-05-01T00:00:00Z"),
+      q1Close: new Date("2026-05-31T23:59:59Z"),
       q2Open: new Date("2026-10-01T00:00:00Z"),
       q2Close: new Date("2026-10-31T23:59:59Z"),
       q3Open: new Date("2027-01-01T00:00:00Z"),

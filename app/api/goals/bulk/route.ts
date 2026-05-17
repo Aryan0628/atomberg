@@ -33,14 +33,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Goal setting window is closed" }, { status: 403 });
   }
 
-  const goals = await prisma.goal.findMany({
-    where: { ownerId: session.user.id, cycleId, status: "DRAFT" },
+  const allGoals = await prisma.goal.findMany({
+    where: { ownerId: session.user.id, cycleId },
   });
 
-  if (goals.length === 0) return NextResponse.json({ error: "No draft goals to submit" }, { status: 400 });
-  if (goals.length > 8) return NextResponse.json({ error: "Maximum 8 goals per employee per cycle" }, { status: 400 });
+  // REJECTED goals are excluded — their slot and weightage are freed up
+  const activeGoals = allGoals.filter((g) => g.status !== "REJECTED");
+  const goals = allGoals.filter((g) => g.status === "DRAFT");
 
-  const totalWeightage = goals.reduce((sum, g) => sum + g.weightage, 0);
+  if (goals.length === 0) return NextResponse.json({ error: "No draft goals to submit" }, { status: 400 });
+  if (activeGoals.length > 8) return NextResponse.json({ error: "Maximum 8 goals per employee per cycle" }, { status: 400 });
+
+  // Total weightage must equal 100% across all active (non-rejected) goals
+  const totalWeightage = activeGoals.reduce((sum, g) => sum + g.weightage, 0);
   if (Math.abs(totalWeightage - 100) > 0.01) {
     return NextResponse.json(
       { error: `Total weightage must be exactly 100%. Currently: ${totalWeightage.toFixed(1)}%`, current: totalWeightage },

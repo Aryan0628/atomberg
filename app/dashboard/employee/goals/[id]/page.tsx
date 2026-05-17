@@ -2,19 +2,71 @@
 "use client";
 
 import { useGoal } from "@/hooks/useGoals";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { getGoalStatusColor, getUoMLabel, getUoMColor, formatDate, formatScore } from "@/lib/utils";
 import { getScoreColor } from "@/lib/scoring";
-import { Target, Weight, BarChart3, CheckCircle2, XCircle, RotateCcw, Lock, FileText, ClipboardCheck } from "lucide-react";
+import { Target, Weight, BarChart3, CheckCircle2, XCircle, RotateCcw, Lock, FileText, ClipboardCheck, ArrowLeft, Pencil } from "lucide-react";
 import { GoalCommentThread } from "@/components/shared/GoalCommentThread";
 import Link from "next/link";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export default function GoalDetailPage() {
   const params = useParams();
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: goal, isLoading } = useGoal(params.id as string);
+  const [editOpen, setEditOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editForm, setEditForm] = useState<Record<string, string>>({});
+
+  function openEdit() {
+    if (!goal) return;
+    setEditForm({
+      title: goal.title ?? "",
+      description: goal.description ?? "",
+      target: goal.target != null ? String(goal.target) : "",
+      weightage: String(goal.weightage ?? ""),
+    });
+    setEditOpen(true);
+  }
+
+  async function saveEdit() {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/goals/${params.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editForm.title,
+          description: editForm.description || undefined,
+          target: editForm.target ? Number(editForm.target) : undefined,
+          weightage: Number(editForm.weightage),
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to save");
+      }
+      toast.success("Goal updated — status reset to Draft");
+      setEditOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["goal", params.id] });
+      router.refresh();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   if (isLoading) {
     return (
@@ -36,7 +88,10 @@ export default function GoalDetailPage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      {/* Header */}
+      {/* Back + Header */}
+      <Link href="/dashboard/employee/goals" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-1">
+        <ArrowLeft className="w-4 h-4" /> Back to Goals
+      </Link>
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{goal.title}</h1>
@@ -44,9 +99,16 @@ export default function GoalDetailPage() {
             <p className="text-muted-foreground mt-1">{goal.description}</p>
           )}
         </div>
-        <Badge className={`${getGoalStatusColor(goal.status)} font-normal text-sm px-3 py-1`} variant="secondary">
-          {goal.status.replace("_", " ")}
-        </Badge>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {["RETURNED", "DRAFT"].includes(goal.status) && (
+            <Button size="sm" variant="outline" className="gap-1.5" onClick={openEdit}>
+              <Pencil className="w-3.5 h-3.5" /> Edit Goal
+            </Button>
+          )}
+          <Badge className={`${getGoalStatusColor(goal.status)} font-normal text-sm px-3 py-1`} variant="secondary">
+            {goal.status.replace("_", " ")}
+          </Badge>
+        </div>
       </div>
 
       {/* Key Metrics */}
@@ -224,6 +286,46 @@ export default function GoalDetailPage() {
 
       {/* Comment Thread */}
       <GoalCommentThread goalId={goal.id} />
+
+      {/* Edit Dialog (DRAFT / RETURNED goals) */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="w-4 h-4" /> Edit Goal
+            </DialogTitle>
+          </DialogHeader>
+          {goal.returnReason && (
+            <div className="text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+              <span className="font-medium">Return reason:</span> {goal.returnReason}
+            </div>
+          )}
+          <div className="space-y-4">
+            <div>
+              <Label>Title</Label>
+              <Input value={editForm.title ?? ""} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Description</Label>
+              <Textarea value={editForm.description ?? ""} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} rows={3} />
+            </div>
+            {goal.target != null && (
+              <div>
+                <Label>Target{goal.uomUnit ? ` (${goal.uomUnit})` : ""}</Label>
+                <Input type="number" value={editForm.target ?? ""} onChange={e => setEditForm(f => ({ ...f, target: e.target.value }))} />
+              </div>
+            )}
+            <div>
+              <Label>Weightage (%)</Label>
+              <Input type="number" min={10} max={100} value={editForm.weightage ?? ""} onChange={e => setEditForm(f => ({ ...f, weightage: e.target.value }))} />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
+              <Button onClick={saveEdit} disabled={saving}>{saving ? "Saving…" : "Save & Reset to Draft"}</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
