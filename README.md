@@ -74,49 +74,58 @@ AtomQuest digitises the entire annual goal lifecycle at Atomberg Technologies. E
 │  ├── goals/        cycles/       users/                         │
 │  ├── analytics/    audit/        notifications/                 │
 │  ├── ai/           export/       templates/                     │
-│  └── cron/escalate + cron/lock-goals (Vercel Cron)             │
+│  ├── kafka/consumer              qstash/setup                   │
+│  └── cron/escalate + cron/lock-goals (Vercel Cron — 2 slots)  │
 │                                                                 │
 │  Core Library (lib/)                                            │
 │  ├── auth.ts       db.ts         scoring.ts                     │
 │  ├── audit.ts      escalation.ts notifications.ts               │
 │  ├── ai-client.ts  redis.ts      export.ts                      │
+│  ├── kafka.ts      cycle.ts      cache.ts                       │
 │  └── validations.ts weightage.ts teams.ts                       │
 └──────────────┬──────────────────────────┬───────────────────────┘
                │                          │
     ┌──────────┴──────────┐    ┌──────────┴──────────────────┐
     │                     │    │                              │
     ▼                     ▼    ▼                              ▼
-┌──────────┐   ┌──────────────────┐            ┌─────────────────────┐
-│PostgreSQL│   │  Upstash Redis   │            │ Python AI Service   │
-│(Neon.tech│   │                  │            │ (Railway · Docker)  │
-│          │   │ · Rate limiting  │            │                     │
-│ Prisma 5 │   │ · Escalation     │            │ FastAPI + LangGraph │
-│ SHA-256  │   │   dedup (24h)    │            │                     │
-│ hash     │   │ · Cache keys     │            │ /evaluate           │
-│ chain on │   │                  │            │  brd_enforcer       │
-│ AuditLog │   └──────────────────┘            │  smart_analyzer     │
-│          │                                   │  semantic_matcher   │
-│ 13 models│                                   │  output_formatter   │
-└──────────┘                                   │                     │
-                                               │ /review/synthesize  │
-                                               │  review_analyzer    │
-                                               │  review_enricher    │
-                                               │  review_scorer      │
-                                               │  review_composer    │
-                                               │                     │
-                                               │ /goals/check-       │
-                                               │  redundancy         │
-                                               │  redundancy_embedder│
-                                               │  redundancy_ranker  │
-                                               │  redundancy_recomm. │
-                                               │                     │
-                                               │ HMAC-SHA256 auth    │
-                                               │ Circuit breaker     │
-                                               │ Gemini fallback     │
-                                               └─────────────────────┘
+┌──────────┐   ┌──────────────────────┐       ┌─────────────────────┐
+│PostgreSQL│   │  Upstash Redis       │       │ Python AI Service   │
+│(Neon.tech│   │                      │       │ (Railway · Docker)  │
+│          │   │ · Rate limiting      │       │                     │
+│ Prisma 5 │   │ · Escalation         │       │ FastAPI + LangGraph │
+│ SHA-256  │   │   dedup (24h)        │       │                     │
+│ hash     │   │ · Response cache     │       │ /evaluate           │
+│ chain on │   │ · Audit last-hash    │       │  brd_enforcer       │
+│ AuditLog │   └──────────────────────┘       │  smart_analyzer     │
+│          │                                  │  semantic_matcher   │
+│ 13 models│   ┌──────────────────────┐       │  output_formatter   │
+└──────────┘   │  Upstash Kafka       │       │                     │
+               │  (goal-events topic) │       │ /review/synthesize  │
+               │                      │       │  review_analyzer    │
+               │  Producer: API routes│       │  review_enricher    │
+               │  · goal.submitted    │       │  review_scorer      │
+               │  · goal.approved     │       │  review_composer    │
+               │  · goal.rejected     │       │                     │
+               │  · goal.returned     │       │ /goals/check-       │
+               │  · goal.shared       │       │  redundancy         │
+               │                      │       │  redundancy_embedder│
+               │  Consumer: every 10m │       │  redundancy_ranker  │
+               │  triggered by QStash │       │  redundancy_recomm. │
+               └──────────┬───────────┘       │                     │
+                          │                   │ HMAC-SHA256 auth    │
+               ┌──────────┴───────────┐       │ Circuit breaker     │
+               │  Upstash QStash      │       │ Gemini fallback     │
+               │                      │       └─────────────────────┘
+               │  Schedules consumer  │
+               │  every 10 minutes    │
+               │  Free: 500 msgs/day  │
+               │  Independent of      │
+               │  Vercel cron quota   │
+               └──────────────────────┘
 
 ┌──────────────────────┐       ┌──────────────────────────┐
 │  Resend + React Email│       │  Microsoft Teams Webhook │
+│  (via Kafka consumer)│       │  (via Kafka consumer)    │
 │                      │       │                          │
 │  6 templates:        │       │  · Goal submitted        │
 │  · Goal submitted    │       │  · Checkin window open   │
@@ -132,17 +141,22 @@ AtomQuest digitises the entire annual goal lifecycle at Atomberg Technologies. E
 
 ```
 Browser
-  → middleware.ts  (JWT verify + role guard)
-  → API Route      (Zod validation + auth check)
-  → Prisma query
-  → writeAudit()   (SHA-256 hash chain)
-  → invalidateCache()
-  → Response
-  → TanStack Query cache update
-  → UI re-render
+  → middleware.ts      (JWT verify + role guard)
+  → API Route          (Zod validation + auth check)
+  → Prisma transaction (DB write + writeAudit in one commit)
+  → invalidateCache()  (Redis + in-memory)
+  → kafkaProduce()     (fire-and-forget — never blocks response)
+  → Response           (← returned here, ~5ms after kafkaProduce enqueues)
+
+   ↓ async, up to 10 min later
+  Upstash QStash triggers /api/kafka/consumer
+  → kafkaConsume()     (reads batch from Upstash Kafka REST API)
+  → createNotification() (DB insert per user)
+  → sendEmail()        (Resend)
+  → sendTeamsCard()    (optional webhook)
 ```
 
-### Cron Jobs (Vercel)
+### Cron Jobs (Vercel Hobby — 2 slots used)
 
 ```
 02:30 UTC daily  →  /api/cron/escalate    →  runEscalationEngine()
@@ -151,6 +165,20 @@ Browser
 
 00:00 UTC hourly →  /api/cron/lock-goals  →  Auto-lock APPROVED goals
                                                when goalSettingClose passes
+```
+
+### Kafka Consumer (QStash — independent of Vercel cron quota)
+
+```
+every 10 minutes  →  Upstash QStash  →  /api/kafka/consumer
+                                          Reads goal-events topic
+                                          Fans out: email + Teams + in-app
+
+Auth: QStash cryptographic signature (Upstash-Signature header)
+      OR CRON_SECRET bearer token (manual admin trigger)
+
+Fallback: if UPSTASH_KAFKA_REST_URL is unset, API routes call
+          email/notification directly (identical to pre-Kafka behaviour)
 ```
 
 ---
@@ -172,7 +200,9 @@ Browser
 | Export | xlsx (SheetJS) | Excel export with proper formatting |
 | Toasts | Sonner | In-app toasts for every mutation |
 | Rate Limiting | Upstash Redis | API protection + escalation deduplication |
-| Cron | Vercel Cron Jobs | Escalation engine + auto-lock goals |
+| Async Events | Upstash Kafka | Durable event bus for goal lifecycle side-effects |
+| HTTP Scheduler | Upstash QStash | Triggers Kafka consumer every 10 min, no Vercel cron slot |
+| Cron | Vercel Cron Jobs | Escalation engine + auto-lock goals (2 slots on Hobby) |
 | AI Service | FastAPI + LangGraph + Gemini | Multi-agent goal evaluation pipeline |
 | AI Deploy | Railway (Docker) | Zero-config Python container deploy |
 | Fonts | Geist Sans + Geist Mono | Mono for scores and audit log values |
@@ -228,6 +258,10 @@ atomberg/
 │   │   ├── shared-goals/route.ts
 │   │   ├── templates/route.ts
 │   │   ├── users/route.ts
+│   │   ├── kafka/
+│   │   │   └── consumer/route.ts       # Kafka consumer — triggered by QStash every 10 min
+│   │   ├── qstash/
+│   │   │   └── setup/route.ts          # One-time admin endpoint to register QStash schedule
 │   │   └── cron/
 │   │       ├── escalate/route.ts       # Daily 02:30 UTC
 │   │       └── lock-goals/route.ts     # Hourly — locks APPROVED goals after close
@@ -291,15 +325,17 @@ atomberg/
 │
 ├── lib/
 │   ├── ai-client.ts                     # HMAC signer + circuit breaker + Gemini fallback
-│   ├── audit.ts                         # SHA-256 hash-chained audit writer
+│   ├── audit.ts                         # SHA-256 hash-chained audit writer (Redis-cached last hash)
 │   ├── auth.ts                          # NextAuth v5 config
-│   ├── cache.ts                         # Redis-backed cache invalidation helpers
-│   ├── db.ts                            # Prisma client singleton
+│   ├── cache.ts                         # Local-first → Redis cache with correct redisDel invalidation
+│   ├── cycle.ts                         # getActiveCycle() shared helper with 60s cache
+│   ├── db.ts                            # Prisma client singleton (pg.Pool max:1 for Neon serverless)
 │   ├── escalation.ts                    # Escalation engine business logic
 │   ├── export.ts                        # CSV + Excel generation (SheetJS)
+│   ├── kafka.ts                         # Upstash Kafka typed event producer + consumer
 │   ├── notifications.ts                 # In-app + Resend email helpers
 │   ├── rate-limit.ts                    # Upstash sliding window rate limiter
-│   ├── redis.ts                         # Upstash Redis client
+│   ├── redis.ts                         # Upstash Redis client (get / set / del)
 │   ├── scoring.ts                       # All 5 UoM formulas + Wellness Score + Forecast
 │   ├── teams.ts                         # Microsoft Teams webhook (graceful no-op)
 │   ├── utils.ts                         # Date helpers, formatters, cn()
@@ -704,29 +740,46 @@ Admin can also trigger manually from `/admin/escalations` → "Run Now" button.
 
 ## Notification System
 
+### Event Bus (Upstash Kafka)
+
+Goal lifecycle side-effects (email, Teams, in-app notifications) are decoupled from the API response via Kafka. The API route commits the DB write and publishes one event — then returns immediately. The consumer processes it asynchronously up to 10 minutes later.
+
+```
+API Route  →  DB commit  →  kafkaProduce()  →  respond (done)
+                                  ↓
+                          Upstash Kafka
+                          goal-events topic
+                                  ↓  (every 10 min, via QStash)
+                          /api/kafka/consumer
+                          ├── createNotification()  (DB)
+                          ├── sendEmail()           (Resend)
+                          └── sendTeamsCard()       (optional webhook)
+```
+
+**Fallback:** if `UPSTASH_KAFKA_REST_URL` is not set, `isKafkaConfigured()` returns false and API routes call email/notification directly in the same request (identical to pre-Kafka behaviour — nothing breaks).
+
 ### In-App Notifications
 
-- Stored in `Notification` model, fetched every 60s
-- Bell icon in Header with unread count badge
+- Stored in `Notification` model, created by the Kafka consumer
+- Bell icon in Header with unread count badge, fetched every 60s
 - Dropdown: last 10 notifications with color-coded icons, timestamps, deep-links
 - "Mark all read" button
 
 ### Email Triggers
 
-| Event | Recipient |
-|---|---|
-| Employee bulk submits goals | Manager |
-| Goal approved | Employee |
-| Goal rejected (with reason) | Employee |
-| Goal returned for rework | Employee |
-| Escalation fires | Employee / Manager / Skip-level / HR |
-| New user created | New user (welcome + temp password) |
+| Event | Recipient | Path |
+|---|---|---|
+| Employee bulk submits goals | Manager | Kafka `goal.submitted` event |
+| Goal approved | Employee | Kafka `goal.approved` event |
+| Goal rejected (with reason) | Employee | Kafka `goal.rejected` event |
+| Goal returned for rework | Employee | Kafka `goal.returned` event |
+| Escalation fires | Employee / Manager / Skip-level / HR | Direct (escalation cron) |
+| New user created | New user (welcome + temp password) | Direct |
 
 ### Microsoft Teams (Optional)
 
-`lib/teams.ts` — sends MessageCard via incoming webhook alongside emails for:
+`lib/teams.ts` — sends MessageCard via incoming webhook. Triggered by the Kafka consumer alongside email for:
 - Goal submission → manager's channel
-- Check-in window opens → team channel
 - Escalation run summary → HR/Admin channel
 
 Gracefully skips (no error, no log) if `TEAMS_WEBHOOK_URL` is not set.
@@ -879,39 +932,54 @@ Manager SLA:  ████████░░ 82% approved within 5 days
 ## Environment Variables
 
 ```bash
-# Database (Neon.tech)
+# ── Database (Neon.tech) ─────────────────────────────────────────
 DATABASE_URL="postgresql://user:pass@host/db?sslmode=require&pgbouncer=true"
 DIRECT_URL="postgresql://user:pass@host/db?sslmode=require"
 
-# Auth
+# ── Auth ─────────────────────────────────────────────────────────
 NEXTAUTH_SECRET=""           # openssl rand -base64 32
 NEXTAUTH_URL="http://localhost:3000"
 
-# Email
+# ── Email (Resend.com — free: 100 emails/day) ────────────────────
 RESEND_API_KEY="re_..."
 
-# Redis (Upstash)
+# ── Upstash Redis (free: 10K cmds/day) ──────────────────────────
 UPSTASH_REDIS_REST_URL="https://..."
 UPSTASH_REDIS_REST_TOKEN="..."
 
-# Azure AD SSO (optional — grayed button in demo if absent)
+# ── Upstash Kafka (free: 10K msgs/day) ──────────────────────────
+# Create a topic named "goal-events" in the Upstash Kafka dashboard.
+# Leave all three empty to skip Kafka — API routes fall back to direct calls.
+UPSTASH_KAFKA_REST_URL="https://..."
+UPSTASH_KAFKA_REST_USERNAME="..."
+UPSTASH_KAFKA_REST_PASSWORD="..."
+
+# ── Upstash QStash (free: 500 msgs/day) ─────────────────────────
+# Used to trigger /api/kafka/consumer every 10 min (no Vercel cron slot needed).
+# After first deploy: call POST /api/qstash/setup once to register the schedule.
+QSTASH_TOKEN="..."
+QSTASH_CURRENT_SIGNING_KEY="..."
+QSTASH_NEXT_SIGNING_KEY="..."
+
+# ── Azure AD SSO (optional — grayed button if absent) ────────────
 AZURE_AD_CLIENT_ID=""
 AZURE_AD_CLIENT_SECRET=""
 AZURE_AD_TENANT_ID=""
 
-# AI Microservice
+# ── AI Microservice (Railway) ────────────────────────────────────
 GEMINI_API_KEY=""            # Google AI Studio — free tier
 AI_SERVICE_URL=""            # Railway service URL after deploy
-AI_SERVICE_SECRET=""         # openssl rand -hex 32 — same in Vercel + Railway
+AI_SERVICE_SECRET=""         # openssl rand -hex 32 — same value in Vercel + Railway
 
-# Cron security
+# ── Cron / QStash security ───────────────────────────────────────
 CRON_SECRET=""               # openssl rand -base64 32
+                             # Used by: /api/cron/*, /api/kafka/consumer (manual trigger)
 
-# Demo mode (enables role switcher)
+# ── App config ───────────────────────────────────────────────────
 NEXT_PUBLIC_DEMO_MODE="true"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
-# Teams (optional — silently skipped if empty)
+# ── Teams (optional — silently skipped if empty) ─────────────────
 TEAMS_WEBHOOK_URL=""
 ```
 
@@ -979,7 +1047,34 @@ npm run build        # TypeScript check — must return 0 errors
 vercel --prod
 ```
 
-Add all environment variables in the Vercel dashboard. The two cron jobs in `vercel.json` activate automatically.
+Add all environment variables in the Vercel dashboard. The two cron jobs in `vercel.json` (`/api/cron/escalate` and `/api/cron/lock-goals`) activate automatically on Vercel Hobby.
+
+### Register the QStash Schedule (one time after deploy)
+
+```bash
+# Replace with your deployed URL
+curl -X POST https://your-app.vercel.app/api/qstash/setup \
+  -H "Cookie: <your-admin-session-cookie>"
+```
+
+Or log in as Admin → open browser DevTools → run:
+```js
+fetch('/api/qstash/setup', { method: 'POST' }).then(r => r.json()).then(console.log)
+```
+
+Expected response:
+```json
+{ "message": "QStash schedule created", "scheduleId": "...", "cron": "*/10 * * * *" }
+```
+
+This registers a persistent QStash schedule that calls `/api/kafka/consumer` every 10 minutes. You only need to do this once per deployment URL. If you redeploy to a different URL, call `DELETE /api/qstash/setup` first, then `POST` again.
+
+### Create the Kafka Topic
+
+In the [Upstash Console](https://console.upstash.com/kafka):
+1. Create a Kafka cluster (free tier)
+2. Create a topic named **`goal-events`** (1 partition, retention: 1 day)
+3. Copy `REST URL`, `Username`, and `Password` → set as `UPSTASH_KAFKA_REST_URL`, `UPSTASH_KAFKA_REST_USERNAME`, `UPSTASH_KAFKA_REST_PASSWORD` in Vercel
 
 ### AI Service → Railway
 
@@ -996,7 +1091,9 @@ Copy the Railway service URL → set as `AI_SERVICE_URL` in Vercel. Set the same
 |---|---|---|
 | Vercel | Hobby | $0 |
 | Neon PostgreSQL | Free | $0 |
-| Upstash Redis | Free (10k cmd/day) | $0 |
+| Upstash Redis | Free (10K cmd/day) | $0 |
+| Upstash Kafka | Free (10K msg/day) | $0 |
+| Upstash QStash | Free (500 msg/day) | $0 |
 | Resend | Free (100 emails/day) | $0 |
 | Google Gemini | Free tier | $0 |
 | Railway (AI service) | Starter, scales to zero | ~$5 |
