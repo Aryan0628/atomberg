@@ -69,6 +69,15 @@ AtomQuest digitises the entire annual goal lifecycle at Atomberg Technologies. E
 ### Cryptographic Audit Trail — Full lifecycle log with color-coded action badges
 ![Audit trail](docs/screenshots/audit-trail.png)
 
+### Manager Dashboard — Team health, Goal Wellness grades, pending approvals
+![Manager dashboard](docs/screenshots/manager-dashboard.png)
+
+### Admin Org Chart — Interactive D3 hierarchy with role and department labels
+![Org chart](docs/screenshots/org-chart.png)
+
+### Admin Dashboard (Dark Mode) — Org pulse ticker, stat cards, analytics in dark theme
+![Admin dark mode](docs/screenshots/admin-dark-mode.png)
+
 ---
 
 ## Architecture Diagram
@@ -1125,4 +1134,4 @@ Copy the Railway service URL → set as `AI_SERVICE_URL` in Vercel. Set the same
 
 ---
 
-*AtomQuest Hackathon 1.0 · Atomberg Technologies · First place or nothing.*
+*AtomQuest Hackathon 1.0 · Atomberg Technologies*
