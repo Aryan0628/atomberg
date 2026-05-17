@@ -129,19 +129,19 @@ export default function ManagerCheckinsPage() {
       </div>
 
       {checkins?.length === 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center py-12">
-            <ClipboardCheck className="w-12 h-12 text-blue-400 mb-4" />
-            <p className="text-lg font-medium">No check-ins submitted yet</p>
-            <p className="text-sm text-slate-400">Team check-ins will appear here during quarterly review periods</p>
+        <Card className="border-border shadow-sm">
+          <CardContent className="flex flex-col items-center py-16">
+            <ClipboardCheck className="w-12 h-12 text-muted-foreground opacity-50 mb-4" />
+            <p className="text-lg font-semibold text-foreground">No check-ins submitted yet</p>
+            <p className="text-sm text-muted-foreground">Team check-ins will appear here during quarterly review periods</p>
           </CardContent>
         </Card>
       )}
 
       {/* Pending Reviews */}
       {pending.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Awaiting Your Review</h2>
+        <div className="space-y-4">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Awaiting Your Review</h2>
           {pending.map((c) => (
             <CheckinCard key={`${c.id}`} checkin={c} onReview={openReview} />
           ))}
@@ -231,34 +231,35 @@ export default function ManagerCheckinsPage() {
 
 function CheckinCard({ checkin, onReview }: { checkin: Checkin; onReview: (c: Checkin) => void }) {
   return (
-    <Card className="hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
-      <CardContent className="p-4">
+    <Card className="hover:border-primary/50 transition-colors shadow-sm">
+      <CardContent className="p-5">
         <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1 flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="outline">{checkin.quarter}</Badge>
-              <span className="font-medium text-sm">{checkin.employee.name}</span>
-              {checkin.employee.department && <span className="text-xs text-slate-400">{checkin.employee.department}</span>}
+          <div className="space-y-1.5 flex-1">
+            <div className="flex items-center gap-3 flex-wrap">
+              <Badge variant="secondary" className="font-medium text-xs">{checkin.quarter}</Badge>
+              <span className="font-semibold text-sm text-foreground">{checkin.employee.name}</span>
+              {checkin.employee.department && <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{checkin.employee.department}</span>}
             </div>
-            <p className="text-sm text-slate-600 dark:text-slate-400 truncate">{checkin.goal.title}</p>
-            <div className="flex items-center gap-3 text-xs text-slate-400">
+            <p className="text-sm text-muted-foreground truncate">{checkin.goal.title}</p>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-2">
               {checkin.scorePercentage !== null && (
                 <span className={`font-semibold ${getScoreColor(checkin.scorePercentage)}`}>
                   {checkin.scorePercentage.toFixed(1)}%
                 </span>
               )}
               {checkin.actualValue !== null && (
-                <span>Actual: {checkin.actualValue} {checkin.goal.uomUnit || ""}</span>
+                <span className="font-medium">Actual: {checkin.actualValue} {checkin.goal.uomUnit || ""}</span>
               )}
+              <span className="opacity-50">·</span>
               {checkin.submittedAt && <span>Submitted {formatDate(checkin.submittedAt)}</span>}
             </div>
             {checkin.managerCheckedIn && checkin.managerComment && (
-              <p className="text-xs text-slate-500 mt-1 italic">Your review: {checkin.managerComment.slice(0, 60)}{checkin.managerComment.length > 60 ? "..." : ""}</p>
+              <p className="text-xs text-muted-foreground mt-2 italic bg-muted/50 p-2 rounded border border-border">Your review: {checkin.managerComment.slice(0, 60)}{checkin.managerComment.length > 60 ? "..." : ""}</p>
             )}
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-3 flex-shrink-0">
             {checkin.managerCheckedIn ? (
-              <CheckCircle className="w-4 h-4 text-green-500" />
+              <CheckCircle className="w-4 h-4 text-emerald-500" />
             ) : (
               <Clock className="w-4 h-4 text-amber-500" />
             )}

@@ -214,27 +214,27 @@ export default function EmployeeGoalsPage() {
   return (
     <div className="space-y-6">
       {/* Weightage Meter */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+      <Card className="shadow-sm border-border">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-semibold text-foreground">
               Total Weightage: {totalWeightage}%
             </span>
-            <span className={`text-sm font-medium ${Math.abs(totalWeightage - 100) < 0.01 ? "text-green-600" : "text-amber-600"}`}>
+            <span className={`text-xs font-semibold ${Math.abs(totalWeightage - 100) < 0.01 ? "text-emerald-500" : "text-amber-500"}`}>
               {Math.abs(totalWeightage - 100) < 0.01 ? "✓ Complete" : `${100 - totalWeightage}% remaining`}
             </span>
           </div>
           <Progress value={Math.min(totalWeightage, 100)} className="h-2" />
-          <div className="flex items-center gap-2 mt-3 flex-wrap">
-            <span className="text-xs text-slate-500">{allGoals.length}/8 goals</span>
+          <div className="flex items-center gap-3 mt-4 flex-wrap">
+            <span className="text-xs font-medium text-muted-foreground">{allGoals.length}/8 goals</span>
             {draftGoals.length >= 2 && Math.abs(totalWeightage - 100) > 0.01 && (
               <>
-                <span className="text-xs text-amber-600">
-                  Weightage ≠ 100%. Auto-balance {draftGoals.length} draft goals equally?
+                <span className="text-xs text-amber-600 dark:text-amber-400 font-medium ml-2">
+                  Auto-balance {draftGoals.length} draft goals equally?
                 </span>
                 <Button
                   size="sm" variant="outline"
-                  className="h-6 text-xs px-2 border-amber-300 text-amber-700 hover:bg-amber-50"
+                  className="h-7 text-xs px-3 border-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
                   disabled={rebalanceMutation.isPending}
                   onClick={() => {
                     // Distribute 100% equally across all draft goals
@@ -255,7 +255,7 @@ export default function EmployeeGoalsPage() {
             )}
             {canSubmit && (
               <Button size="sm" onClick={handleBulkSubmit} disabled={bulkSubmit.isPending} className="ml-auto">
-                <Send className="w-3 h-3 mr-1" />
+                <Send className="w-3.5 h-3.5 mr-1.5" />
                 {bulkSubmit.isPending ? "Submitting..." : "Submit All Goals"}
               </Button>
             )}
@@ -266,8 +266,8 @@ export default function EmployeeGoalsPage() {
       {/* Filters & Actions */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input placeholder="Search goals..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="Search goals..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-10 bg-card" />
         </div>
         <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v || "ALL")}>
           <SelectTrigger className="w-[140px]">
@@ -411,15 +411,15 @@ export default function EmployeeGoalsPage() {
 
       {/* Goals Grid */}
       {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2">
-          {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-40" />)}
+        <div className="grid gap-6 md:grid-cols-2">
+          {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-40 rounded-xl" />)}
         </div>
       ) : filteredGoals.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center py-12">
-            <Target className="w-12 h-12 text-slate-300 mb-4" />
-            <p className="text-lg font-medium text-slate-600 dark:text-slate-400">No goals found</p>
-            <p className="text-sm text-slate-400 mb-4">Create your first goal to get started</p>
+        <Card className="border-border shadow-sm">
+          <CardContent className="flex flex-col items-center py-16">
+            <Target className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
+            <p className="text-lg font-semibold text-foreground">No goals found</p>
+            <p className="text-sm text-muted-foreground mb-6">Create your first goal to get started</p>
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => setTemplateDialogOpen(true)} className="gap-2">
                 <BookTemplate className="w-4 h-4" /> Browse Templates
@@ -431,40 +431,42 @@ export default function EmployeeGoalsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2">
           {filteredGoals.map((goal: Record<string, unknown>) => (
             <Link key={goal.id as string} href={`/dashboard/employee/goals/${goal.id}`}>
-              <Card className="hover:shadow-md transition-all hover:border-blue-200 dark:hover:border-blue-800 cursor-pointer group h-full">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="text-base group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
+              <Card className="hover:shadow-md transition-all hover:border-primary/50 cursor-pointer group h-full shadow-sm">
+                <CardHeader className="pb-4 pt-6 px-6">
+                  <div className="flex items-start justify-between gap-3">
+                    <CardTitle className="text-base font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">
                       {goal.title as string}
                     </CardTitle>
-                    <Badge className={getGoalStatusColor(goal.status as string)} variant="outline">
+                    <Badge className={`font-normal ${getGoalStatusColor(goal.status as string)}`} variant="secondary">
                       {(goal.status as string).replace(/_/g, " ")}
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-4 px-6 pb-6">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="secondary" className="text-xs">{goal.thrustArea as string}</Badge>
-                    <Badge variant="outline" className={`text-xs ${getUoMColor(goal.uomType as string)}`}>
+                    <Badge variant="outline" className="text-xs text-muted-foreground border-border font-medium">
+                      {goal.thrustArea as string}
+                    </Badge>
+                    <Badge variant="outline" className={`text-xs font-medium border-border ${getUoMColor(goal.uomType as string)}`}>
                       {getUoMLabel(goal.uomType as string)}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-500">Weightage: <span className="font-medium text-slate-700 dark:text-slate-300">{goal.weightage as number}%</span></span>
+                    <span className="text-muted-foreground">Weight: <span className="font-semibold text-foreground">{goal.weightage as number}%</span></span>
                     {goal.latestScore !== null && goal.latestScore !== undefined && (
-                      <span className={`font-medium ${getScoreColor(goal.latestScore as number)}`}>
+                      <span className={`font-semibold ${getScoreColor(goal.latestScore as number)}`}>
                         Score: {formatScore(goal.latestScore as number)}
                       </span>
                     )}
                     {!!goal.target && (
-                      <span className="text-slate-500">Target: <span className="font-medium">{goal.target as number}{goal.uomUnit ? ` ${goal.uomUnit}` : ""}</span></span>
+                      <span className="text-muted-foreground">Target: <span className="font-semibold text-foreground">{goal.target as number}{goal.uomUnit ? ` ${goal.uomUnit}` : ""}</span></span>
                     )}
                   </div>
                   <div className="flex items-center justify-end">
-                    <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 transition-colors" />
+                    <ArrowRight className="w-4 h-4 text-muted-foreground opacity-50 group-hover:opacity-100 group-hover:text-primary transition-all group-hover:translate-x-1" />
                   </div>
                 </CardContent>
               </Card>
@@ -475,42 +477,42 @@ export default function EmployeeGoalsPage() {
 
       {/* Browse Templates Modal */}
       <Dialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen}>
-        <DialogContent className="max-w-xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <BookTemplate className="w-5 h-5 text-blue-500" /> Goal Templates Library
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader className="mb-4">
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <BookTemplate className="w-5 h-5 text-primary" /> Goal Templates Library
             </DialogTitle>
-            <p className="text-sm text-slate-500">Select a template to pre-fill the goal creation form. You can edit any field after.</p>
+            <p className="text-sm text-muted-foreground">Select a template to pre-fill the goal creation form. You can edit any field after.</p>
           </DialogHeader>
-          <div className="space-y-4 mt-2">
+          <div className="space-y-6">
             {Object.keys(templatesByThrust).length === 0 && (
-              <p className="text-sm text-slate-400 text-center py-8">No templates available yet</p>
+              <p className="text-sm text-muted-foreground text-center py-12">No templates available yet</p>
             )}
             {Object.entries(templatesByThrust).map(([thrustArea, tmplts]) => (
-              <div key={thrustArea} className="space-y-2">
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{thrustArea}</h3>
-                <div className="space-y-2">
+              <div key={thrustArea} className="space-y-3">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{thrustArea}</h3>
+                <div className="grid grid-cols-1 gap-3">
                   {tmplts.map((t) => (
                     <button
                       key={t.id as string}
                       type="button"
                       onClick={() => applyTemplate(t)}
-                      className="w-full text-left p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all group"
+                      className="w-full text-left p-4 rounded-xl border border-border bg-card hover:border-primary/50 hover:bg-muted/30 transition-all group shadow-sm"
                     >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="space-y-1 flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate group-hover:text-blue-700 dark:group-hover:text-blue-300">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="space-y-1.5 flex-1 min-w-0">
+                          <p className="font-semibold text-sm truncate text-foreground group-hover:text-primary transition-colors">
                             {String(t.title)}
                           </p>
-                          <div className="flex items-center gap-2 text-xs text-slate-400 flex-wrap">
-                            <span>{getUoMLabel(String(t.uomType))}</span>
-                            {!!t.suggestedTarget && <span>Target: {Number(t.suggestedTarget)} {String(t.uomUnit ?? "")}</span>}
-                            <span>Wtg: {Number(t.suggestedWeightage)}%</span>
-                            <span className="text-slate-300">·</span>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                            <span className="font-medium bg-muted px-2 py-0.5 rounded">{getUoMLabel(String(t.uomType))}</span>
+                            {!!t.suggestedTarget && <span className="font-medium">Target: {Number(t.suggestedTarget)} {String(t.uomUnit ?? "")}</span>}
+                            <span className="font-medium">Wt: {Number(t.suggestedWeightage)}%</span>
+                            <span className="opacity-50">·</span>
                             <span>{Number(t.usageCount)} uses</span>
                           </div>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 flex-shrink-0" />
+                        <ChevronRight className="w-5 h-5 text-muted-foreground opacity-50 group-hover:opacity-100 group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" />
                       </div>
                     </button>
                   ))}

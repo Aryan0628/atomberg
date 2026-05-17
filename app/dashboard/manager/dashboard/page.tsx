@@ -4,59 +4,36 @@ import { useGoals } from "@/hooks/useGoals";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Users, UserCheck, ClipboardCheck, Target, ArrowRight, ChevronRight } from "lucide-react";
+import { Users, UserCheck, ClipboardCheck, Target, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { getGoalStatusColor } from "@/lib/utils";
 import { ActionCenter } from "@/components/shared/ActionCenter";
 import { computeGoalWellness, computeWeightedScore } from "@/lib/scoring";
-import { useRef, useEffect } from "react";
-import { useStaggerIn } from "@/hooks/useGsap";
-import gsap from "gsap";
 
 const GRADE_PILL: Record<string, string> = {
-  A: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400",
-  B: "bg-blue-100   text-blue-700   dark:bg-blue-500/15   dark:text-blue-400",
-  C: "bg-amber-100  text-amber-700  dark:bg-amber-500/15  dark:text-amber-400",
-  D: "bg-red-100    text-red-700    dark:bg-red-500/15    dark:text-red-400",
+  A: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20",
+  B: "bg-blue-500/10   text-blue-600   dark:text-blue-400   border border-blue-500/20",
+  C: "bg-amber-500/10  text-amber-600  dark:text-amber-400  border border-amber-500/20",
+  D: "bg-red-500/10    text-red-600    dark:text-red-400    border border-red-500/20",
 };
 
 function StatCard({
-  label, value, sub, icon: Icon, accent,
+  label, value, sub, icon: Icon, highlight = false,
 }: {
   label: string; value: number | string; sub: string;
-  icon: React.ElementType; accent: string;
+  icon: React.ElementType; highlight?: boolean;
 }) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const numRef  = useRef<HTMLSpanElement>(null);
-
-  useEffect(() => {
-    if (!cardRef.current) return;
-    gsap.fromTo(cardRef.current, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" });
-    const parsed = typeof value === "number" ? value : parseFloat(String(value));
-    if (numRef.current && !isNaN(parsed) && parsed > 0) {
-      gsap.fromTo({ v: 0 }, { v: parsed }, {
-        duration: 0.75, ease: "power2.out",
-        onUpdate() { if (numRef.current) numRef.current.textContent = String(Math.round((this as { targets: () => { v: number }[] }).targets()[0].v)); },
-      });
-    }
-  }, [value]);
-
   return (
-    <div
-      ref={cardRef}
-      className="opacity-0 rounded-xl border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] p-5"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">{label}</p>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1 tabular-nums tracking-tight">
-            <span ref={numRef}>{value}</span>
-          </p>
-          <p className="text-xs text-slate-500 mt-1">{sub}</p>
-        </div>
-        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${accent}`}>
-          <Icon className="w-4 h-4" />
-        </div>
+    <div className="rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-xs font-medium text-muted-foreground">{label}</p>
+        <Icon className={`w-4 h-4 ${highlight ? "text-primary" : "text-muted-foreground"}`} />
+      </div>
+      <div>
+        <p className="text-2xl font-semibold text-foreground tracking-tight tabular-nums">
+          {value}
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">{sub}</p>
       </div>
     </div>
   );
@@ -92,41 +69,37 @@ export default function ManagerDashboard() {
     return { id, name: emp.name, ...wellness, goalsCount: empGoals.length, ws };
   });
 
-  const wellnessRef   = useStaggerIn({ delay: 0.2, stagger: 0.05 });
-  const approvalRef   = useStaggerIn({ delay: 0.3, stagger: 0.06 });
-  const teamRef       = useStaggerIn({ delay: 0.35, stagger: 0.05 });
-
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <ActionCenter />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Pending Approvals" value={pendingApprovals.length} sub="Goals awaiting review"    icon={UserCheck}     accent="bg-amber-50   text-amber-600  dark:bg-amber-500/10  dark:text-amber-400" />
-        <StatCard label="Team Members"      value={totalReports}            sub="Direct reports"           icon={Users}         accent="bg-indigo-50  text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400" />
-        <StatCard label="Approved Goals"    value={approvedGoals.length}    sub="Active goals"             icon={ClipboardCheck} accent="bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400" />
-        <StatCard label="Total Goals"       value={allGoals.length}         sub="Across all reports"       icon={Target}        accent="bg-blue-50    text-blue-600   dark:bg-blue-500/10   dark:text-blue-400" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard label="Pending Approvals" value={pendingApprovals.length} sub="Goals awaiting review"    icon={UserCheck} highlight={pendingApprovals.length > 0} />
+        <StatCard label="Team Members"      value={totalReports}            sub="Direct reports"           icon={Users} />
+        <StatCard label="Approved Goals"    value={approvedGoals.length}    sub="Active goals"             icon={ClipboardCheck} />
+        <StatCard label="Total Goals"       value={allGoals.length}         sub="Across all reports"       icon={Target} />
       </div>
 
       {/* Team Wellness */}
       {employeeWellness.length > 0 && (
-        <div className="rounded-xl border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-slate-100 dark:border-white/[0.04]">
-            <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Team Wellness</h2>
-            <p className="text-xs text-slate-400 mt-0.5">Based on goal completeness, weightage, and check-in rates</p>
+        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-border">
+            <h2 className="text-base font-semibold text-foreground">Team Wellness</h2>
+            <p className="text-sm text-muted-foreground mt-1">Based on goal completeness, weightage, and check-in rates</p>
           </div>
           <TooltipProvider>
-            <div ref={wellnessRef} className="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {employeeWellness.map((emp) => (
                 <Tooltip key={emp.id}>
-                  <TooltipTrigger className="w-full text-left rounded-lg border border-slate-100 dark:border-white/[0.06] hover:border-slate-200 dark:hover:border-white/[0.1] hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors focus:outline-none p-3">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${GRADE_PILL[emp.grade] ?? GRADE_PILL.D}`}>
+                  <TooltipTrigger className="w-full text-left rounded-lg border border-border hover:bg-muted/50 transition-colors focus:outline-none p-4 shadow-sm">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 ${GRADE_PILL[emp.grade] ?? GRADE_PILL.D}`}>
                         {emp.grade}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate">{emp.name}</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">
+                        <p className="text-sm font-semibold text-foreground truncate">{emp.name}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
                           {emp.goalsCount} goal{emp.goalsCount !== 1 ? "s" : ""}
                           {emp.ws > 0 ? ` · ${emp.ws.toFixed(0)}%` : ""}
                         </p>
@@ -134,13 +107,13 @@ export default function ManagerDashboard() {
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="max-w-[200px]">
-                    <p className="font-semibold mb-1 text-xs">Wellness {emp.score}/100 — Grade {emp.grade}</p>
+                    <p className="font-semibold mb-2 text-sm">Wellness {emp.score}/100 — Grade {emp.grade}</p>
                     {emp.issues.length > 0 ? (
-                      <ul className="text-xs space-y-0.5 text-slate-300">
+                      <ul className="text-xs space-y-1 text-muted-foreground">
                         {emp.issues.map((issue) => <li key={issue}>· {issue}</li>)}
                       </ul>
                     ) : (
-                      <p className="text-xs text-emerald-400">All checks passed ✓</p>
+                      <p className="text-xs text-emerald-500">All checks passed ✓</p>
                     )}
                   </TooltipContent>
                 </Tooltip>
@@ -152,30 +125,30 @@ export default function ManagerDashboard() {
 
       {/* Pending Approvals */}
       {pendingApprovals.length > 0 && (
-        <div className="rounded-xl border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-white/[0.04]">
+        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border">
             <div>
-              <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Pending Approvals</h2>
+              <h2 className="text-base font-semibold text-foreground">Pending Approvals</h2>
             </div>
             <Link
               href="/dashboard/manager/approvals"
-              className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 flex items-center gap-0.5"
+              className="text-sm font-medium text-primary hover:underline flex items-center gap-1"
             >
-              Review all <ChevronRight className="w-3 h-3" />
+              Review all <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
-          <div ref={approvalRef} className="divide-y divide-slate-100 dark:divide-white/[0.04]">
+          <div className="divide-y divide-border">
             {pendingApprovals.map((goal: Record<string, unknown>) => (
-              <div key={goal.id as string} className="flex items-center gap-4 px-5 py-3.5">
+              <div key={goal.id as string} className="flex items-center gap-4 px-6 py-4">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{goal.title as string}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-sm font-medium text-foreground truncate">{goal.title as string}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
                     {((goal.owner as Record<string, unknown>)?.name as string) ?? "Unknown"}
                     {" · "}{goal.thrustArea as string}
                     {" · "}{goal.weightage as number}% weight
                   </p>
                 </div>
-                <Badge className={`text-[10px] shrink-0 ${getGoalStatusColor(goal.status as string)}`}>
+                <Badge className={`text-xs shrink-0 font-normal ${getGoalStatusColor(goal.status as string)}`} variant="secondary">
                   {goal.status as string}
                 </Badge>
               </div>
@@ -185,31 +158,31 @@ export default function ManagerDashboard() {
       )}
 
       {/* Team goals overview */}
-      <div className="rounded-xl border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-white/[0.04]">
-          <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Team Goals</h2>
+      <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2 className="text-base font-semibold text-foreground">Team Goals</h2>
           <Link
             href="/dashboard/manager/team"
-            className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 flex items-center gap-0.5"
+            className="text-sm font-medium text-primary hover:underline flex items-center gap-1"
           >
-            Full view <ChevronRight className="w-3 h-3" />
+            Full view <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
 
         {isLoading ? (
-          <div className="p-5 space-y-3">
-            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 rounded-lg" />)}
+          <div className="p-6 space-y-4">
+            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 rounded-lg" />)}
           </div>
         ) : (
-          <div ref={teamRef} className="divide-y divide-slate-100 dark:divide-white/[0.04]">
+          <div className="divide-y divide-border">
             {allGoals.slice(0, 8).map((goal: Record<string, unknown>) => (
-              <div key={goal.id as string} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
-                <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 flex-shrink-0" />
+              <div key={goal.id as string} className="flex items-center gap-4 px-6 py-4 hover:bg-muted/50 transition-colors">
+                <div className="w-2 h-2 rounded-full bg-muted-foreground flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{goal.title as string}</p>
-                  <p className="text-xs text-slate-400">{((goal.owner as Record<string, unknown>)?.name as string) ?? "Unknown"}</p>
+                  <p className="text-sm font-medium text-foreground truncate">{goal.title as string}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{((goal.owner as Record<string, unknown>)?.name as string) ?? "Unknown"}</p>
                 </div>
-                <Badge className={`text-[10px] shrink-0 ${getGoalStatusColor(goal.status as string)}`} variant="outline">
+                <Badge className={`text-xs shrink-0 font-normal ${getGoalStatusColor(goal.status as string)}`} variant="secondary">
                   {(goal.status as string).replace("_", " ")}
                 </Badge>
               </div>

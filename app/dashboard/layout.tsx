@@ -10,11 +10,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { sidebarCollapsed } = useAppStore();
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#080c10]">
+    <div className="min-h-screen bg-background">
       <Sidebar />
       <div className={cn("transition-all duration-300 ease-in-out", sidebarCollapsed ? "ml-[60px]" : "ml-60")}>
         <Header />
-        <main className="p-5 lg:p-7">{children}</main>
+        <main className="p-6 lg:p-8">{children}</main>
       </div>
     </div>
   );
