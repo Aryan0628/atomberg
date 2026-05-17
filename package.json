@@ -24,7 +24,6 @@
     "@react-email/render": "^2.0.8",
     "@tanstack/react-query": "^5.100.10",
     "@tanstack/react-query-devtools": "^5.100.10",
-    "@upstash/kafka": "^1.3.5",
     "@upstash/qstash": "^2.11.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
