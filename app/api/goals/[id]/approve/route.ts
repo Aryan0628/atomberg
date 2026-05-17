@@ -9,6 +9,7 @@ import { prisma } from "@/lib/db";
 import { ManagerApprovalSchema } from "@/lib/validations";
 import { writeAudit } from "@/lib/audit";
 import { createNotification, sendGoalApprovedEmail, sendGoalRejectedEmail } from "@/lib/notifications";
+import { kafkaProduce, isKafkaConfigured } from "@/lib/kafka";
 import { invalidateCache } from "@/lib/cache";
 import { parseJson } from "@/lib/utils";
 import { NextResponse } from "next/server";
@@ -106,20 +107,31 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     invalidateCache(`analytics:manager-effectiveness:${goal.cycleId}`),
   ]);
 
-  // Notifications fire in background after commit
-  Promise.allSettled([
-    action === "APPROVE"
-      ? Promise.all([
-          createNotification({ userId: goal.ownerId, type: "GOAL_APPROVED", title: "Goal approved!", message: `"${goal.title}" approved by your manager.`, link: `/dashboard/employee/goals/${goal.id}` }),
-          sendGoalApprovedEmail(goal.owner, goal.title),
-        ])
-      : action === "REJECT"
-      ? Promise.all([
-          createNotification({ userId: goal.ownerId, type: "GOAL_REJECTED", title: "Goal rejected", message: `"${goal.title}" — Reason: ${rejectReason}`, link: `/dashboard/employee/goals/${goal.id}` }),
-          sendGoalRejectedEmail(goal.owner, goal.title, rejectReason!),
-        ])
-      : createNotification({ userId: goal.ownerId, type: "GOAL_RETURNED", title: "Goal returned for rework", message: `"${goal.title}" — ${returnReason}`, link: `/dashboard/employee/goals/${goal.id}` }),
-  ]);
+  // Kafka: enqueue side-effects so the consumer handles email + in-app notification.
+  // Fallback: fire directly if Kafka is not configured.
+  if (isKafkaConfigured()) {
+    if (action === "APPROVE") {
+      void kafkaProduce({ type: "goal.approved", ownerId: goal.ownerId, ownerName: goal.owner.name, ownerEmail: goal.owner.email, goalId: goal.id, goalTitle: goal.title });
+    } else if (action === "REJECT") {
+      void kafkaProduce({ type: "goal.rejected", ownerId: goal.ownerId, ownerName: goal.owner.name, ownerEmail: goal.owner.email, goalId: goal.id, goalTitle: goal.title, reason: rejectReason! });
+    } else {
+      void kafkaProduce({ type: "goal.returned", ownerId: goal.ownerId, goalId: goal.id, goalTitle: goal.title, reason: returnReason! });
+    }
+  } else {
+    Promise.allSettled([
+      action === "APPROVE"
+        ? Promise.all([
+            createNotification({ userId: goal.ownerId, type: "GOAL_APPROVED", title: "Goal approved!", message: `"${goal.title}" approved by your manager.`, link: `/dashboard/employee/goals/${goal.id}` }),
+            sendGoalApprovedEmail(goal.owner, goal.title),
+          ])
+        : action === "REJECT"
+        ? Promise.all([
+            createNotification({ userId: goal.ownerId, type: "GOAL_REJECTED", title: "Goal rejected", message: `"${goal.title}" — Reason: ${rejectReason}`, link: `/dashboard/employee/goals/${goal.id}` }),
+            sendGoalRejectedEmail(goal.owner, goal.title, rejectReason!),
+          ])
+        : createNotification({ userId: goal.ownerId, type: "GOAL_RETURNED", title: "Goal returned for rework", message: `"${goal.title}" — ${returnReason}`, link: `/dashboard/employee/goals/${goal.id}` }),
+    ]);
+  }
 
   return NextResponse.json({ success: true, action });
 }

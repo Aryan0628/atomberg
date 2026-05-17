@@ -9,6 +9,7 @@ import { writeAudit } from "@/lib/audit";
 import { getActiveCycle } from "@/lib/cycle";
 import { parseJson } from "@/lib/utils";
 import { createNotification } from "@/lib/notifications";
+import { kafkaProduce, isKafkaConfigured } from "@/lib/kafka";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -127,18 +128,28 @@ export async function POST(req: Request) {
     },
   });
 
-  // Notify all recipients in parallel — sequential loop was N × DB writes.
-  void Promise.all(
-    (recipientIds as string[]).map((recipientId) =>
-      createNotification({
-        userId: recipientId,
-        type: "GOAL_SHARED_WITH_YOU",
-        title: `Shared goal assigned: "${parsed.data.title}"`,
-        message: `${session.user.name} assigned a departmental goal to you. Adjust your weightage to include it.`,
-        link: `/dashboard/employee/goals`,
-      })
-    )
-  );
+  // Kafka: single event fans out to all recipient notifications in the consumer.
+  // Fallback: direct parallel inserts if Kafka is not configured.
+  if (isKafkaConfigured()) {
+    void kafkaProduce({
+      type: "goal.shared",
+      recipientIds: recipientIds as string[],
+      goalTitle: parsed.data.title,
+      senderName: session.user.name ?? "Manager",
+    });
+  } else {
+    void Promise.all(
+      (recipientIds as string[]).map((recipientId) =>
+        createNotification({
+          userId: recipientId,
+          type: "GOAL_SHARED_WITH_YOU",
+          title: `Shared goal assigned: "${parsed.data.title}"`,
+          message: `${session.user.name} assigned a departmental goal to you. Adjust your weightage to include it.`,
+          link: `/dashboard/employee/goals`,
+        })
+      )
+    );
+  }
 
   await writeAudit({
     userId: session.user.id,

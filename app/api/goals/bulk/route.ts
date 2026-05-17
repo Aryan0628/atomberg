@@ -10,6 +10,7 @@ import { getActiveCycle } from "@/lib/cycle";
 import { writeAudit } from "@/lib/audit";
 import { createNotification, sendGoalSubmittedEmail } from "@/lib/notifications";
 import { sendTeamsCard } from "@/lib/teams";
+import { kafkaProduce, isKafkaConfigured } from "@/lib/kafka";
 import { invalidateCache } from "@/lib/cache";
 import { parseJson } from "@/lib/utils";
 import { NextResponse } from "next/server";
@@ -83,21 +84,34 @@ export async function POST(req: Request) {
   });
   if (employee?.manager) {
     void invalidateCache(`action-items:${employee.manager.id}`);
-    // Fire notifications in background — response does not wait
-    Promise.allSettled([
-      createNotification({
-        userId: employee.manager.id, type: "GOAL_SUBMITTED_FOR_APPROVAL",
-        title: `${employee.name} submitted goals for review`,
-        message: `${goals.length} goal(s) submitted — total weightage 100%`,
-        link: `/dashboard/manager/approvals`,
-      }),
-      sendGoalSubmittedEmail(employee.manager, employee, goals.length),
-      sendTeamsCard({
-        title: "Goals Submitted for Review",
-        text: `${employee.name} submitted ${goals.length} goals for your review.`,
-        actions: [{ type: "OpenUrl", title: "Review Goals", url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/manager/approvals` }],
-      }),
-    ]);
+    // Kafka: enqueue event so the cron consumer handles email + Teams + in-app.
+    // Fallback: fire directly (void — never blocks response) if Kafka is not configured.
+    if (isKafkaConfigured()) {
+      void kafkaProduce({
+        type: "goal.submitted",
+        managerId: employee.manager.id,
+        managerName: employee.manager.name,
+        managerEmail: employee.manager.email,
+        employeeName: employee.name,
+        employeeEmail: employee.email,
+        goalCount: goals.length,
+      });
+    } else {
+      Promise.allSettled([
+        createNotification({
+          userId: employee.manager.id, type: "GOAL_SUBMITTED_FOR_APPROVAL",
+          title: `${employee.name} submitted goals for review`,
+          message: `${goals.length} goal(s) submitted — total weightage 100%`,
+          link: `/dashboard/manager/approvals`,
+        }),
+        sendGoalSubmittedEmail(employee.manager, employee, goals.length),
+        sendTeamsCard({
+          title: "Goals Submitted for Review",
+          text: `${employee.name} submitted ${goals.length} goals for your review.`,
+          actions: [{ type: "OpenUrl", title: "Review Goals", url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/manager/approvals` }],
+        }),
+      ]);
+    }
   }
 
   return NextResponse.json({ success: true, submitted: goals.length });
