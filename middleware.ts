@@ -4,12 +4,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const roleRoutes: Record<string, string[]> = {
-  "/dashboard/employee": ["EMPLOYEE", "MANAGER", "ADMIN", "HR"],
-  "/dashboard/manager": ["MANAGER", "ADMIN"],
-  "/dashboard/admin": ["ADMIN", "HR"],
-};
-
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 

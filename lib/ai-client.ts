@@ -97,9 +97,23 @@ Respond with ONLY valid JSON:
   if (!res.ok) throw new Error("Gemini fallback failed");
   const json = await res.json();
   const raw = json.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
-  const cleaned = raw.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
+  const cleaned = raw.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
   const parsed = JSON.parse(cleaned);
-  return { ...parsed, semantic_match: { title: "", similarity: 0 } };
+
+  const DEFAULT_SMART = { specific: 5, measurable: 5, achievable: 5, relevant: 5, time_bound: 5 };
+  return {
+    overall_score: typeof parsed.overall_score === "number" ? parsed.overall_score : 5,
+    verdict: (["strong", "acceptable", "needs_work"] as const).includes(parsed.verdict)
+      ? parsed.verdict as GoalEvalResponse["verdict"]
+      : "acceptable",
+    smart_scores: parsed.smart_scores && typeof parsed.smart_scores === "object"
+      ? { ...DEFAULT_SMART, ...parsed.smart_scores }
+      : DEFAULT_SMART,
+    suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
+    improved_title: typeof parsed.improved_title === "string" ? parsed.improved_title : "",
+    brd_issues: Array.isArray(parsed.brd_issues) ? parsed.brd_issues : [],
+    semantic_match: { title: "", similarity: 0 },
+  };
 }
 
 // ─── Review Synthesis Types ──────────────────────────────────────────────────

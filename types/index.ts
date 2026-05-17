@@ -14,14 +14,8 @@ import type {
   GoalComment,
   ThrustArea,
   Role,
-  GoalStatus,
-  ProgressStatus,
   UoMType,
   Quarter,
-  AuditAction,
-  NotificationType,
-  EscalationTrigger,
-  EscalateeTo,
 } from "@/lib/generated/prisma/client";
 
 // Re-export Prisma types for convenience

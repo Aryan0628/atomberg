@@ -143,20 +143,33 @@ export type UserUpdateInput = z.infer<typeof UserUpdateSchema>;
 
 // ─── Cycle Creation ──────────────────────────────────────────
 
-export const CycleCreateSchema = z.object({
-  name: z.string().min(3, "Name must be at least 3 characters"),
-  fiscalYear: z.string().min(4),
-  goalSettingOpen: z.coerce.date(),
-  goalSettingClose: z.coerce.date(),
-  q1Open: z.coerce.date(),
-  q1Close: z.coerce.date(),
-  q2Open: z.coerce.date(),
-  q2Close: z.coerce.date(),
-  q3Open: z.coerce.date(),
-  q3Close: z.coerce.date(),
-  q4Open: z.coerce.date(),
-  q4Close: z.coerce.date(),
-});
+export const CycleCreateSchema = z
+  .object({
+    name: z.string().min(3, "Name must be at least 3 characters"),
+    fiscalYear: z.string().min(4),
+    goalSettingOpen: z.coerce.date(),
+    goalSettingClose: z.coerce.date(),
+    q1Open: z.coerce.date(),
+    q1Close: z.coerce.date(),
+    q2Open: z.coerce.date(),
+    q2Close: z.coerce.date(),
+    q3Open: z.coerce.date(),
+    q3Close: z.coerce.date(),
+    q4Open: z.coerce.date(),
+    q4Close: z.coerce.date(),
+  })
+  .refine((d) => d.goalSettingClose > d.goalSettingOpen, {
+    message: "Goal setting window must close after it opens",
+    path: ["goalSettingClose"],
+  })
+  .refine((d) => d.q1Close > d.q1Open, { message: "Q1 must close after it opens", path: ["q1Close"] })
+  .refine((d) => d.q2Close > d.q2Open, { message: "Q2 must close after it opens", path: ["q2Close"] })
+  .refine((d) => d.q3Close > d.q3Open, { message: "Q3 must close after it opens", path: ["q3Close"] })
+  .refine((d) => d.q4Close > d.q4Open, { message: "Q4 must close after it opens", path: ["q4Close"] })
+  .refine((d) => d.q1Open >= d.goalSettingClose, {
+    message: "Q1 window must start on or after the goal-setting window closes",
+    path: ["q1Open"],
+  });
 
 export type CycleCreateInput = z.infer<typeof CycleCreateSchema>;
 

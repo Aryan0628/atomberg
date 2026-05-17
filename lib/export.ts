@@ -1,12 +1,13 @@
 // lib/export.ts
 // CSV & Excel generation utilities for the Report Center.
-// Uses SheetJS (xlsx) for Excel — judges can open it directly.
+// Uses exceljs (actively maintained, no known prototype-pollution/ReDoS vulns)
+// instead of the abandoned xlsx@0.18.5 package.
 //
-// SECURITY: Both generateExcel and generateCSV neutralise formula injection.
-// Cells starting with = + - @ are prefixed with a single quote so spreadsheet
-// apps treat them as text, preventing macro execution.
+// SECURITY: safeCell() neutralises formula injection — cells starting with
+// = + - @ are prefixed with a single quote so spreadsheet apps treat them
+// as text, preventing macro execution.
 
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 
 /** Prefix any cell value that starts with a spreadsheet formula trigger character. */
 function safeCell(v: unknown): unknown {
@@ -15,37 +16,48 @@ function safeCell(v: unknown): unknown {
 }
 
 /**
- * Generates an Excel file from an array of objects.
+ * Generates an Excel .xlsx file from an array of objects.
  * Returns a Buffer that can be streamed as a response.
  */
-export function generateExcel(rows: object[], sheetName: string): Buffer {
+export async function generateExcel(rows: object[], sheetName: string): Promise<Buffer> {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "AtomQuest Portal";
+  workbook.created = new Date();
+
+  const sheet = workbook.addWorksheet(sheetName);
+
   if (rows.length === 0) {
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["No data"]]), sheetName);
-    return Buffer.from(XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as ArrayBuffer);
+    sheet.addRow(["No data"]);
+    const buf = await workbook.xlsx.writeBuffer();
+    return Buffer.from(buf);
   }
 
-  // Sanitize every cell value before building the sheet
-  const sanitizedRows = rows.map((row) =>
-    Object.fromEntries(
-      Object.entries(row as Record<string, unknown>).map(([k, v]) => [k, safeCell(v)])
-    )
-  );
+  const headers = Object.keys(rows[0]);
 
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(sanitizedRows);
+  // Header row — bold
+  const headerRow = sheet.addRow(headers);
+  headerRow.font = { bold: true };
 
-  // Auto-size columns for readability
-  const colWidths = Object.keys(rows[0]).map((key) => ({
-    wch: Math.max(
-      key.length,
-      ...rows.map((r) => String((r as Record<string, unknown>)[key] ?? "").length)
+  // Auto-size columns
+  sheet.columns = headers.map((h) => ({
+    header: h,
+    key: h,
+    width: Math.max(
+      h.length + 2,
+      ...rows.map((r) => String((r as Record<string, unknown>)[h] ?? "").length + 2)
     ),
   }));
-  ws["!cols"] = colWidths;
 
-  XLSX.utils.book_append_sheet(wb, ws, sheetName);
-  return Buffer.from(XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as ArrayBuffer);
+  // Data rows
+  for (const row of rows) {
+    const sanitized = Object.fromEntries(
+      Object.entries(row as Record<string, unknown>).map(([k, v]) => [k, safeCell(v)])
+    );
+    sheet.addRow(sanitized);
+  }
+
+  const buf = await workbook.xlsx.writeBuffer();
+  return Buffer.from(buf);
 }
 
 /**

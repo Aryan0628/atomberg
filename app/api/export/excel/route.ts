@@ -41,7 +41,7 @@ export async function GET(_req: Request) {
     "Q4 Score": g.checkins.find((c) => c.quarter === "Q4")?.scorePercentage ?? "—",
   }));
 
-  const buffer = generateExcel(rows, `Goals_${cycle.fiscalYear}`);
+  const buffer = await generateExcel(rows, `Goals_${cycle.fiscalYear}`);
 
   await writeAudit({
     userId: session.user.id,

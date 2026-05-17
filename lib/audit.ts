@@ -25,14 +25,18 @@ interface AuditData {
   request?: Request;
 }
 
-export async function writeAudit(data: AuditData) {
+// Accepts an optional Prisma transaction client so audit writes can be
+// included inside a $transaction without breaking the hash chain.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function writeAudit(data: AuditData, tx?: any) {
+  const client = tx ?? prisma;
   const ip = data.request?.headers.get("x-forwarded-for") ?? "unknown";
   const ua = data.request?.headers.get("user-agent") ?? "unknown";
   const now = new Date();
 
   // Fetch last entry with (createdAt DESC, id DESC) for deterministic ordering
   // under concurrent writes at the same millisecond.
-  const last = await prisma.auditLog.findFirst({
+  const last = await client.auditLog.findFirst({
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     select: { hash: true },
   });
@@ -53,7 +57,7 @@ export async function writeAudit(data: AuditData) {
   });
   const hash = createHash("sha256").update(canonicalPayload + previousHash).digest("hex");
 
-  return prisma.auditLog.create({
+  return client.auditLog.create({
     data: {
       userId: data.userId,
       action: data.action,

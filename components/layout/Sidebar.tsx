@@ -120,6 +120,7 @@ export function Sidebar() {
         )}
         <button
           onClick={toggleSidebar}
+          aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
         >
           {sidebarCollapsed

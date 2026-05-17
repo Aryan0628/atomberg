@@ -64,6 +64,16 @@ export async function getRecentNotifications(userId: string, limit = 10) {
 // These wrap Resend API calls. If RESEND_API_KEY is not set, they log and return.
 // This ensures the app works in demo mode without email configured.
 
+/** Escape user-controlled strings before injecting into HTML email bodies. */
+function esc(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
+
 interface EmailUser {
   name: string;
   email: string;
@@ -94,8 +104,8 @@ export async function sendGoalSubmittedEmail(
       html: `
         <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #1D4ED8;">AtomQuest — Goals Submitted</h2>
-          <p>Hi ${manager.name},</p>
-          <p><strong>${employee.name}</strong> has submitted <strong>${goalCount} goal(s)</strong> for your review.</p>
+          <p>Hi ${esc(manager.name)},</p>
+          <p><strong>${esc(employee.name)}</strong> has submitted <strong>${goalCount} goal(s)</strong> for your review.</p>
           <p>Total weightage: 100% ✓</p>
           <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/manager/approvals" 
              style="display: inline-block; padding: 12px 24px; background: #1D4ED8; color: white; text-decoration: none; border-radius: 6px; margin-top: 16px;">
@@ -132,8 +142,8 @@ export async function sendGoalApprovedEmail(
       html: `
         <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #16A34A;">✓ Goal Approved</h2>
-          <p>Hi ${employee.name},</p>
-          <p>Your goal <strong>"${goalTitle}"</strong> has been approved by your manager.</p>
+          <p>Hi ${esc(employee.name)},</p>
+          <p>Your goal <strong>&ldquo;${esc(goalTitle)}&rdquo;</strong> has been approved by your manager.</p>
           <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/employee/goals" 
              style="display: inline-block; padding: 12px 24px; background: #16A34A; color: white; text-decoration: none; border-radius: 6px; margin-top: 16px;">
             View Goals
@@ -170,9 +180,9 @@ export async function sendGoalRejectedEmail(
       html: `
         <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #DC2626;">✕ Goal Rejected</h2>
-          <p>Hi ${employee.name},</p>
-          <p>Your goal <strong>"${goalTitle}"</strong> has been rejected.</p>
-          <p><strong>Reason:</strong> ${reason}</p>
+          <p>Hi ${esc(employee.name)},</p>
+          <p>Your goal <strong>&ldquo;${esc(goalTitle)}&rdquo;</strong> has been rejected.</p>
+          <p><strong>Reason:</strong> ${esc(reason)}</p>
           <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/employee/goals" 
              style="display: inline-block; padding: 12px 24px; background: #DC2626; color: white; text-decoration: none; border-radius: 6px; margin-top: 16px;">
             View Goals
@@ -212,9 +222,9 @@ export async function sendEscalationEmail(
       html: `
         <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #F59E0B;">⚠ Escalation Notice</h2>
-          <p>Hi ${recipient.name},</p>
-          <p>This is an automated escalation for: <strong>${trigger.replace(/_/g, " ")}</strong></p>
-          <p>Cycle: ${cycleName}</p>
+          <p>Hi ${esc(recipient.name)},</p>
+          <p>This is an automated escalation for: <strong>${esc(trigger.replace(/_/g, " "))}</strong></p>
+          <p>Cycle: ${esc(cycleName)}</p>
           <p>Please take immediate action to avoid further escalation.</p>
           <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" 
              style="display: inline-block; padding: 12px 24px; background: #F59E0B; color: white; text-decoration: none; border-radius: 6px; margin-top: 16px;">
