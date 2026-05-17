@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Check, X, RotateCcw, CheckSquare, BarChart2, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { AiAnalysisPanel, type AiResult } from "@/components/goals/AiAnalysisPanel";
+import { GoalCommentThread } from "@/components/shared/GoalCommentThread";
 import { useState, useCallback } from "react";
 import { getUoMLabel, formatRelativeTime } from "@/lib/utils";
 
@@ -312,6 +313,11 @@ export default function ManagerApprovalsPage() {
                             <AiAnalysisPanel result={aiResults[goal.id as string].result!} />
                           </div>
                         )}
+                      </div>
+
+                      {/* Discussion thread — manager ↔ employee on this goal */}
+                      <div className="mt-4">
+                        <GoalCommentThread goalId={goal.id as string} />
                       </div>
                     </div>
                   </div>
