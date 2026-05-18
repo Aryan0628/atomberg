@@ -1,14 +1,17 @@
-// lib/auth.ts
-// NextAuth v5 (Auth.js) configuration — JWT sessions, role-aware, Credentials provider.
-// Azure AD SSO wired but gracefully degraded when env vars are empty.
+// lib/auth.ts — Full NextAuth config (server-only: Prisma + bcrypt).
+// Spreads authConfig (Edge-safe callbacks + session strategy) and adds the
+// Credentials provider which requires Node.js modules unavailable at the Edge.
+// middleware.ts uses auth.config.ts directly to avoid pulling in this file.
 
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { authConfig } from "@/auth.config";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
   providers: [
     Credentials({
       credentials: {
@@ -33,7 +36,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const valid = await bcrypt.compare(parsed.data.password, user.password);
         if (!valid) return null;
 
-        // Update last login timestamp
         await prisma.user.update({
           where: { id: user.id },
           data: { lastLoginAt: new Date() },
@@ -51,26 +53,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        const u = user as unknown as Record<string, unknown>;
-        token.role = u.role as string;
-        token.userId = user.id;
-        token.managerId = u.managerId as string | undefined;
-        token.department = u.department as string | undefined;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      session.user.role = token.role as "EMPLOYEE" | "MANAGER" | "ADMIN" | "HR";
-      session.user.id = token.userId as string;
-      session.user.managerId = token.managerId as string | undefined;
-      session.user.department = token.department as string | undefined;
-      return session;
-    },
-  },
-  pages: { signIn: "/login" },
-  session: { strategy: "jwt", maxAge: 8 * 60 * 60 }, // 8 hour sessions
-  trustHost: true,
 });

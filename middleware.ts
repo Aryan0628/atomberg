@@ -1,21 +1,24 @@
-// middleware.ts
-// Auth + role-based route protection — uses NextAuth v5 auth() wrapper
-// which decodes the JWT at the Edge without any Node.js crypto imports.
+// middleware.ts — Auth + role-based route protection at the Edge.
 //
-// Route map:
+// Uses authConfig (NO Prisma, NO bcrypt) so no Node.js native modules
+// are bundled into the Edge runtime — fixes the node:path error.
+//
+// Role map:
 //   /dashboard/admin/*     → ADMIN, HR only
 //   /dashboard/manager/*   → MANAGER, ADMIN only
 //   /dashboard/employee/*  → all authenticated roles
 //
-// Unauthenticated users → /login
-// Wrong-role users      → their own dashboard home
+// Unauthenticated → /login
+// Wrong role      → own dashboard home
 
-import { auth } from "@/lib/auth";
-import { NextResponse } from "next/server";
+import NextAuth from "next-auth";
+import { authConfig } from "./auth.config";
+
+const { auth } = NextAuth(authConfig);
 
 const ROLE_ROUTES: Array<{ prefix: string; allowed: string[] }> = [
-  { prefix: "/dashboard/admin",    allowed: ["ADMIN", "HR"] },
-  { prefix: "/dashboard/manager",  allowed: ["MANAGER", "ADMIN"] },
+  { prefix: "/dashboard/admin",   allowed: ["ADMIN", "HR"] },
+  { prefix: "/dashboard/manager", allowed: ["MANAGER", "ADMIN"] },
   // /dashboard/employee is open to all authenticated roles
 ];
 
@@ -29,9 +32,8 @@ const ROLE_FALLBACK: Record<string, string> = {
 export default auth((req) => {
   const { pathname } = req.nextUrl;
 
-  // No valid session → login
   if (!req.auth) {
-    return NextResponse.redirect(new URL("/login", req.url));
+    return Response.redirect(new URL("/login", req.url));
   }
 
   const role = (req.auth.user as { role?: string })?.role ?? "";
@@ -39,11 +41,9 @@ export default auth((req) => {
   for (const { prefix, allowed } of ROLE_ROUTES) {
     if (pathname.startsWith(prefix) && !allowed.includes(role)) {
       const fallback = ROLE_FALLBACK[role] ?? "/login";
-      return NextResponse.redirect(new URL(fallback, req.url));
+      return Response.redirect(new URL(fallback, req.url));
     }
   }
-
-  return NextResponse.next();
 });
 
 export const config = {
