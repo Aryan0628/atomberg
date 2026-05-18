@@ -37,9 +37,9 @@ AtomQuest digitises the entire annual goal lifecycle at Atomberg Technologies. E
 
 **Three roles, three dashboards:**
 
-- **Employee** — set goals, manage weightage, submit for approval, run quarterly check-ins, track scores live
-- **Manager** — approve/reject/return goals, run team check-ins, view AI quality scores, generate annual reviews
-- **Admin / HR** — manage org, configure fiscal cycles, view tamper-evident audit trails, export reports, view 7-chart analytics
+- **Employee** — set goals (with AI quality coaching + NLP parser), manage weightage, submit for approval, run quarterly check-ins, track scores live, give/receive peer feedback, schedule 1:1 meetings
+- **Manager** — approve/reject/return goals, run team check-ins, view AI quality scores, generate annual reviews, manage 1:1 meetings with agenda items, view goal-status staleness alerts
+- **Admin / HR** — manage org, configure fiscal cycles, run formal 360° review cycles, create eNPS surveys, set company OKRs, view tamper-evident audit trails, export reports, view 7-chart analytics + department leaderboard
 
 ---
 
@@ -139,7 +139,7 @@ AtomQuest digitises the entire annual goal lifecycle at Atomberg Technologies. E
 │ chain on │   │ · Audit last-hash    │       │  brd_enforcer       │
 │ AuditLog │   └──────────────────────┘       │  smart_analyzer     │
 │          │                                  │  semantic_matcher   │
-│ 13 models│   ┌──────────────────────┐       │  output_formatter   │
+│ 21 models│   ┌──────────────────────┐       │  output_formatter   │
 └──────────┘   │  Upstash QStash      │       │                     │
                │  (push event bus)    │       │ /review/synthesize  │
                │                      │       │  review_analyzer    │
@@ -271,10 +271,12 @@ atomberg/
 │   │   │   ├── qoq/route.ts
 │   │   │   ├── heatmap/route.ts
 │   │   │   ├── distribution/route.ts
-│   │   │   └── manager-effectiveness/route.ts
+│   │   │   ├── manager-effectiveness/route.ts
+│   │   │   └── leaderboard/route.ts    # Department + employee leaderboard rankings
 │   │   ├── audit/
 │   │   │   ├── route.ts                # Paginated, filterable audit trail
-│   │   │   └── verify/route.ts         # SHA-256 chain integrity verification
+│   │   │   ├── verify/route.ts         # SHA-256 chain integrity verification
+│   │   │   └── export/route.ts         # Filtered audit export (CSV)
 │   │   ├── cycles/
 │   │   │   ├── route.ts
 │   │   │   ├── [id]/route.ts
@@ -292,15 +294,31 @@ atomberg/
 │   │   │   └── [id]/
 │   │   │       ├── route.ts
 │   │   │       ├── approve/route.ts    # Approve / Reject / Return
+│   │   │       ├── cancel/route.ts     # Employee cancels a draft goal
 │   │   │       ├── checkin/route.ts    # Quarterly check-in (validates window open)
 │   │   │       ├── comments/route.ts   # Role-aware thread (isInternal filter)
-│   │   │       ├── history/route.ts
+│   │   │       ├── history/route.ts    # Change history (role-aware access)
 │   │   │       ├── manager-checkin/route.ts
+│   │   │       ├── milestones/route.ts             # GET + POST goal milestones
+│   │   │       ├── milestones/[milestoneId]/route.ts # PATCH + DELETE individual milestone
 │   │   │       └── unlock/route.ts     # Admin unlock post-lock
+│   │   ├── checkins/route.ts           # Manager-scoped check-in hub (team check-ins view)
 │   │   ├── notifications/route.ts
+│   │   ├── notifications/escalate/route.ts  # Manual escalation trigger
 │   │   ├── shared-goals/route.ts
 │   │   ├── templates/route.ts
+│   │   ├── templates/[id]/route.ts
 │   │   ├── users/route.ts
+│   │   ├── feedback/route.ts           # Peer feedback — GET list, POST submit (anonymous)
+│   │   ├── enps/route.ts               # eNPS survey management (Admin)
+│   │   ├── enps/respond/route.ts       # Employee submits eNPS response
+│   │   ├── meetings/route.ts           # 1:1 meetings — GET + POST
+│   │   ├── meetings/[id]/route.ts      # GET detail, PATCH update, agenda item toggle
+│   │   ├── review-cycles/route.ts      # Formal 360° review cycle management (Admin)
+│   │   ├── review-cycles/[id]/route.ts # GET + PATCH cycle state
+│   │   ├── review-cycles/[id]/respond/route.ts  # Submit review response (reviewer auth)
+│   │   ├── company-goals/route.ts      # Company-level OKR goals — GET + POST
+│   │   ├── scheduled-reports/route.ts  # Scheduled report config — GET + POST
 │   │   ├── events/
 │   │   │   └── consumer/route.ts       # QStash push receiver — handles all goal lifecycle events
 │   │   └── cron/
@@ -308,27 +326,36 @@ atomberg/
 │   │       └── lock-goals/route.ts     # Hourly — locks APPROVED goals after close
 │   └── dashboard/
 │       ├── employee/
+│       │   ├── dashboard/page.tsx      # Score card, forecast, action center, deadlines
 │       │   ├── goals/page.tsx          # Goals list, weightage meter, rebalancer, submit
-│       │   ├── goals/[id]/page.tsx     # Goal detail + timeline + comment thread
+│       │   ├── goals/[id]/page.tsx     # Goal detail + milestones + timeline + comments
 │       │   ├── goals/[id]/checkin/     # Quarterly check-in with live score preview
-│       │   └── history/page.tsx
+│       │   ├── history/page.tsx        # Past cycles locked goals
+│       │   ├── feedback/page.tsx       # Peer feedback — give and view received
+│       │   └── meetings/page.tsx       # 1:1 meetings with manager — agenda, notes
 │       ├── manager/
+│       │   ├── dashboard/page.tsx      # Team health, action center, wellness grades
 │       │   ├── approvals/page.tsx      # Bulk queue + AI badges + per-goal comments
 │       │   ├── team/page.tsx           # All reports × goals × scores + AI review
 │       │   ├── checkins/page.tsx       # Manager check-in review hub
-│       │   ├── shared-goals/page.tsx
-│       │   └── escalations/page.tsx
+│       │   ├── shared-goals/page.tsx   # Create + manage departmental KPIs
+│       │   ├── escalations/page.tsx    # Escalation log viewer
+│       │   ├── goal-status/page.tsx    # Goal status report — staleness alerts per report
+│       │   └── meetings/page.tsx       # 1:1 meetings scheduler — create, agenda items
 │       └── admin/
 │           ├── dashboard/page.tsx      # OrgPulseTicker + stat cards
-│           ├── analytics/page.tsx      # 7 charts
+│           ├── analytics/page.tsx      # 7 charts + leaderboard
 │           ├── audit/page.tsx          # Audit trail + chain integrity button
 │           ├── cycles/page.tsx         # Cycle manager + clone
 │           ├── escalations/page.tsx    # Config + manual trigger
 │           ├── org-chart/page.tsx
 │           ├── architecture/page.tsx   # Live system architecture diagram + print-to-PDF
-│           ├── reports/page.tsx        # Export center (CSV + Excel)
+│           ├── reports/page.tsx        # Export center (CSV + Excel + ICS calendar)
 │           ├── templates/page.tsx      # Goal template CRUD
-│           └── users/page.tsx
+│           ├── users/page.tsx
+│           ├── enps/page.tsx           # eNPS surveys + NPS gauge chart
+│           ├── review-cycles/page.tsx  # Formal 360° review cycle manager
+│           └── company-goals/page.tsx  # Company-level OKR cascade
 │
 ├── ai/                                 # Python microservice (Railway)
 │   ├── main.py                         # FastAPI entry point, 3 endpoints
@@ -402,7 +429,7 @@ atomberg/
 │   └── WelcomeEmail.tsx
 │
 ├── prisma/
-│   ├── schema.prisma                    # 13 models, full schema
+│   ├── schema.prisma                    # 21 models, full schema
 │   └── seed.ts                          # Rich demo data for all 3 roles
 │
 ├── store/useAppStore.ts                 # Zustand: sidebar collapse, role switcher
@@ -430,6 +457,9 @@ User
  │     │     ├── employeeId → User
  │     │     └── cycleId    → Cycle
  │     │
+ │     ├──< Milestone
+ │     │     └── completedAt, dueDate — triggers latestScore recalc
+ │     │
  │     ├──< AuditLog (goalId)
  │     │     └── hash + previousHash  ← SHA-256 chain
  │     │
@@ -439,7 +469,12 @@ User
  │
  ├──< Notification
  ├──< AuditLog (userId)
- └──< EscalationLog
+ ├──< EscalationLog
+ ├──< PeerFeedback (subject)
+ ├──< ReviewResponse (reviewer / subject)
+ ├──< ENPSResponse
+ └──< OneOnOneMeeting
+       └──< MeetingAgendaItem
 
 Cycle
  ├── goalSettingOpen / goalSettingClose
@@ -450,9 +485,16 @@ Cycle
        ├── trigger: GOAL_NOT_SUBMITTED | GOAL_NOT_APPROVED | CHECKIN_NOT_COMPLETED
        ├── escalateTo: EMPLOYEE | MANAGER | SKIP_LEVEL | HR
        └── daysAfterTrigger: Int
+
+ReviewCycle
+ ├──< ReviewQuestion
+ └──< ReviewResponse (feedbackType: SELF | PEER | MANAGER | UPWARD)
+
+ENPSSurvey
+ └──< ENPSResponse
 ```
 
-### All 13 Models
+### All 21 Models
 
 | Model | Purpose |
 |---|---|
@@ -467,6 +509,16 @@ Cycle
 | `ThrustArea` | Admin-configurable org thrust areas |
 | `GoalTemplate` | Reusable templates with usage count |
 | `GoalComment` | Employee ↔ Manager discussion thread per goal |
+| `Milestone` | Sub-tasks per goal with due date and completion flag; auto-updates `latestScore` |
+| `PeerFeedback` | Anonymous structured peer feedback — strength, growth, rating per employee |
+| `ReviewCycle` | Formal 360° appraisal cycle — configurable questions, review window |
+| `ReviewQuestion` | Questions in a review cycle (text + optional options) |
+| `ReviewResponse` | Individual reviewer's answers per subject per cycle (feedbackType auth) |
+| `ENPSSurvey` | Employee NPS survey — name, start/end dates, active flag |
+| `ENPSResponse` | Employee's eNPS score (0–10) + optional comment |
+| `OneOnOneMeeting` | Manager-scheduled 1:1 with date, title, notes |
+| `MeetingAgendaItem` | Line items per meeting with completion toggle |
+| `ScheduledReport` | Admin-configured recurring export jobs (frequency + format) |
 
 ### Goal Status Machine
 
@@ -592,6 +644,64 @@ Admin clones the current cycle with one click:
 - All 9 date windows shift forward exactly 1 year
 - All EscalationRules are cloned for the new cycle
 - New cycle starts as `isActive: false` — admin activates manually
+
+### 9. Goal Milestones
+
+Each goal can have unlimited sub-milestones with due dates and completion toggles.
+
+- Employee marks milestones complete from the goal detail page
+- Completing a milestone auto-recalculates `goal.latestScore` via the PATCH endpoint
+- Milestone completion % shown inline on the goal card
+- Stored in `Milestone` model — not quarter-scoped (persist across check-in windows)
+
+### 10. Peer Feedback
+
+Structured peer feedback with anonymity protection.
+
+- Employee submits feedback (strength + area for growth + rating 1–5) on any colleague
+- Feedback is anonymous by default — `giver` is hidden from the subject at the API level
+- Employee sees all feedback received on the `/employee/feedback` page
+- Admin/HR can view all feedback ungated for compliance purposes
+- Stored in `PeerFeedback` model with `isAnonymous` flag
+
+### 11. eNPS Surveys (Employee Net Promoter Score)
+
+Admin creates time-boxed eNPS surveys; employees respond with a 0–10 score.
+
+- Admin `/admin/enps` page — create survey, set start/end dates, view results
+- Response page for employees once a survey is active
+- NPS gauge chart (Recharts RadialBar) shows promoters / passives / detractors breakdown
+- NPS formula: `(promoters% − detractors%) × 100`
+- Each employee can respond once per survey (upsert on `ENPSResponse`)
+
+### 12. Formal 360° Review Cycles
+
+Beyond quarterly check-ins — HR/Admin can create named formal review cycles.
+
+- Admin configures review questions per cycle (`ReviewQuestion` model)
+- Reviewers respond as SELF, PEER, MANAGER, or UPWARD — each type is relationship-verified at the API
+- Responses stored in `ReviewResponse`; admin views aggregated results
+- `/admin/review-cycles` page — create, activate, view completion rates
+- `/api/review-cycles/[id]/respond` enforces: SELF = same userId, MANAGER = subject is direct report, UPWARD = subject is reviewer's manager, PEER = different user (no hierarchy relationship required)
+
+### 13. 1:1 Meeting Scheduler
+
+Manager creates structured 1:1 meetings with direct reports.
+
+- Manager `/manager/meetings` — create meeting with date, title, notes; view all scheduled 1:1s
+- Employee `/employee/meetings` — view upcoming meetings with manager
+- Each meeting has agenda items (add/remove, toggle complete inline)
+- `MeetingAgendaItem.completed` toggled via PATCH `/api/meetings/[id]`
+- IDOR guard: agenda item toggle verifies `agendaItem.meetingId === params.id`
+
+### 14. Company-Level OKR Cascade
+
+Admin sets company-wide strategic goals (OKRs) that employees can see and align personal goals to.
+
+- `/admin/company-goals` page — CRUD company goals with thrust area and status
+- `/api/company-goals` endpoint (Admin POST, Any GET)
+- Employee sees active company goals in their goal creation wizard for alignment context
+- Not individually scored — informational cascade layer for strategic alignment
 
 ---
 
@@ -906,6 +1016,18 @@ Manager SLA:  ████████░░ 82% approved within 5 days
 | 19 | Progressive Web App (installable, offline-capable) | `app/manifest.ts`, SVG icons |
 | 20 | In-app architecture diagram + print-to-PDF | `/admin/architecture` |
 | 21 | Natural language goal parser (AI) | `ai/main.py` `/nlp/parse-goal`, `/api/ai/parse-goal` |
+| 22 | Cmd+K Command Palette | `components/layout/CommandPalette.tsx` — role-aware nav + admin quick actions |
+| 23 | Goal milestones with auto-score recalc | `/api/goals/[id]/milestones`, `Milestone` model |
+| 24 | Anonymous peer feedback system | `/api/feedback`, `/employee/feedback`, `PeerFeedback` model |
+| 25 | eNPS surveys with NPS gauge chart | `/admin/enps`, `/api/enps`, `ENPSSurvey` + `ENPSResponse` models |
+| 26 | Formal 360° review cycles | `/admin/review-cycles`, `/api/review-cycles`, `ReviewCycle` + `ReviewResponse` models |
+| 27 | 1:1 meeting scheduler with agenda items | `/manager/meetings`, `/api/meetings`, `OneOnOneMeeting` + `MeetingAgendaItem` models |
+| 28 | Company-level OKR cascade | `/admin/company-goals`, `/api/company-goals` — strategic alignment layer |
+| 29 | Department leaderboard analytics | `/api/analytics/leaderboard` — dept rankings + top 10 employees |
+| 30 | Cryptographic audit export (filtered CSV) | `/api/audit/export` — downloadable tamper-evident log |
+| 31 | Manager goal-status staleness alerts | `/manager/goal-status` — flags goals not updated in N days |
+| 32 | ICS calendar export | Admin reports — check-in window dates → Google Cal / Outlook / Apple |
+| 33 | Scheduled reports config | `/api/scheduled-reports`, `ScheduledReport` model — recurring export jobs |
 
 ---
 
@@ -922,10 +1044,21 @@ Manager SLA:  ████████░░ 82% approved within 5 days
 | DELETE | `/api/goals/:id` | Owner (DRAFT) | Delete draft goal |
 | POST | `/api/goals/bulk` | Employee | Atomic bulk submit — validates active weightage = 100% |
 | POST | `/api/goals/:id/approve` | Manager/Admin | Approve / Reject / Return with reason |
+| POST | `/api/goals/:id/cancel` | Owner (DRAFT) | Cancel a draft goal |
 | POST | `/api/goals/:id/checkin` | Owner | Submit check-in — validates window open + goal locked |
 | POST | `/api/goals/:id/unlock` | Admin | Unlock locked goal with reason |
 | GET | `/api/goals/:id/comments` | Owner+Manager | Comments — internal notes filtered for employees |
 | POST | `/api/goals/:id/comments` | Owner+Manager | Add comment; `isInternal` toggle for managers |
+| GET | `/api/goals/:id/history` | Owner/Manager | Role-aware change history from AuditLog |
+
+### Milestones
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/goals/:id/milestones` | Owner/Manager | List milestones for a goal |
+| POST | `/api/goals/:id/milestones` | Owner | Create milestone with title + dueDate |
+| PATCH | `/api/goals/:id/milestones/:milestoneId` | Owner | Toggle complete or update fields; auto-recalculates `latestScore` |
+| DELETE | `/api/goals/:id/milestones/:milestoneId` | Owner | Remove milestone |
 
 ### Cycles
 
@@ -937,6 +1070,69 @@ Manager SLA:  ████████░░ 82% approved within 5 days
 | PUT | `/api/cycles/:id` | Admin | Update / activate / deactivate |
 | POST | `/api/cycles/:id/clone` | Admin | Clone + shift dates +1 year |
 
+### Check-ins
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/checkins` | Manager | Team check-ins view — all direct reports' submissions |
+
+### Peer Feedback
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/feedback` | Any | Feedback received by current user (anonymous — giver hidden) |
+| POST | `/api/feedback` | Any | Submit feedback on a colleague |
+
+### eNPS Surveys
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/enps` | Any | Active eNPS survey (employees) or all surveys (Admin/HR) |
+| POST | `/api/enps` | Admin/HR | Create new eNPS survey |
+| POST | `/api/enps/respond` | Any | Submit eNPS response (0–10 score + optional comment) |
+
+### 1:1 Meetings
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/meetings` | Any | Meetings for current user (manager sees all they created; employee sees theirs) |
+| POST | `/api/meetings` | Manager | Create 1:1 meeting — validates employee is a direct report |
+| GET | `/api/meetings/:id` | Participant | Meeting detail with agenda items |
+| PATCH | `/api/meetings/:id` | Manager | Update meeting or toggle agenda item completion (IDOR-guarded) |
+
+### Review Cycles
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/review-cycles` | Admin/HR | All review cycles |
+| POST | `/api/review-cycles` | Admin/HR | Create cycle with questions |
+| GET | `/api/review-cycles/:id` | Admin/HR | Cycle detail — restricted to Admin/HR to prevent PII leakage |
+| PATCH | `/api/review-cycles/:id` | Admin/HR | Update cycle state (activate/close) |
+| POST | `/api/review-cycles/:id/respond` | Any | Submit review response — feedbackType validated against reviewer-subject relationship |
+
+### Company Goals
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/company-goals` | Any | Company-level OKR goals (strategic alignment layer) |
+| POST | `/api/company-goals` | Admin | Create company goal |
+
+### Notifications
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/notifications` | Any | Last 10 notifications for current user |
+| POST | `/api/notifications/escalate` | Admin/Cron | Manual escalation engine trigger |
+
+### Templates
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/templates` | Any | All active goal templates |
+| POST | `/api/templates` | Admin | Create new template |
+| PUT | `/api/templates/:id` | Admin | Update template |
+| DELETE | `/api/templates/:id` | Admin | Deactivate template |
+
 ### Analytics (all Admin/HR, 60s revalidation cache)
 
 | Endpoint | Data |
@@ -946,6 +1142,7 @@ Manager SLA:  ████████░░ 82% approved within 5 days
 | `/api/analytics/heatmap` | Employee × Quarter achievement grid |
 | `/api/analytics/distribution` | By thrust area and UoM type |
 | `/api/analytics/manager-effectiveness` | Team check-in completion per manager |
+| `/api/analytics/leaderboard` | Department rankings + top 10 employees |
 
 ### AI (rate limited — 10 req/user/min)
 
@@ -962,7 +1159,15 @@ Manager SLA:  ████████░░ 82% approved within 5 days
 |---|---|---|---|
 | GET | `/api/audit` | Admin/HR | Paginated 15/page, filterable by action |
 | GET | `/api/audit/verify` | Admin/HR | Re-derives full chain, returns tamper result |
+| GET | `/api/audit/export` | Admin/HR | Download filtered audit entries as CSV |
 | DELETE | `/api/audit` | — | **405 — intentional, no delete ever** |
+
+### Scheduled Reports
+
+| Method | Endpoint | Auth | Notes |
+|---|---|---|---|
+| GET | `/api/scheduled-reports` | Admin/HR | List configured recurring export jobs |
+| POST | `/api/scheduled-reports` | Admin/HR | Create scheduled report (frequency + format) |
 
 ---
 
@@ -1164,7 +1369,7 @@ Available at `/dashboard/admin/architecture` (linked in admin sidebar under "Arc
 - Live system overview diagram showing all services and data flow
 - AI microservice endpoints and LangGraph pipeline
 - Complete tech stack table with cost column (~$5/month total)
-- Database schema summary (all 13 models)
+- Database schema summary (all 21 models)
 - Key request lifecycle flows
 - Deployment topology (Vercel vs Railway)
 - Security posture overview
