@@ -60,7 +60,9 @@ function CommandDialog({
         )}
         showCloseButton={showCloseButton}
       >
-        {children}
+        {/* Command must wrap all cmdk primitives so they receive the cmdk context.
+            Without this wrapper, CommandPrimitive.Input throws "cannot read subscribe". */}
+        <Command>{children}</Command>
       </DialogContent>
     </Dialog>
   )
