@@ -11,9 +11,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
-// NODE_ENV is a compile-time constant in Next.js — this entire block is
-// dead-code-eliminated in production builds, so passwords never ship to prod.
-const IS_DEMO = process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+// Controlled via NEXT_PUBLIC_DEMO_MODE env var — set to "true" on Vercel for judges.
+const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 
 const demoCredentials = [
   { role: "Admin",    email: "admin@atomberg.com",        password: "Admin@123" },

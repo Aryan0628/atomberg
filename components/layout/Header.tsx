@@ -104,7 +104,7 @@ export function Header() {
 
       <div className="flex items-center gap-2">
         {/* Demo Role Switcher */}
-        {process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
+        {process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
           <DropdownMenu>
             <DropdownMenuTrigger className="hidden md:inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-xs font-medium border border-border bg-transparent hover:bg-accent hover:text-accent-foreground transition-colors text-muted-foreground">
               <Shuffle className="w-3.5 h-3.5" />
