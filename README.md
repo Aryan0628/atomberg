@@ -45,38 +45,41 @@ AtomQuest digitises the entire annual goal lifecycle at Atomberg Technologies. E
 
 ## Screenshots
 
-### Login — Quick-access demo cards for all 4 roles + Azure SSO button
-![Login page](docs/screenshots/login.png)
+### Login — One-click demo access for all 4 roles, Azure SSO button
+![Login](docs/screenshots/login.png)
 
-### Employee Dashboard — Live countdown, Action Required center, weighted score & forecast
-![Employee dashboard](docs/screenshots/employee-dashboard.png)
+### Employee Goals — Weightage meter locked at 100%, UoM badges, live scores
+![Employee goals list](docs/screenshots/employee-goals.png)
 
-### Employee Goals — Weightage meter at 100%, UoM badges, score per goal
-![Employee goals](docs/screenshots/employee-goals.png)
+### Quarterly Check-in — Live score preview updates as you type, self-rating stars
+![Quarterly check-in with live score](docs/screenshots/employee-checkin.png)
 
-### AI Goal Coach — SMART criteria breakdown, policy issues, suggested title
-![AI Goal Coach panel](docs/screenshots/ai-goal-coach.png)
+### AI Goal Coach — Multi-agent LangGraph pipeline: SMART scores, BRD issues, improved title
+![AI Goal Coach SMART analysis](docs/screenshots/ai-goal-coach.png)
 
-### Manager Approvals — Per-goal AI quality score (8/10), SMART bars, policy issues, suggestions
-![Manager approvals with AI analysis](docs/screenshots/manager-approvals.png)
+### AI Natural Language Parser — Type plain English, AI fills every form field
+![NLP goal parser](docs/screenshots/ai-nlp-parser.png)
 
-### Admin Analytics — Stat cards, goal status distribution, thrust area breakdown
-![Admin analytics overview](docs/screenshots/analytics-overview.png)
+### Manager Approvals — Inline AI quality badge per goal, approve / reject / return
+![Manager approvals with AI badges](docs/screenshots/manager-approvals.png)
 
-### Commitment vs Achievement Quadrant — Every employee plotted by commitment × achievement
-![Performance quadrant chart](docs/screenshots/performance-quadrant.png)
+### Achievement Heatmap — D3 grid: every employee × every quarter, RdYlGn color scale
+![D3 achievement heatmap](docs/screenshots/analytics-heatmap.png)
 
-### Cryptographic Audit Trail — Full lifecycle log with color-coded action badges
-![Audit trail](docs/screenshots/audit-trail.png)
+### Commitment vs Achievement Quadrant — Each dot is an employee; 4 quadrant labels
+![Performance quadrant scatter chart](docs/screenshots/performance-quadrant.png)
 
-### Manager Dashboard — Team health, Goal Wellness grades, pending approvals
-![Manager dashboard](docs/screenshots/manager-dashboard.png)
+### Cryptographic Audit Trail — SHA-256 hash chain, "Verify Integrity" button
+![Tamper-evident audit trail](docs/screenshots/audit-trail.png)
 
-### Admin Org Chart — Interactive D3 hierarchy with role and department labels
-![Org chart](docs/screenshots/org-chart.png)
+### eNPS Surveys — Radial gauge chart, beyond-BRD employee pulse feature
+![eNPS survey with NPS gauge](docs/screenshots/admin-enps.png)
 
-### Admin Dashboard (Dark Mode) — Org pulse ticker, stat cards, analytics in dark theme
-![Admin dark mode](docs/screenshots/admin-dark-mode.png)
+### In-App Architecture Diagram — System overview, tech stack, cost table, print-to-PDF
+![Architecture page](docs/screenshots/architecture-page.png)
+
+### Cmd+K Command Palette — Role-aware instant navigation, admin quick actions
+![Command palette](docs/screenshots/cmd-palette.png)
 
 ---
 
