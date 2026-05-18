@@ -322,6 +322,7 @@ atomberg/
 │           ├── cycles/page.tsx         # Cycle manager + clone
 │           ├── escalations/page.tsx    # Config + manual trigger
 │           ├── org-chart/page.tsx
+│           ├── architecture/page.tsx   # Live system architecture diagram + print-to-PDF
 │           ├── reports/page.tsx        # Export center (CSV + Excel)
 │           ├── templates/page.tsx      # Goal template CRUD
 │           └── users/page.tsx
@@ -353,7 +354,10 @@ atomberg/
 │   ├── goals/
 │   │   ├── AiAnalysisPanel.tsx         # SMART score bars + suggestions UI
 │   │   ├── AnnualReviewModal.tsx        # AI-generated review modal (manager)
+│   │   ├── GoalRing.tsx                 # SVG circular progress ring per goal
 │   │   └── RedundancyWarning.tsx        # Near-duplicate warning in goal form
+│   ├── employee/
+│   │   └── GamificationBadges.tsx       # 10 achievement badges computed client-side
 │   ├── layout/
 │   │   ├── Header.tsx                   # Notification bell + role switcher
 │   │   └── Sidebar.tsx                  # Collapsible role-aware nav
@@ -649,6 +653,24 @@ Manager/HR triggers for any employee. Four nodes:
 
 Output shown in `AnnualReviewModal` — copyable, includes quarterly narratives, strengths, and development areas.
 
+### Pipeline 4 — Natural Language Goal Parser
+
+Employee types a plain-English sentence ("I want to achieve 50L in sales by Q1") and the AI extracts a structured goal form. The `/nlp/parse-goal` endpoint in `ai/main.py` calls Gemini Flash with a structured extraction prompt and returns a JSON object with all goal fields pre-filled.
+
+```json
+{
+  "title": "Achieve 50L in direct sales by Q1 end",
+  "thrustArea": "Sales Revenue",
+  "uomType": "NUMERIC_MIN",
+  "target": 5000000,
+  "uomUnit": "INR",
+  "targetDate": null,
+  "description": "Achieve 50 lakh in direct sales revenue through enterprise accounts"
+}
+```
+
+The goal creation wizard has a "Parse from text" button. On click, text is sent to `/api/ai/parse-goal` (thin Next.js proxy → Python), and the response pre-fills all form fields. Employee reviews and confirms — no mandatory AI step.
+
 ### Pipeline 3 — Semantic Redundancy Detection
 
 Debounced 1.5s after employee stops typing a goal title. Three nodes:
@@ -876,6 +898,11 @@ Manager SLA:  ████████░░ 82% approved within 5 days
 | 14 | Manager ↔ employee comment thread per goal | `GoalCommentThread.tsx` |
 | 15 | Annual score forecasting with trend arrow | Employee dashboard |
 | 16 | REJECTED goals excluded from weightage + count | Goals page + bulk submit API |
+| 17 | GoalRing SVG progress circles per goal card | `components/goals/GoalRing.tsx` |
+| 18 | Gamification achievement badges (10 types) | `components/employee/GamificationBadges.tsx` |
+| 19 | Progressive Web App (installable, offline-capable) | `app/manifest.ts`, SVG icons |
+| 20 | In-app architecture diagram + print-to-PDF | `/admin/architecture` |
+| 21 | Natural language goal parser (AI) | `ai/main.py` `/nlp/parse-goal`, `/api/ai/parse-goal` |
 
 ---
 
@@ -924,6 +951,7 @@ Manager SLA:  ████████░░ 82% approved within 5 days
 | POST | `/api/ai/evaluate` | Any authenticated | Goal quality score + SMART breakdown |
 | POST | `/api/ai/redundancy` | Any authenticated | Semantic duplicate detection |
 | POST | `/api/ai/review` | Manager/Admin/HR | Annual review synthesis for an employee |
+| POST | `/api/ai/parse-goal` | Any authenticated | NLP goal parser — plain text → structured fields |
 
 ### Audit
 
@@ -1114,6 +1142,30 @@ Copy the Railway service URL → set as `AI_SERVICE_URL` in Vercel. Set the same
 | Google Gemini | Free tier | $0 |
 | Railway (AI service) | Starter, scales to zero | ~$5 |
 | **Total** | | **~$0–5/month** |
+
+---
+
+## Progressive Web App (PWA)
+
+AtomQuest is installable as a PWA on Chrome, Edge, and Safari (iOS 16.4+).
+
+- `app/manifest.ts` — `MetadataRoute.Manifest` with name, short_name, theme_color, start_url, orientation
+- `public/icon-192.svg` and `public/icon-512.svg` — blue Atomberg "A" logo with amber "Q" badge
+- `app/layout.tsx` — `appleWebApp` meta tags for iOS home-screen install
+- `display: "standalone"` — hides browser chrome when launched from home screen
+
+### Architecture Page
+
+Available at `/dashboard/admin/architecture` (linked in admin sidebar under "Architecture"). Includes:
+
+- Live system overview diagram showing all services and data flow
+- AI microservice endpoints and LangGraph pipeline
+- Complete tech stack table with cost column (~$5/month total)
+- Database schema summary (all 13 models)
+- Key request lifecycle flows
+- Deployment topology (Vercel vs Railway)
+- Security posture overview
+- "Print to PDF" button (`window.print()`) for submission artifacts
 
 ---
 

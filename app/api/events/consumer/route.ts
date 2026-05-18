@@ -90,6 +90,17 @@ export async function POST(req: Request) {
             { name: event.ownerName, email: event.ownerEmail },
             event.goalTitle
           ),
+          sendTeamsCard({
+            title: "Goal Approved ✓",
+            text: `Your goal "${event.goalTitle}" has been approved by your manager.`,
+            actions: [
+              {
+                type: "OpenUrl",
+                title: "View Goal",
+                url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/employee/goals/${event.goalId}`,
+              },
+            ],
+          }),
         ]);
         break;
 
@@ -107,29 +118,66 @@ export async function POST(req: Request) {
             event.goalTitle,
             event.reason
           ),
+          sendTeamsCard({
+            title: "Goal Rejected",
+            text: `Your goal "${event.goalTitle}" was rejected. Reason: ${event.reason}`,
+            actions: [
+              {
+                type: "OpenUrl",
+                title: "View Goal",
+                url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/employee/goals/${event.goalId}`,
+              },
+            ],
+          }),
         ]);
         break;
 
       case "goal.returned":
-        await createNotification({
-          userId: event.ownerId,
-          type: "GOAL_RETURNED",
-          title: "Goal returned for rework",
-          message: `"${event.goalTitle}" — ${event.reason}`,
-          link: `/dashboard/employee/goals/${event.goalId}`,
-        });
+        await Promise.allSettled([
+          createNotification({
+            userId: event.ownerId,
+            type: "GOAL_RETURNED",
+            title: "Goal returned for rework",
+            message: `"${event.goalTitle}" — ${event.reason}`,
+            link: `/dashboard/employee/goals/${event.goalId}`,
+          }),
+          sendTeamsCard({
+            title: "Goal Returned for Rework",
+            text: `Your goal "${event.goalTitle}" needs revision. Feedback: ${event.reason}`,
+            actions: [
+              {
+                type: "OpenUrl",
+                title: "Revise Goal",
+                url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/employee/goals/${event.goalId}`,
+              },
+            ],
+          }),
+        ]);
         break;
 
       case "goal.shared":
         await Promise.allSettled(
           event.recipientIds.map((recipientId) =>
-            createNotification({
-              userId: recipientId,
-              type: "GOAL_SHARED_WITH_YOU",
-              title: `Shared goal assigned: "${event.goalTitle}"`,
-              message: `${event.senderName} assigned a departmental goal to you. Adjust your weightage to include it.`,
-              link: "/dashboard/employee/goals",
-            })
+            Promise.allSettled([
+              createNotification({
+                userId: recipientId,
+                type: "GOAL_SHARED_WITH_YOU",
+                title: `Shared goal assigned: "${event.goalTitle}"`,
+                message: `${event.senderName} assigned a departmental goal to you. Adjust your weightage to include it.`,
+                link: "/dashboard/employee/goals",
+              }),
+              sendTeamsCard({
+                title: "Shared Goal Assigned",
+                text: `${event.senderName} has assigned a shared goal to you: "${event.goalTitle}". Update your goal weightage to include it.`,
+                actions: [
+                  {
+                    type: "OpenUrl",
+                    title: "View My Goals",
+                    url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/employee/goals`,
+                  },
+                ],
+              }),
+            ])
           )
         );
         break;

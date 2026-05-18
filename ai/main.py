@@ -117,6 +117,10 @@ class RedundancyCheckRequest(BaseModel):
     existing_goals: list[ExistingGoal]
 
 
+class NLPParseRequest(BaseModel):
+    text: str
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "atomquest-ai-goal-coach"}
@@ -160,6 +164,58 @@ async def check_redundancy(payload: RedundancyCheckRequest, request: Request):
         "has_redundancy": result.get("has_redundancy", False),
         "matches": result.get("matches", result.get("raw_matches", [])),
     }
+
+
+@app.post("/nlp/parse-goal", dependencies=[Depends(verify_service_token)])
+async def parse_goal_nlp(payload: NLPParseRequest, request: Request):
+    """Extract structured goal fields from a natural language description."""
+    import json
+    import re
+    import httpx
+
+    api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=503, detail="GEMINI_API_KEY not configured")
+
+    prompt = f"""You are an HR goal-setting assistant. Extract structured goal fields from this natural language description.
+
+User input: "{payload.text}"
+
+Return ONLY valid JSON with these fields (no markdown, no explanation):
+{{
+  "title": "concise goal title (<=80 chars, SMART phrasing)",
+  "thrustArea": "one of: Sales Revenue, Customer Experience, Operational Excellence, Safety & Compliance, People Development, Cost Efficiency, Innovation, Digital Transformation, Quality",
+  "uomType": "one of: NUMERIC_MIN (higher is better), NUMERIC_MAX (lower is better e.g. cost/TAT/defects), TIMELINE (completion by date), ZERO (zero incidents = success), PERCENTAGE",
+  "target": <number or null>,
+  "uomUnit": "unit string (e.g. %, hours, L, incidents, features) or null",
+  "targetDate": "ISO date string YYYY-MM-DD or null",
+  "description": "one sentence clarifying the goal context"
+}}
+
+Rules:
+- Reducing/cutting/lowering -> NUMERIC_MAX
+- Achieving/increasing/growing -> NUMERIC_MIN
+- Completing by a date -> TIMELINE
+- Zero incidents/accidents/errors -> ZERO
+- % target -> PERCENTAGE
+- Extract numbers (e.g. "20%" -> 20, "48 hours" -> 48)
+- Convert relative dates (Q1=March 31, Q2=June 30, Q3=Sept 30, Q4=Dec 31 of 2026)
+- thrustArea must match one of the listed options exactly"""
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    resp = httpx.post(
+        url,
+        json={"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"temperature": 0.1, "maxOutputTokens": 512}},
+        timeout=15.0,
+    )
+    if resp.status_code != 200:
+        raise HTTPException(status_code=503, detail=f"Gemini error {resp.status_code}")
+
+    raw = resp.json().get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+    match = re.search(r"\{[\s\S]*\}", raw)
+    if not match:
+        raise HTTPException(status_code=503, detail="No structured output from AI")
+    return json.loads(match.group(0))
 
 
 @app.post("/evaluate", dependencies=[Depends(verify_service_token)])

@@ -80,8 +80,33 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     if (!body.weightage || isNaN(weightage) || weightage < 10 || weightage > 100) {
       return NextResponse.json({ error: "Shared goal recipients can only edit weightage (10–100)" }, { status: 400 });
     }
+    // Validate recipient's total weightage (all their goals) stays at 100%
+    const otherGoalsWeight = await prisma.goal.aggregate({
+      where: {
+        ownerId: session.user.id,
+        cycleId: goal.cycleId,
+        id: { not: id },
+        status: { notIn: ["REJECTED"] },
+      },
+      _sum: { weightage: true },
+    });
+    const newTotal = (otherGoalsWeight._sum.weightage ?? 0) + weightage;
+    if (Math.abs(newTotal - 100) > 0.01 && newTotal > 100) {
+      return NextResponse.json(
+        { error: `This weightage would set your total to ${newTotal.toFixed(1)}% (must not exceed 100%)` },
+        { status: 422 }
+      );
+    }
     const updated = await prisma.goal.update({ where: { id }, data: { weightage } });
-    void invalidateCache(`goal:${id}`);
+    void Promise.all([
+      invalidateCache(`goal:${id}`),
+      invalidateCache(`goals:${session.user.id}:${goal.cycleId}`),
+      invalidateCache(`action-items:${session.user.id}`),
+    ]);
+    await writeAudit({
+      userId: session.user.id, action: "WEIGHTAGE_EDITED", entityType: "Goal", entityId: id,
+      goalId: id, oldValue: { weightage: goal.weightage }, newValue: { weightage },
+    });
     return NextResponse.json(updated);
   }
 

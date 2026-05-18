@@ -115,11 +115,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Goal setting window is closed" }, { status: 403 });
   }
 
+  // REJECTED goals are excluded from the 8-goal cap — their slot is freed.
   const existingCount = await prisma.goal.count({
-    where: { ownerId: session.user.id, cycleId: activeCycle.id },
+    where: { ownerId: session.user.id, cycleId: activeCycle.id, status: { not: "REJECTED" } },
   });
   if (existingCount >= 8) {
-    return NextResponse.json({ error: "Maximum 8 goals per employee per cycle" }, { status: 400 });
+    return NextResponse.json({ error: "Maximum 8 active goals per employee per cycle" }, { status: 400 });
   }
 
   const goal = await prisma.goal.create({

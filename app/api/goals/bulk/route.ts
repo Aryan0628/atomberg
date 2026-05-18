@@ -97,7 +97,7 @@ export async function POST(req: Request) {
         goalCount: goals.length,
       });
     } else {
-      Promise.allSettled([
+      void Promise.allSettled([
         createNotification({
           userId: employee.manager.id, type: "GOAL_SUBMITTED_FOR_APPROVAL",
           title: `${employee.name} submitted goals for review`,

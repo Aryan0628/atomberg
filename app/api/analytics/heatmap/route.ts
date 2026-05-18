@@ -20,9 +20,16 @@ export async function GET() {
   if (!activeCycle) return NextResponse.json({ employees: [], quarters: [] });
 
   const result = await withCache(`analytics:heatmap:${activeCycle.id}`, 120, async () => {
+    // Select only fields needed for the grid — avoids loading notes/blockers into memory.
+    // 50K row ceiling: at 500 employees × 8 goals × 4 quarters = 16K rows max in practice.
     const checkins = await prisma.checkin.findMany({
       where: { cycleId: activeCycle.id },
-      include: { employee: { select: { id: true, name: true, department: true } } },
+      select: {
+        quarter: true,
+        scorePercentage: true,
+        employee: { select: { id: true, name: true, department: true } },
+      },
+      take: 50000,
     });
 
     const empMap: Record<string, { name: string; department: string; scores: Record<string, number[]> }> = {};

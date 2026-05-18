@@ -118,7 +118,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       void publishEvent({ type: "goal.returned", ownerId: goal.ownerId, goalId: goal.id, goalTitle: goal.title, reason: returnReason! });
     }
   } else {
-    Promise.allSettled([
+    void Promise.allSettled([
       action === "APPROVE"
         ? Promise.all([
             createNotification({ userId: goal.ownerId, type: "GOAL_APPROVED", title: "Goal approved!", message: `"${goal.title}" approved by your manager.`, link: `/dashboard/employee/goals/${goal.id}` }),
