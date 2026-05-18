@@ -9,12 +9,15 @@ import {
   LayoutDashboard, Target, ClipboardCheck, Users, Calendar,
   BarChart3, Shield, FileText, PanelLeftClose, PanelLeftOpen,
   UserCheck, Share2, AlertTriangle, Settings, History, BookTemplate, GitBranch,
+  MessageSquare, CalendarDays, BarChart2, Smile, Building2, ClipboardList,
 } from "lucide-react";
 
 const employeeLinks = [
   { href: "/dashboard/employee/dashboard", label: "Dashboard",  icon: LayoutDashboard },
   { href: "/dashboard/employee/goals",     label: "My Goals",   icon: Target },
   { href: "/dashboard/employee/history",   label: "History",    icon: History },
+  { href: "/dashboard/employee/feedback",  label: "Feedback",   icon: MessageSquare },
+  { href: "/dashboard/employee/meetings",  label: "1:1 Meetings", icon: CalendarDays },
 ];
 
 const managerLinks = [
@@ -23,20 +26,25 @@ const managerLinks = [
   { href: "/dashboard/manager/team",         label: "Team",         icon: Users },
   { href: "/dashboard/manager/checkins",     label: "Check-ins",    icon: ClipboardCheck },
   { href: "/dashboard/manager/shared-goals", label: "Shared Goals", icon: Share2 },
+  { href: "/dashboard/manager/goal-status",  label: "Goal Status",  icon: BarChart2 },
+  { href: "/dashboard/manager/meetings",     label: "1:1 Meetings", icon: CalendarDays },
   { href: "/dashboard/manager/escalations",  label: "Escalations",  icon: AlertTriangle },
 ];
 
 const adminLinks = [
-  { href: "/dashboard/admin/dashboard",  label: "Dashboard",  icon: LayoutDashboard },
-  { href: "/dashboard/admin/users",      label: "Users",      icon: Users },
-  { href: "/dashboard/admin/cycles",     label: "Cycles",     icon: Calendar },
-  { href: "/dashboard/admin/analytics",  label: "Analytics",  icon: BarChart3 },
-  { href: "/dashboard/admin/audit",      label: "Audit Trail", icon: Shield },
-  { href: "/dashboard/admin/escalations",label: "Escalations", icon: AlertTriangle },
-  { href: "/dashboard/admin/reports",    label: "Reports",    icon: FileText },
-  { href: "/dashboard/admin/templates",  label: "Templates",  icon: BookTemplate },
-  { href: "/dashboard/admin/org-chart",    label: "Org Chart",    icon: Settings },
-  { href: "/dashboard/admin/architecture", label: "Architecture", icon: GitBranch },
+  { href: "/dashboard/admin/dashboard",      label: "Dashboard",    icon: LayoutDashboard },
+  { href: "/dashboard/admin/users",          label: "Users",        icon: Users },
+  { href: "/dashboard/admin/cycles",         label: "Cycles",       icon: Calendar },
+  { href: "/dashboard/admin/analytics",      label: "Analytics",    icon: BarChart3 },
+  { href: "/dashboard/admin/audit",          label: "Audit Trail",  icon: Shield },
+  { href: "/dashboard/admin/escalations",    label: "Escalations",  icon: AlertTriangle },
+  { href: "/dashboard/admin/reports",        label: "Reports",      icon: FileText },
+  { href: "/dashboard/admin/templates",      label: "Templates",    icon: BookTemplate },
+  { href: "/dashboard/admin/company-goals",  label: "Company Goals", icon: Building2 },
+  { href: "/dashboard/admin/review-cycles",  label: "Reviews",      icon: ClipboardList },
+  { href: "/dashboard/admin/enps",           label: "eNPS",         icon: Smile },
+  { href: "/dashboard/admin/org-chart",      label: "Org Chart",    icon: Settings },
+  { href: "/dashboard/admin/architecture",   label: "Architecture", icon: GitBranch },
 ];
 
 const ROLE_LABEL: Record<string, string> = {

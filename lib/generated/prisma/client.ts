@@ -96,3 +96,53 @@ export type GoalTemplate = Prisma.GoalTemplateModel
  * 
  */
 export type GoalComment = Prisma.GoalCommentModel
+/**
+ * Model Milestone
+ * 
+ */
+export type Milestone = Prisma.MilestoneModel
+/**
+ * Model PeerFeedback
+ * 
+ */
+export type PeerFeedback = Prisma.PeerFeedbackModel
+/**
+ * Model ReviewCycle
+ * 
+ */
+export type ReviewCycle = Prisma.ReviewCycleModel
+/**
+ * Model ReviewQuestion
+ * 
+ */
+export type ReviewQuestion = Prisma.ReviewQuestionModel
+/**
+ * Model ReviewResponse
+ * 
+ */
+export type ReviewResponse = Prisma.ReviewResponseModel
+/**
+ * Model ENPSSurvey
+ * 
+ */
+export type ENPSSurvey = Prisma.ENPSSurveyModel
+/**
+ * Model ENPSResponse
+ * 
+ */
+export type ENPSResponse = Prisma.ENPSResponseModel
+/**
+ * Model OneOnOneMeeting
+ * 
+ */
+export type OneOnOneMeeting = Prisma.OneOnOneMeetingModel
+/**
+ * Model MeetingAgendaItem
+ * 
+ */
+export type MeetingAgendaItem = Prisma.MeetingAgendaItemModel
+/**
+ * Model ScheduledReport
+ * 
+ */
+export type ScheduledReport = Prisma.ScheduledReportModel

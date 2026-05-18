@@ -67,6 +67,10 @@ export type GoalMinAggregateOutputType = {
   reworkCount: number | null
   latestScore: number | null
   latestStatus: $Enums.ProgressStatus | null
+  goalLevel: $Enums.GoalLevel | null
+  parentGoalId: string | null
+  cancelledAt: Date | null
+  cancelReason: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -98,6 +102,10 @@ export type GoalMaxAggregateOutputType = {
   reworkCount: number | null
   latestScore: number | null
   latestStatus: $Enums.ProgressStatus | null
+  goalLevel: $Enums.GoalLevel | null
+  parentGoalId: string | null
+  cancelledAt: Date | null
+  cancelReason: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -129,6 +137,10 @@ export type GoalCountAggregateOutputType = {
   reworkCount: number
   latestScore: number
   latestStatus: number
+  goalLevel: number
+  parentGoalId: number
+  cancelledAt: number
+  cancelReason: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -176,6 +188,10 @@ export type GoalMinAggregateInputType = {
   reworkCount?: true
   latestScore?: true
   latestStatus?: true
+  goalLevel?: true
+  parentGoalId?: true
+  cancelledAt?: true
+  cancelReason?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -207,6 +223,10 @@ export type GoalMaxAggregateInputType = {
   reworkCount?: true
   latestScore?: true
   latestStatus?: true
+  goalLevel?: true
+  parentGoalId?: true
+  cancelledAt?: true
+  cancelReason?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -238,6 +258,10 @@ export type GoalCountAggregateInputType = {
   reworkCount?: true
   latestScore?: true
   latestStatus?: true
+  goalLevel?: true
+  parentGoalId?: true
+  cancelledAt?: true
+  cancelReason?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -356,6 +380,10 @@ export type GoalGroupByOutputType = {
   reworkCount: number
   latestScore: number | null
   latestStatus: $Enums.ProgressStatus
+  goalLevel: $Enums.GoalLevel
+  parentGoalId: string | null
+  cancelledAt: Date | null
+  cancelReason: string | null
   createdAt: Date
   updatedAt: Date
   _count: GoalCountAggregateOutputType | null
@@ -410,15 +438,22 @@ export type GoalWhereInput = {
   reworkCount?: Prisma.IntFilter<"Goal"> | number
   latestScore?: Prisma.FloatNullableFilter<"Goal"> | number | null
   latestStatus?: Prisma.EnumProgressStatusFilter<"Goal"> | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFilter<"Goal"> | $Enums.GoalLevel
+  parentGoalId?: Prisma.StringNullableFilter<"Goal"> | string | null
+  cancelledAt?: Prisma.DateTimeNullableFilter<"Goal"> | Date | string | null
+  cancelReason?: Prisma.StringNullableFilter<"Goal"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Goal"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Goal"> | Date | string
   sharedWith?: Prisma.UserListRelationFilter
   owner?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   approver?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   cycle?: Prisma.XOR<Prisma.CycleScalarRelationFilter, Prisma.CycleWhereInput>
+  parentGoal?: Prisma.XOR<Prisma.GoalNullableScalarRelationFilter, Prisma.GoalWhereInput> | null
+  childGoals?: Prisma.GoalListRelationFilter
   checkins?: Prisma.CheckinListRelationFilter
   auditLogs?: Prisma.AuditLogListRelationFilter
   comments?: Prisma.GoalCommentListRelationFilter
+  milestones?: Prisma.MilestoneListRelationFilter
 }
 
 export type GoalOrderByWithRelationInput = {
@@ -448,15 +483,22 @@ export type GoalOrderByWithRelationInput = {
   reworkCount?: Prisma.SortOrder
   latestScore?: Prisma.SortOrderInput | Prisma.SortOrder
   latestStatus?: Prisma.SortOrder
+  goalLevel?: Prisma.SortOrder
+  parentGoalId?: Prisma.SortOrderInput | Prisma.SortOrder
+  cancelledAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  cancelReason?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   sharedWith?: Prisma.UserOrderByRelationAggregateInput
   owner?: Prisma.UserOrderByWithRelationInput
   approver?: Prisma.UserOrderByWithRelationInput
   cycle?: Prisma.CycleOrderByWithRelationInput
+  parentGoal?: Prisma.GoalOrderByWithRelationInput
+  childGoals?: Prisma.GoalOrderByRelationAggregateInput
   checkins?: Prisma.CheckinOrderByRelationAggregateInput
   auditLogs?: Prisma.AuditLogOrderByRelationAggregateInput
   comments?: Prisma.GoalCommentOrderByRelationAggregateInput
+  milestones?: Prisma.MilestoneOrderByRelationAggregateInput
 }
 
 export type GoalWhereUniqueInput = Prisma.AtLeast<{
@@ -489,15 +531,22 @@ export type GoalWhereUniqueInput = Prisma.AtLeast<{
   reworkCount?: Prisma.IntFilter<"Goal"> | number
   latestScore?: Prisma.FloatNullableFilter<"Goal"> | number | null
   latestStatus?: Prisma.EnumProgressStatusFilter<"Goal"> | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFilter<"Goal"> | $Enums.GoalLevel
+  parentGoalId?: Prisma.StringNullableFilter<"Goal"> | string | null
+  cancelledAt?: Prisma.DateTimeNullableFilter<"Goal"> | Date | string | null
+  cancelReason?: Prisma.StringNullableFilter<"Goal"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Goal"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Goal"> | Date | string
   sharedWith?: Prisma.UserListRelationFilter
   owner?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   approver?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   cycle?: Prisma.XOR<Prisma.CycleScalarRelationFilter, Prisma.CycleWhereInput>
+  parentGoal?: Prisma.XOR<Prisma.GoalNullableScalarRelationFilter, Prisma.GoalWhereInput> | null
+  childGoals?: Prisma.GoalListRelationFilter
   checkins?: Prisma.CheckinListRelationFilter
   auditLogs?: Prisma.AuditLogListRelationFilter
   comments?: Prisma.GoalCommentListRelationFilter
+  milestones?: Prisma.MilestoneListRelationFilter
 }, "id">
 
 export type GoalOrderByWithAggregationInput = {
@@ -527,6 +576,10 @@ export type GoalOrderByWithAggregationInput = {
   reworkCount?: Prisma.SortOrder
   latestScore?: Prisma.SortOrderInput | Prisma.SortOrder
   latestStatus?: Prisma.SortOrder
+  goalLevel?: Prisma.SortOrder
+  parentGoalId?: Prisma.SortOrderInput | Prisma.SortOrder
+  cancelledAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  cancelReason?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.GoalCountOrderByAggregateInput
@@ -566,6 +619,10 @@ export type GoalScalarWhereWithAggregatesInput = {
   reworkCount?: Prisma.IntWithAggregatesFilter<"Goal"> | number
   latestScore?: Prisma.FloatNullableWithAggregatesFilter<"Goal"> | number | null
   latestStatus?: Prisma.EnumProgressStatusWithAggregatesFilter<"Goal"> | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelWithAggregatesFilter<"Goal"> | $Enums.GoalLevel
+  parentGoalId?: Prisma.StringNullableWithAggregatesFilter<"Goal"> | string | null
+  cancelledAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Goal"> | Date | string | null
+  cancelReason?: Prisma.StringNullableWithAggregatesFilter<"Goal"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Goal"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Goal"> | Date | string
 }
@@ -594,15 +651,21 @@ export type GoalCreateInput = {
   reworkCount?: number
   latestScore?: number | null
   latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sharedWith?: Prisma.UserCreateNestedManyWithoutSharedGoalsInput
   owner: Prisma.UserCreateNestedOneWithoutOwnedGoalsInput
   approver?: Prisma.UserCreateNestedOneWithoutApprovedGoalsInput
   cycle: Prisma.CycleCreateNestedOneWithoutGoalsInput
+  parentGoal?: Prisma.GoalCreateNestedOneWithoutChildGoalsInput
+  childGoals?: Prisma.GoalCreateNestedManyWithoutParentGoalInput
   checkins?: Prisma.CheckinCreateNestedManyWithoutGoalInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutGoalInput
   comments?: Prisma.GoalCommentCreateNestedManyWithoutGoalInput
+  milestones?: Prisma.MilestoneCreateNestedManyWithoutGoalInput
 }
 
 export type GoalUncheckedCreateInput = {
@@ -632,12 +695,18 @@ export type GoalUncheckedCreateInput = {
   reworkCount?: number
   latestScore?: number | null
   latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  parentGoalId?: string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sharedWith?: Prisma.UserUncheckedCreateNestedManyWithoutSharedGoalsInput
+  childGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutParentGoalInput
   checkins?: Prisma.CheckinUncheckedCreateNestedManyWithoutGoalInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutGoalInput
   comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutGoalInput
+  milestones?: Prisma.MilestoneUncheckedCreateNestedManyWithoutGoalInput
 }
 
 export type GoalUpdateInput = {
@@ -664,15 +733,21 @@ export type GoalUpdateInput = {
   reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
   latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sharedWith?: Prisma.UserUpdateManyWithoutSharedGoalsNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutOwnedGoalsNestedInput
   approver?: Prisma.UserUpdateOneWithoutApprovedGoalsNestedInput
   cycle?: Prisma.CycleUpdateOneRequiredWithoutGoalsNestedInput
+  parentGoal?: Prisma.GoalUpdateOneWithoutChildGoalsNestedInput
+  childGoals?: Prisma.GoalUpdateManyWithoutParentGoalNestedInput
   checkins?: Prisma.CheckinUpdateManyWithoutGoalNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutGoalNestedInput
   comments?: Prisma.GoalCommentUpdateManyWithoutGoalNestedInput
+  milestones?: Prisma.MilestoneUpdateManyWithoutGoalNestedInput
 }
 
 export type GoalUncheckedUpdateInput = {
@@ -702,12 +777,18 @@ export type GoalUncheckedUpdateInput = {
   reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
   latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  parentGoalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sharedWith?: Prisma.UserUncheckedUpdateManyWithoutSharedGoalsNestedInput
+  childGoals?: Prisma.GoalUncheckedUpdateManyWithoutParentGoalNestedInput
   checkins?: Prisma.CheckinUncheckedUpdateManyWithoutGoalNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutGoalNestedInput
   comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutGoalNestedInput
+  milestones?: Prisma.MilestoneUncheckedUpdateManyWithoutGoalNestedInput
 }
 
 export type GoalCreateManyInput = {
@@ -737,6 +818,10 @@ export type GoalCreateManyInput = {
   reworkCount?: number
   latestScore?: number | null
   latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  parentGoalId?: string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -765,6 +850,9 @@ export type GoalUpdateManyMutationInput = {
   reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
   latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -796,6 +884,10 @@ export type GoalUncheckedUpdateManyInput = {
   reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
   latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  parentGoalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -808,6 +900,11 @@ export type GoalListRelationFilter = {
 
 export type GoalOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type GoalNullableScalarRelationFilter = {
+  is?: Prisma.GoalWhereInput | null
+  isNot?: Prisma.GoalWhereInput | null
 }
 
 export type GoalCountOrderByAggregateInput = {
@@ -837,6 +934,10 @@ export type GoalCountOrderByAggregateInput = {
   reworkCount?: Prisma.SortOrder
   latestScore?: Prisma.SortOrder
   latestStatus?: Prisma.SortOrder
+  goalLevel?: Prisma.SortOrder
+  parentGoalId?: Prisma.SortOrder
+  cancelledAt?: Prisma.SortOrder
+  cancelReason?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -875,6 +976,10 @@ export type GoalMaxOrderByAggregateInput = {
   reworkCount?: Prisma.SortOrder
   latestScore?: Prisma.SortOrder
   latestStatus?: Prisma.SortOrder
+  goalLevel?: Prisma.SortOrder
+  parentGoalId?: Prisma.SortOrder
+  cancelledAt?: Prisma.SortOrder
+  cancelReason?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -906,6 +1011,10 @@ export type GoalMinOrderByAggregateInput = {
   reworkCount?: Prisma.SortOrder
   latestScore?: Prisma.SortOrder
   latestStatus?: Prisma.SortOrder
+  goalLevel?: Prisma.SortOrder
+  parentGoalId?: Prisma.SortOrder
+  cancelledAt?: Prisma.SortOrder
+  cancelReason?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -920,11 +1029,6 @@ export type GoalSumOrderByAggregateInput = {
 export type GoalScalarRelationFilter = {
   is?: Prisma.GoalWhereInput
   isNot?: Prisma.GoalWhereInput
-}
-
-export type GoalNullableScalarRelationFilter = {
-  is?: Prisma.GoalWhereInput | null
-  isNot?: Prisma.GoalWhereInput | null
 }
 
 export type GoalCreateNestedManyWithoutOwnerInput = {
@@ -1091,6 +1195,26 @@ export type GoalUncheckedUpdateManyWithoutCycleNestedInput = {
   deleteMany?: Prisma.GoalScalarWhereInput | Prisma.GoalScalarWhereInput[]
 }
 
+export type GoalCreateNestedOneWithoutChildGoalsInput = {
+  create?: Prisma.XOR<Prisma.GoalCreateWithoutChildGoalsInput, Prisma.GoalUncheckedCreateWithoutChildGoalsInput>
+  connectOrCreate?: Prisma.GoalCreateOrConnectWithoutChildGoalsInput
+  connect?: Prisma.GoalWhereUniqueInput
+}
+
+export type GoalCreateNestedManyWithoutParentGoalInput = {
+  create?: Prisma.XOR<Prisma.GoalCreateWithoutParentGoalInput, Prisma.GoalUncheckedCreateWithoutParentGoalInput> | Prisma.GoalCreateWithoutParentGoalInput[] | Prisma.GoalUncheckedCreateWithoutParentGoalInput[]
+  connectOrCreate?: Prisma.GoalCreateOrConnectWithoutParentGoalInput | Prisma.GoalCreateOrConnectWithoutParentGoalInput[]
+  createMany?: Prisma.GoalCreateManyParentGoalInputEnvelope
+  connect?: Prisma.GoalWhereUniqueInput | Prisma.GoalWhereUniqueInput[]
+}
+
+export type GoalUncheckedCreateNestedManyWithoutParentGoalInput = {
+  create?: Prisma.XOR<Prisma.GoalCreateWithoutParentGoalInput, Prisma.GoalUncheckedCreateWithoutParentGoalInput> | Prisma.GoalCreateWithoutParentGoalInput[] | Prisma.GoalUncheckedCreateWithoutParentGoalInput[]
+  connectOrCreate?: Prisma.GoalCreateOrConnectWithoutParentGoalInput | Prisma.GoalCreateOrConnectWithoutParentGoalInput[]
+  createMany?: Prisma.GoalCreateManyParentGoalInputEnvelope
+  connect?: Prisma.GoalWhereUniqueInput | Prisma.GoalWhereUniqueInput[]
+}
+
 export type EnumUoMTypeFieldUpdateOperationsInput = {
   set?: $Enums.UoMType
 }
@@ -1125,6 +1249,48 @@ export type IntFieldUpdateOperationsInput = {
 
 export type EnumProgressStatusFieldUpdateOperationsInput = {
   set?: $Enums.ProgressStatus
+}
+
+export type EnumGoalLevelFieldUpdateOperationsInput = {
+  set?: $Enums.GoalLevel
+}
+
+export type GoalUpdateOneWithoutChildGoalsNestedInput = {
+  create?: Prisma.XOR<Prisma.GoalCreateWithoutChildGoalsInput, Prisma.GoalUncheckedCreateWithoutChildGoalsInput>
+  connectOrCreate?: Prisma.GoalCreateOrConnectWithoutChildGoalsInput
+  upsert?: Prisma.GoalUpsertWithoutChildGoalsInput
+  disconnect?: Prisma.GoalWhereInput | boolean
+  delete?: Prisma.GoalWhereInput | boolean
+  connect?: Prisma.GoalWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.GoalUpdateToOneWithWhereWithoutChildGoalsInput, Prisma.GoalUpdateWithoutChildGoalsInput>, Prisma.GoalUncheckedUpdateWithoutChildGoalsInput>
+}
+
+export type GoalUpdateManyWithoutParentGoalNestedInput = {
+  create?: Prisma.XOR<Prisma.GoalCreateWithoutParentGoalInput, Prisma.GoalUncheckedCreateWithoutParentGoalInput> | Prisma.GoalCreateWithoutParentGoalInput[] | Prisma.GoalUncheckedCreateWithoutParentGoalInput[]
+  connectOrCreate?: Prisma.GoalCreateOrConnectWithoutParentGoalInput | Prisma.GoalCreateOrConnectWithoutParentGoalInput[]
+  upsert?: Prisma.GoalUpsertWithWhereUniqueWithoutParentGoalInput | Prisma.GoalUpsertWithWhereUniqueWithoutParentGoalInput[]
+  createMany?: Prisma.GoalCreateManyParentGoalInputEnvelope
+  set?: Prisma.GoalWhereUniqueInput | Prisma.GoalWhereUniqueInput[]
+  disconnect?: Prisma.GoalWhereUniqueInput | Prisma.GoalWhereUniqueInput[]
+  delete?: Prisma.GoalWhereUniqueInput | Prisma.GoalWhereUniqueInput[]
+  connect?: Prisma.GoalWhereUniqueInput | Prisma.GoalWhereUniqueInput[]
+  update?: Prisma.GoalUpdateWithWhereUniqueWithoutParentGoalInput | Prisma.GoalUpdateWithWhereUniqueWithoutParentGoalInput[]
+  updateMany?: Prisma.GoalUpdateManyWithWhereWithoutParentGoalInput | Prisma.GoalUpdateManyWithWhereWithoutParentGoalInput[]
+  deleteMany?: Prisma.GoalScalarWhereInput | Prisma.GoalScalarWhereInput[]
+}
+
+export type GoalUncheckedUpdateManyWithoutParentGoalNestedInput = {
+  create?: Prisma.XOR<Prisma.GoalCreateWithoutParentGoalInput, Prisma.GoalUncheckedCreateWithoutParentGoalInput> | Prisma.GoalCreateWithoutParentGoalInput[] | Prisma.GoalUncheckedCreateWithoutParentGoalInput[]
+  connectOrCreate?: Prisma.GoalCreateOrConnectWithoutParentGoalInput | Prisma.GoalCreateOrConnectWithoutParentGoalInput[]
+  upsert?: Prisma.GoalUpsertWithWhereUniqueWithoutParentGoalInput | Prisma.GoalUpsertWithWhereUniqueWithoutParentGoalInput[]
+  createMany?: Prisma.GoalCreateManyParentGoalInputEnvelope
+  set?: Prisma.GoalWhereUniqueInput | Prisma.GoalWhereUniqueInput[]
+  disconnect?: Prisma.GoalWhereUniqueInput | Prisma.GoalWhereUniqueInput[]
+  delete?: Prisma.GoalWhereUniqueInput | Prisma.GoalWhereUniqueInput[]
+  connect?: Prisma.GoalWhereUniqueInput | Prisma.GoalWhereUniqueInput[]
+  update?: Prisma.GoalUpdateWithWhereUniqueWithoutParentGoalInput | Prisma.GoalUpdateWithWhereUniqueWithoutParentGoalInput[]
+  updateMany?: Prisma.GoalUpdateManyWithWhereWithoutParentGoalInput | Prisma.GoalUpdateManyWithWhereWithoutParentGoalInput[]
+  deleteMany?: Prisma.GoalScalarWhereInput | Prisma.GoalScalarWhereInput[]
 }
 
 export type GoalCreateNestedOneWithoutCheckinsInput = {
@@ -1171,6 +1337,20 @@ export type GoalUpdateOneRequiredWithoutCommentsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.GoalUpdateToOneWithWhereWithoutCommentsInput, Prisma.GoalUpdateWithoutCommentsInput>, Prisma.GoalUncheckedUpdateWithoutCommentsInput>
 }
 
+export type GoalCreateNestedOneWithoutMilestonesInput = {
+  create?: Prisma.XOR<Prisma.GoalCreateWithoutMilestonesInput, Prisma.GoalUncheckedCreateWithoutMilestonesInput>
+  connectOrCreate?: Prisma.GoalCreateOrConnectWithoutMilestonesInput
+  connect?: Prisma.GoalWhereUniqueInput
+}
+
+export type GoalUpdateOneRequiredWithoutMilestonesNestedInput = {
+  create?: Prisma.XOR<Prisma.GoalCreateWithoutMilestonesInput, Prisma.GoalUncheckedCreateWithoutMilestonesInput>
+  connectOrCreate?: Prisma.GoalCreateOrConnectWithoutMilestonesInput
+  upsert?: Prisma.GoalUpsertWithoutMilestonesInput
+  connect?: Prisma.GoalWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.GoalUpdateToOneWithWhereWithoutMilestonesInput, Prisma.GoalUpdateWithoutMilestonesInput>, Prisma.GoalUncheckedUpdateWithoutMilestonesInput>
+}
+
 export type GoalCreateWithoutOwnerInput = {
   id?: string
   title: string
@@ -1195,14 +1375,20 @@ export type GoalCreateWithoutOwnerInput = {
   reworkCount?: number
   latestScore?: number | null
   latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sharedWith?: Prisma.UserCreateNestedManyWithoutSharedGoalsInput
   approver?: Prisma.UserCreateNestedOneWithoutApprovedGoalsInput
   cycle: Prisma.CycleCreateNestedOneWithoutGoalsInput
+  parentGoal?: Prisma.GoalCreateNestedOneWithoutChildGoalsInput
+  childGoals?: Prisma.GoalCreateNestedManyWithoutParentGoalInput
   checkins?: Prisma.CheckinCreateNestedManyWithoutGoalInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutGoalInput
   comments?: Prisma.GoalCommentCreateNestedManyWithoutGoalInput
+  milestones?: Prisma.MilestoneCreateNestedManyWithoutGoalInput
 }
 
 export type GoalUncheckedCreateWithoutOwnerInput = {
@@ -1231,12 +1417,18 @@ export type GoalUncheckedCreateWithoutOwnerInput = {
   reworkCount?: number
   latestScore?: number | null
   latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  parentGoalId?: string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sharedWith?: Prisma.UserUncheckedCreateNestedManyWithoutSharedGoalsInput
+  childGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutParentGoalInput
   checkins?: Prisma.CheckinUncheckedCreateNestedManyWithoutGoalInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutGoalInput
   comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutGoalInput
+  milestones?: Prisma.MilestoneUncheckedCreateNestedManyWithoutGoalInput
 }
 
 export type GoalCreateOrConnectWithoutOwnerInput = {
@@ -1273,14 +1465,20 @@ export type GoalCreateWithoutApproverInput = {
   reworkCount?: number
   latestScore?: number | null
   latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sharedWith?: Prisma.UserCreateNestedManyWithoutSharedGoalsInput
   owner: Prisma.UserCreateNestedOneWithoutOwnedGoalsInput
   cycle: Prisma.CycleCreateNestedOneWithoutGoalsInput
+  parentGoal?: Prisma.GoalCreateNestedOneWithoutChildGoalsInput
+  childGoals?: Prisma.GoalCreateNestedManyWithoutParentGoalInput
   checkins?: Prisma.CheckinCreateNestedManyWithoutGoalInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutGoalInput
   comments?: Prisma.GoalCommentCreateNestedManyWithoutGoalInput
+  milestones?: Prisma.MilestoneCreateNestedManyWithoutGoalInput
 }
 
 export type GoalUncheckedCreateWithoutApproverInput = {
@@ -1309,12 +1507,18 @@ export type GoalUncheckedCreateWithoutApproverInput = {
   reworkCount?: number
   latestScore?: number | null
   latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  parentGoalId?: string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sharedWith?: Prisma.UserUncheckedCreateNestedManyWithoutSharedGoalsInput
+  childGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutParentGoalInput
   checkins?: Prisma.CheckinUncheckedCreateNestedManyWithoutGoalInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutGoalInput
   comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutGoalInput
+  milestones?: Prisma.MilestoneUncheckedCreateNestedManyWithoutGoalInput
 }
 
 export type GoalCreateOrConnectWithoutApproverInput = {
@@ -1351,14 +1555,20 @@ export type GoalCreateWithoutSharedWithInput = {
   reworkCount?: number
   latestScore?: number | null
   latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   owner: Prisma.UserCreateNestedOneWithoutOwnedGoalsInput
   approver?: Prisma.UserCreateNestedOneWithoutApprovedGoalsInput
   cycle: Prisma.CycleCreateNestedOneWithoutGoalsInput
+  parentGoal?: Prisma.GoalCreateNestedOneWithoutChildGoalsInput
+  childGoals?: Prisma.GoalCreateNestedManyWithoutParentGoalInput
   checkins?: Prisma.CheckinCreateNestedManyWithoutGoalInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutGoalInput
   comments?: Prisma.GoalCommentCreateNestedManyWithoutGoalInput
+  milestones?: Prisma.MilestoneCreateNestedManyWithoutGoalInput
 }
 
 export type GoalUncheckedCreateWithoutSharedWithInput = {
@@ -1388,11 +1598,17 @@ export type GoalUncheckedCreateWithoutSharedWithInput = {
   reworkCount?: number
   latestScore?: number | null
   latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  parentGoalId?: string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  childGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutParentGoalInput
   checkins?: Prisma.CheckinUncheckedCreateNestedManyWithoutGoalInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutGoalInput
   comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutGoalInput
+  milestones?: Prisma.MilestoneUncheckedCreateNestedManyWithoutGoalInput
 }
 
 export type GoalCreateOrConnectWithoutSharedWithInput = {
@@ -1446,6 +1662,10 @@ export type GoalScalarWhereInput = {
   reworkCount?: Prisma.IntFilter<"Goal"> | number
   latestScore?: Prisma.FloatNullableFilter<"Goal"> | number | null
   latestStatus?: Prisma.EnumProgressStatusFilter<"Goal"> | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFilter<"Goal"> | $Enums.GoalLevel
+  parentGoalId?: Prisma.StringNullableFilter<"Goal"> | string | null
+  cancelledAt?: Prisma.DateTimeNullableFilter<"Goal"> | Date | string | null
+  cancelReason?: Prisma.StringNullableFilter<"Goal"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Goal"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Goal"> | Date | string
 }
@@ -1506,14 +1726,20 @@ export type GoalCreateWithoutCycleInput = {
   reworkCount?: number
   latestScore?: number | null
   latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sharedWith?: Prisma.UserCreateNestedManyWithoutSharedGoalsInput
   owner: Prisma.UserCreateNestedOneWithoutOwnedGoalsInput
   approver?: Prisma.UserCreateNestedOneWithoutApprovedGoalsInput
+  parentGoal?: Prisma.GoalCreateNestedOneWithoutChildGoalsInput
+  childGoals?: Prisma.GoalCreateNestedManyWithoutParentGoalInput
   checkins?: Prisma.CheckinCreateNestedManyWithoutGoalInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutGoalInput
   comments?: Prisma.GoalCommentCreateNestedManyWithoutGoalInput
+  milestones?: Prisma.MilestoneCreateNestedManyWithoutGoalInput
 }
 
 export type GoalUncheckedCreateWithoutCycleInput = {
@@ -1542,12 +1768,18 @@ export type GoalUncheckedCreateWithoutCycleInput = {
   reworkCount?: number
   latestScore?: number | null
   latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  parentGoalId?: string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sharedWith?: Prisma.UserUncheckedCreateNestedManyWithoutSharedGoalsInput
+  childGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutParentGoalInput
   checkins?: Prisma.CheckinUncheckedCreateNestedManyWithoutGoalInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutGoalInput
   comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutGoalInput
+  milestones?: Prisma.MilestoneUncheckedCreateNestedManyWithoutGoalInput
 }
 
 export type GoalCreateOrConnectWithoutCycleInput = {
@@ -1576,6 +1808,288 @@ export type GoalUpdateManyWithWhereWithoutCycleInput = {
   data: Prisma.XOR<Prisma.GoalUpdateManyMutationInput, Prisma.GoalUncheckedUpdateManyWithoutCycleInput>
 }
 
+export type GoalCreateWithoutChildGoalsInput = {
+  id?: string
+  title: string
+  description?: string | null
+  thrustArea: string
+  uomType: $Enums.UoMType
+  uomUnit?: string | null
+  target?: number | null
+  targetDate?: Date | string | null
+  weightage: number
+  status?: $Enums.GoalStatus
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  isShared?: boolean
+  primaryOwnerId?: string | null
+  submittedAt?: Date | string | null
+  approvedAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  rejectReason?: string | null
+  returnedAt?: Date | string | null
+  returnReason?: string | null
+  reworkCount?: number
+  latestScore?: number | null
+  latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sharedWith?: Prisma.UserCreateNestedManyWithoutSharedGoalsInput
+  owner: Prisma.UserCreateNestedOneWithoutOwnedGoalsInput
+  approver?: Prisma.UserCreateNestedOneWithoutApprovedGoalsInput
+  cycle: Prisma.CycleCreateNestedOneWithoutGoalsInput
+  parentGoal?: Prisma.GoalCreateNestedOneWithoutChildGoalsInput
+  checkins?: Prisma.CheckinCreateNestedManyWithoutGoalInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutGoalInput
+  comments?: Prisma.GoalCommentCreateNestedManyWithoutGoalInput
+  milestones?: Prisma.MilestoneCreateNestedManyWithoutGoalInput
+}
+
+export type GoalUncheckedCreateWithoutChildGoalsInput = {
+  id?: string
+  title: string
+  description?: string | null
+  thrustArea: string
+  uomType: $Enums.UoMType
+  uomUnit?: string | null
+  target?: number | null
+  targetDate?: Date | string | null
+  weightage: number
+  status?: $Enums.GoalStatus
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  isShared?: boolean
+  primaryOwnerId?: string | null
+  ownerId: string
+  approverId?: string | null
+  cycleId: string
+  submittedAt?: Date | string | null
+  approvedAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  rejectReason?: string | null
+  returnedAt?: Date | string | null
+  returnReason?: string | null
+  reworkCount?: number
+  latestScore?: number | null
+  latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  parentGoalId?: string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sharedWith?: Prisma.UserUncheckedCreateNestedManyWithoutSharedGoalsInput
+  checkins?: Prisma.CheckinUncheckedCreateNestedManyWithoutGoalInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutGoalInput
+  comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutGoalInput
+  milestones?: Prisma.MilestoneUncheckedCreateNestedManyWithoutGoalInput
+}
+
+export type GoalCreateOrConnectWithoutChildGoalsInput = {
+  where: Prisma.GoalWhereUniqueInput
+  create: Prisma.XOR<Prisma.GoalCreateWithoutChildGoalsInput, Prisma.GoalUncheckedCreateWithoutChildGoalsInput>
+}
+
+export type GoalCreateWithoutParentGoalInput = {
+  id?: string
+  title: string
+  description?: string | null
+  thrustArea: string
+  uomType: $Enums.UoMType
+  uomUnit?: string | null
+  target?: number | null
+  targetDate?: Date | string | null
+  weightage: number
+  status?: $Enums.GoalStatus
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  isShared?: boolean
+  primaryOwnerId?: string | null
+  submittedAt?: Date | string | null
+  approvedAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  rejectReason?: string | null
+  returnedAt?: Date | string | null
+  returnReason?: string | null
+  reworkCount?: number
+  latestScore?: number | null
+  latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sharedWith?: Prisma.UserCreateNestedManyWithoutSharedGoalsInput
+  owner: Prisma.UserCreateNestedOneWithoutOwnedGoalsInput
+  approver?: Prisma.UserCreateNestedOneWithoutApprovedGoalsInput
+  cycle: Prisma.CycleCreateNestedOneWithoutGoalsInput
+  childGoals?: Prisma.GoalCreateNestedManyWithoutParentGoalInput
+  checkins?: Prisma.CheckinCreateNestedManyWithoutGoalInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutGoalInput
+  comments?: Prisma.GoalCommentCreateNestedManyWithoutGoalInput
+  milestones?: Prisma.MilestoneCreateNestedManyWithoutGoalInput
+}
+
+export type GoalUncheckedCreateWithoutParentGoalInput = {
+  id?: string
+  title: string
+  description?: string | null
+  thrustArea: string
+  uomType: $Enums.UoMType
+  uomUnit?: string | null
+  target?: number | null
+  targetDate?: Date | string | null
+  weightage: number
+  status?: $Enums.GoalStatus
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  isShared?: boolean
+  primaryOwnerId?: string | null
+  ownerId: string
+  approverId?: string | null
+  cycleId: string
+  submittedAt?: Date | string | null
+  approvedAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  rejectReason?: string | null
+  returnedAt?: Date | string | null
+  returnReason?: string | null
+  reworkCount?: number
+  latestScore?: number | null
+  latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sharedWith?: Prisma.UserUncheckedCreateNestedManyWithoutSharedGoalsInput
+  childGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutParentGoalInput
+  checkins?: Prisma.CheckinUncheckedCreateNestedManyWithoutGoalInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutGoalInput
+  comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutGoalInput
+  milestones?: Prisma.MilestoneUncheckedCreateNestedManyWithoutGoalInput
+}
+
+export type GoalCreateOrConnectWithoutParentGoalInput = {
+  where: Prisma.GoalWhereUniqueInput
+  create: Prisma.XOR<Prisma.GoalCreateWithoutParentGoalInput, Prisma.GoalUncheckedCreateWithoutParentGoalInput>
+}
+
+export type GoalCreateManyParentGoalInputEnvelope = {
+  data: Prisma.GoalCreateManyParentGoalInput | Prisma.GoalCreateManyParentGoalInput[]
+  skipDuplicates?: boolean
+}
+
+export type GoalUpsertWithoutChildGoalsInput = {
+  update: Prisma.XOR<Prisma.GoalUpdateWithoutChildGoalsInput, Prisma.GoalUncheckedUpdateWithoutChildGoalsInput>
+  create: Prisma.XOR<Prisma.GoalCreateWithoutChildGoalsInput, Prisma.GoalUncheckedCreateWithoutChildGoalsInput>
+  where?: Prisma.GoalWhereInput
+}
+
+export type GoalUpdateToOneWithWhereWithoutChildGoalsInput = {
+  where?: Prisma.GoalWhereInput
+  data: Prisma.XOR<Prisma.GoalUpdateWithoutChildGoalsInput, Prisma.GoalUncheckedUpdateWithoutChildGoalsInput>
+}
+
+export type GoalUpdateWithoutChildGoalsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  thrustArea?: Prisma.StringFieldUpdateOperationsInput | string
+  uomType?: Prisma.EnumUoMTypeFieldUpdateOperationsInput | $Enums.UoMType
+  uomUnit?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  target?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  targetDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  weightage?: Prisma.FloatFieldUpdateOperationsInput | number
+  status?: Prisma.EnumGoalStatusFieldUpdateOperationsInput | $Enums.GoalStatus
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isShared?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  primaryOwnerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  returnedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  returnReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
+  latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sharedWith?: Prisma.UserUpdateManyWithoutSharedGoalsNestedInput
+  owner?: Prisma.UserUpdateOneRequiredWithoutOwnedGoalsNestedInput
+  approver?: Prisma.UserUpdateOneWithoutApprovedGoalsNestedInput
+  cycle?: Prisma.CycleUpdateOneRequiredWithoutGoalsNestedInput
+  parentGoal?: Prisma.GoalUpdateOneWithoutChildGoalsNestedInput
+  checkins?: Prisma.CheckinUpdateManyWithoutGoalNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutGoalNestedInput
+  comments?: Prisma.GoalCommentUpdateManyWithoutGoalNestedInput
+  milestones?: Prisma.MilestoneUpdateManyWithoutGoalNestedInput
+}
+
+export type GoalUncheckedUpdateWithoutChildGoalsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  thrustArea?: Prisma.StringFieldUpdateOperationsInput | string
+  uomType?: Prisma.EnumUoMTypeFieldUpdateOperationsInput | $Enums.UoMType
+  uomUnit?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  target?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  targetDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  weightage?: Prisma.FloatFieldUpdateOperationsInput | number
+  status?: Prisma.EnumGoalStatusFieldUpdateOperationsInput | $Enums.GoalStatus
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isShared?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  primaryOwnerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  approverId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cycleId?: Prisma.StringFieldUpdateOperationsInput | string
+  submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  returnedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  returnReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
+  latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  parentGoalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sharedWith?: Prisma.UserUncheckedUpdateManyWithoutSharedGoalsNestedInput
+  checkins?: Prisma.CheckinUncheckedUpdateManyWithoutGoalNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutGoalNestedInput
+  comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutGoalNestedInput
+  milestones?: Prisma.MilestoneUncheckedUpdateManyWithoutGoalNestedInput
+}
+
+export type GoalUpsertWithWhereUniqueWithoutParentGoalInput = {
+  where: Prisma.GoalWhereUniqueInput
+  update: Prisma.XOR<Prisma.GoalUpdateWithoutParentGoalInput, Prisma.GoalUncheckedUpdateWithoutParentGoalInput>
+  create: Prisma.XOR<Prisma.GoalCreateWithoutParentGoalInput, Prisma.GoalUncheckedCreateWithoutParentGoalInput>
+}
+
+export type GoalUpdateWithWhereUniqueWithoutParentGoalInput = {
+  where: Prisma.GoalWhereUniqueInput
+  data: Prisma.XOR<Prisma.GoalUpdateWithoutParentGoalInput, Prisma.GoalUncheckedUpdateWithoutParentGoalInput>
+}
+
+export type GoalUpdateManyWithWhereWithoutParentGoalInput = {
+  where: Prisma.GoalScalarWhereInput
+  data: Prisma.XOR<Prisma.GoalUpdateManyMutationInput, Prisma.GoalUncheckedUpdateManyWithoutParentGoalInput>
+}
+
 export type GoalCreateWithoutCheckinsInput = {
   id?: string
   title: string
@@ -1600,14 +2114,20 @@ export type GoalCreateWithoutCheckinsInput = {
   reworkCount?: number
   latestScore?: number | null
   latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sharedWith?: Prisma.UserCreateNestedManyWithoutSharedGoalsInput
   owner: Prisma.UserCreateNestedOneWithoutOwnedGoalsInput
   approver?: Prisma.UserCreateNestedOneWithoutApprovedGoalsInput
   cycle: Prisma.CycleCreateNestedOneWithoutGoalsInput
+  parentGoal?: Prisma.GoalCreateNestedOneWithoutChildGoalsInput
+  childGoals?: Prisma.GoalCreateNestedManyWithoutParentGoalInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutGoalInput
   comments?: Prisma.GoalCommentCreateNestedManyWithoutGoalInput
+  milestones?: Prisma.MilestoneCreateNestedManyWithoutGoalInput
 }
 
 export type GoalUncheckedCreateWithoutCheckinsInput = {
@@ -1637,11 +2157,17 @@ export type GoalUncheckedCreateWithoutCheckinsInput = {
   reworkCount?: number
   latestScore?: number | null
   latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  parentGoalId?: string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sharedWith?: Prisma.UserUncheckedCreateNestedManyWithoutSharedGoalsInput
+  childGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutParentGoalInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutGoalInput
   comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutGoalInput
+  milestones?: Prisma.MilestoneUncheckedCreateNestedManyWithoutGoalInput
 }
 
 export type GoalCreateOrConnectWithoutCheckinsInput = {
@@ -1684,14 +2210,20 @@ export type GoalUpdateWithoutCheckinsInput = {
   reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
   latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sharedWith?: Prisma.UserUpdateManyWithoutSharedGoalsNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutOwnedGoalsNestedInput
   approver?: Prisma.UserUpdateOneWithoutApprovedGoalsNestedInput
   cycle?: Prisma.CycleUpdateOneRequiredWithoutGoalsNestedInput
+  parentGoal?: Prisma.GoalUpdateOneWithoutChildGoalsNestedInput
+  childGoals?: Prisma.GoalUpdateManyWithoutParentGoalNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutGoalNestedInput
   comments?: Prisma.GoalCommentUpdateManyWithoutGoalNestedInput
+  milestones?: Prisma.MilestoneUpdateManyWithoutGoalNestedInput
 }
 
 export type GoalUncheckedUpdateWithoutCheckinsInput = {
@@ -1721,11 +2253,17 @@ export type GoalUncheckedUpdateWithoutCheckinsInput = {
   reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
   latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  parentGoalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sharedWith?: Prisma.UserUncheckedUpdateManyWithoutSharedGoalsNestedInput
+  childGoals?: Prisma.GoalUncheckedUpdateManyWithoutParentGoalNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutGoalNestedInput
   comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutGoalNestedInput
+  milestones?: Prisma.MilestoneUncheckedUpdateManyWithoutGoalNestedInput
 }
 
 export type GoalCreateWithoutAuditLogsInput = {
@@ -1752,14 +2290,20 @@ export type GoalCreateWithoutAuditLogsInput = {
   reworkCount?: number
   latestScore?: number | null
   latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sharedWith?: Prisma.UserCreateNestedManyWithoutSharedGoalsInput
   owner: Prisma.UserCreateNestedOneWithoutOwnedGoalsInput
   approver?: Prisma.UserCreateNestedOneWithoutApprovedGoalsInput
   cycle: Prisma.CycleCreateNestedOneWithoutGoalsInput
+  parentGoal?: Prisma.GoalCreateNestedOneWithoutChildGoalsInput
+  childGoals?: Prisma.GoalCreateNestedManyWithoutParentGoalInput
   checkins?: Prisma.CheckinCreateNestedManyWithoutGoalInput
   comments?: Prisma.GoalCommentCreateNestedManyWithoutGoalInput
+  milestones?: Prisma.MilestoneCreateNestedManyWithoutGoalInput
 }
 
 export type GoalUncheckedCreateWithoutAuditLogsInput = {
@@ -1789,11 +2333,17 @@ export type GoalUncheckedCreateWithoutAuditLogsInput = {
   reworkCount?: number
   latestScore?: number | null
   latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  parentGoalId?: string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sharedWith?: Prisma.UserUncheckedCreateNestedManyWithoutSharedGoalsInput
+  childGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutParentGoalInput
   checkins?: Prisma.CheckinUncheckedCreateNestedManyWithoutGoalInput
   comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutGoalInput
+  milestones?: Prisma.MilestoneUncheckedCreateNestedManyWithoutGoalInput
 }
 
 export type GoalCreateOrConnectWithoutAuditLogsInput = {
@@ -1836,14 +2386,20 @@ export type GoalUpdateWithoutAuditLogsInput = {
   reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
   latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sharedWith?: Prisma.UserUpdateManyWithoutSharedGoalsNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutOwnedGoalsNestedInput
   approver?: Prisma.UserUpdateOneWithoutApprovedGoalsNestedInput
   cycle?: Prisma.CycleUpdateOneRequiredWithoutGoalsNestedInput
+  parentGoal?: Prisma.GoalUpdateOneWithoutChildGoalsNestedInput
+  childGoals?: Prisma.GoalUpdateManyWithoutParentGoalNestedInput
   checkins?: Prisma.CheckinUpdateManyWithoutGoalNestedInput
   comments?: Prisma.GoalCommentUpdateManyWithoutGoalNestedInput
+  milestones?: Prisma.MilestoneUpdateManyWithoutGoalNestedInput
 }
 
 export type GoalUncheckedUpdateWithoutAuditLogsInput = {
@@ -1873,11 +2429,17 @@ export type GoalUncheckedUpdateWithoutAuditLogsInput = {
   reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
   latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  parentGoalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sharedWith?: Prisma.UserUncheckedUpdateManyWithoutSharedGoalsNestedInput
+  childGoals?: Prisma.GoalUncheckedUpdateManyWithoutParentGoalNestedInput
   checkins?: Prisma.CheckinUncheckedUpdateManyWithoutGoalNestedInput
   comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutGoalNestedInput
+  milestones?: Prisma.MilestoneUncheckedUpdateManyWithoutGoalNestedInput
 }
 
 export type GoalCreateWithoutCommentsInput = {
@@ -1904,14 +2466,20 @@ export type GoalCreateWithoutCommentsInput = {
   reworkCount?: number
   latestScore?: number | null
   latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sharedWith?: Prisma.UserCreateNestedManyWithoutSharedGoalsInput
   owner: Prisma.UserCreateNestedOneWithoutOwnedGoalsInput
   approver?: Prisma.UserCreateNestedOneWithoutApprovedGoalsInput
   cycle: Prisma.CycleCreateNestedOneWithoutGoalsInput
+  parentGoal?: Prisma.GoalCreateNestedOneWithoutChildGoalsInput
+  childGoals?: Prisma.GoalCreateNestedManyWithoutParentGoalInput
   checkins?: Prisma.CheckinCreateNestedManyWithoutGoalInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutGoalInput
+  milestones?: Prisma.MilestoneCreateNestedManyWithoutGoalInput
 }
 
 export type GoalUncheckedCreateWithoutCommentsInput = {
@@ -1941,11 +2509,17 @@ export type GoalUncheckedCreateWithoutCommentsInput = {
   reworkCount?: number
   latestScore?: number | null
   latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  parentGoalId?: string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sharedWith?: Prisma.UserUncheckedCreateNestedManyWithoutSharedGoalsInput
+  childGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutParentGoalInput
   checkins?: Prisma.CheckinUncheckedCreateNestedManyWithoutGoalInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutGoalInput
+  milestones?: Prisma.MilestoneUncheckedCreateNestedManyWithoutGoalInput
 }
 
 export type GoalCreateOrConnectWithoutCommentsInput = {
@@ -1988,14 +2562,20 @@ export type GoalUpdateWithoutCommentsInput = {
   reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
   latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sharedWith?: Prisma.UserUpdateManyWithoutSharedGoalsNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutOwnedGoalsNestedInput
   approver?: Prisma.UserUpdateOneWithoutApprovedGoalsNestedInput
   cycle?: Prisma.CycleUpdateOneRequiredWithoutGoalsNestedInput
+  parentGoal?: Prisma.GoalUpdateOneWithoutChildGoalsNestedInput
+  childGoals?: Prisma.GoalUpdateManyWithoutParentGoalNestedInput
   checkins?: Prisma.CheckinUpdateManyWithoutGoalNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutGoalNestedInput
+  milestones?: Prisma.MilestoneUpdateManyWithoutGoalNestedInput
 }
 
 export type GoalUncheckedUpdateWithoutCommentsInput = {
@@ -2025,11 +2605,193 @@ export type GoalUncheckedUpdateWithoutCommentsInput = {
   reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
   latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  parentGoalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sharedWith?: Prisma.UserUncheckedUpdateManyWithoutSharedGoalsNestedInput
+  childGoals?: Prisma.GoalUncheckedUpdateManyWithoutParentGoalNestedInput
   checkins?: Prisma.CheckinUncheckedUpdateManyWithoutGoalNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutGoalNestedInput
+  milestones?: Prisma.MilestoneUncheckedUpdateManyWithoutGoalNestedInput
+}
+
+export type GoalCreateWithoutMilestonesInput = {
+  id?: string
+  title: string
+  description?: string | null
+  thrustArea: string
+  uomType: $Enums.UoMType
+  uomUnit?: string | null
+  target?: number | null
+  targetDate?: Date | string | null
+  weightage: number
+  status?: $Enums.GoalStatus
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  isShared?: boolean
+  primaryOwnerId?: string | null
+  submittedAt?: Date | string | null
+  approvedAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  rejectReason?: string | null
+  returnedAt?: Date | string | null
+  returnReason?: string | null
+  reworkCount?: number
+  latestScore?: number | null
+  latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sharedWith?: Prisma.UserCreateNestedManyWithoutSharedGoalsInput
+  owner: Prisma.UserCreateNestedOneWithoutOwnedGoalsInput
+  approver?: Prisma.UserCreateNestedOneWithoutApprovedGoalsInput
+  cycle: Prisma.CycleCreateNestedOneWithoutGoalsInput
+  parentGoal?: Prisma.GoalCreateNestedOneWithoutChildGoalsInput
+  childGoals?: Prisma.GoalCreateNestedManyWithoutParentGoalInput
+  checkins?: Prisma.CheckinCreateNestedManyWithoutGoalInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutGoalInput
+  comments?: Prisma.GoalCommentCreateNestedManyWithoutGoalInput
+}
+
+export type GoalUncheckedCreateWithoutMilestonesInput = {
+  id?: string
+  title: string
+  description?: string | null
+  thrustArea: string
+  uomType: $Enums.UoMType
+  uomUnit?: string | null
+  target?: number | null
+  targetDate?: Date | string | null
+  weightage: number
+  status?: $Enums.GoalStatus
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  isShared?: boolean
+  primaryOwnerId?: string | null
+  ownerId: string
+  approverId?: string | null
+  cycleId: string
+  submittedAt?: Date | string | null
+  approvedAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  rejectReason?: string | null
+  returnedAt?: Date | string | null
+  returnReason?: string | null
+  reworkCount?: number
+  latestScore?: number | null
+  latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  parentGoalId?: string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sharedWith?: Prisma.UserUncheckedCreateNestedManyWithoutSharedGoalsInput
+  childGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutParentGoalInput
+  checkins?: Prisma.CheckinUncheckedCreateNestedManyWithoutGoalInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutGoalInput
+  comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutGoalInput
+}
+
+export type GoalCreateOrConnectWithoutMilestonesInput = {
+  where: Prisma.GoalWhereUniqueInput
+  create: Prisma.XOR<Prisma.GoalCreateWithoutMilestonesInput, Prisma.GoalUncheckedCreateWithoutMilestonesInput>
+}
+
+export type GoalUpsertWithoutMilestonesInput = {
+  update: Prisma.XOR<Prisma.GoalUpdateWithoutMilestonesInput, Prisma.GoalUncheckedUpdateWithoutMilestonesInput>
+  create: Prisma.XOR<Prisma.GoalCreateWithoutMilestonesInput, Prisma.GoalUncheckedCreateWithoutMilestonesInput>
+  where?: Prisma.GoalWhereInput
+}
+
+export type GoalUpdateToOneWithWhereWithoutMilestonesInput = {
+  where?: Prisma.GoalWhereInput
+  data: Prisma.XOR<Prisma.GoalUpdateWithoutMilestonesInput, Prisma.GoalUncheckedUpdateWithoutMilestonesInput>
+}
+
+export type GoalUpdateWithoutMilestonesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  thrustArea?: Prisma.StringFieldUpdateOperationsInput | string
+  uomType?: Prisma.EnumUoMTypeFieldUpdateOperationsInput | $Enums.UoMType
+  uomUnit?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  target?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  targetDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  weightage?: Prisma.FloatFieldUpdateOperationsInput | number
+  status?: Prisma.EnumGoalStatusFieldUpdateOperationsInput | $Enums.GoalStatus
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isShared?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  primaryOwnerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  returnedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  returnReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
+  latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sharedWith?: Prisma.UserUpdateManyWithoutSharedGoalsNestedInput
+  owner?: Prisma.UserUpdateOneRequiredWithoutOwnedGoalsNestedInput
+  approver?: Prisma.UserUpdateOneWithoutApprovedGoalsNestedInput
+  cycle?: Prisma.CycleUpdateOneRequiredWithoutGoalsNestedInput
+  parentGoal?: Prisma.GoalUpdateOneWithoutChildGoalsNestedInput
+  childGoals?: Prisma.GoalUpdateManyWithoutParentGoalNestedInput
+  checkins?: Prisma.CheckinUpdateManyWithoutGoalNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutGoalNestedInput
+  comments?: Prisma.GoalCommentUpdateManyWithoutGoalNestedInput
+}
+
+export type GoalUncheckedUpdateWithoutMilestonesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  thrustArea?: Prisma.StringFieldUpdateOperationsInput | string
+  uomType?: Prisma.EnumUoMTypeFieldUpdateOperationsInput | $Enums.UoMType
+  uomUnit?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  target?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  targetDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  weightage?: Prisma.FloatFieldUpdateOperationsInput | number
+  status?: Prisma.EnumGoalStatusFieldUpdateOperationsInput | $Enums.GoalStatus
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isShared?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  primaryOwnerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  approverId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cycleId?: Prisma.StringFieldUpdateOperationsInput | string
+  submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  returnedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  returnReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
+  latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  parentGoalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sharedWith?: Prisma.UserUncheckedUpdateManyWithoutSharedGoalsNestedInput
+  childGoals?: Prisma.GoalUncheckedUpdateManyWithoutParentGoalNestedInput
+  checkins?: Prisma.CheckinUncheckedUpdateManyWithoutGoalNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutGoalNestedInput
+  comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutGoalNestedInput
 }
 
 export type GoalCreateManyOwnerInput = {
@@ -2058,6 +2820,10 @@ export type GoalCreateManyOwnerInput = {
   reworkCount?: number
   latestScore?: number | null
   latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  parentGoalId?: string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -2088,6 +2854,10 @@ export type GoalCreateManyApproverInput = {
   reworkCount?: number
   latestScore?: number | null
   latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  parentGoalId?: string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -2116,14 +2886,20 @@ export type GoalUpdateWithoutOwnerInput = {
   reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
   latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sharedWith?: Prisma.UserUpdateManyWithoutSharedGoalsNestedInput
   approver?: Prisma.UserUpdateOneWithoutApprovedGoalsNestedInput
   cycle?: Prisma.CycleUpdateOneRequiredWithoutGoalsNestedInput
+  parentGoal?: Prisma.GoalUpdateOneWithoutChildGoalsNestedInput
+  childGoals?: Prisma.GoalUpdateManyWithoutParentGoalNestedInput
   checkins?: Prisma.CheckinUpdateManyWithoutGoalNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutGoalNestedInput
   comments?: Prisma.GoalCommentUpdateManyWithoutGoalNestedInput
+  milestones?: Prisma.MilestoneUpdateManyWithoutGoalNestedInput
 }
 
 export type GoalUncheckedUpdateWithoutOwnerInput = {
@@ -2152,12 +2928,18 @@ export type GoalUncheckedUpdateWithoutOwnerInput = {
   reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
   latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  parentGoalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sharedWith?: Prisma.UserUncheckedUpdateManyWithoutSharedGoalsNestedInput
+  childGoals?: Prisma.GoalUncheckedUpdateManyWithoutParentGoalNestedInput
   checkins?: Prisma.CheckinUncheckedUpdateManyWithoutGoalNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutGoalNestedInput
   comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutGoalNestedInput
+  milestones?: Prisma.MilestoneUncheckedUpdateManyWithoutGoalNestedInput
 }
 
 export type GoalUncheckedUpdateManyWithoutOwnerInput = {
@@ -2186,6 +2968,10 @@ export type GoalUncheckedUpdateManyWithoutOwnerInput = {
   reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
   latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  parentGoalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -2214,14 +3000,20 @@ export type GoalUpdateWithoutApproverInput = {
   reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
   latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sharedWith?: Prisma.UserUpdateManyWithoutSharedGoalsNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutOwnedGoalsNestedInput
   cycle?: Prisma.CycleUpdateOneRequiredWithoutGoalsNestedInput
+  parentGoal?: Prisma.GoalUpdateOneWithoutChildGoalsNestedInput
+  childGoals?: Prisma.GoalUpdateManyWithoutParentGoalNestedInput
   checkins?: Prisma.CheckinUpdateManyWithoutGoalNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutGoalNestedInput
   comments?: Prisma.GoalCommentUpdateManyWithoutGoalNestedInput
+  milestones?: Prisma.MilestoneUpdateManyWithoutGoalNestedInput
 }
 
 export type GoalUncheckedUpdateWithoutApproverInput = {
@@ -2250,12 +3042,18 @@ export type GoalUncheckedUpdateWithoutApproverInput = {
   reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
   latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  parentGoalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sharedWith?: Prisma.UserUncheckedUpdateManyWithoutSharedGoalsNestedInput
+  childGoals?: Prisma.GoalUncheckedUpdateManyWithoutParentGoalNestedInput
   checkins?: Prisma.CheckinUncheckedUpdateManyWithoutGoalNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutGoalNestedInput
   comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutGoalNestedInput
+  milestones?: Prisma.MilestoneUncheckedUpdateManyWithoutGoalNestedInput
 }
 
 export type GoalUncheckedUpdateManyWithoutApproverInput = {
@@ -2284,6 +3082,10 @@ export type GoalUncheckedUpdateManyWithoutApproverInput = {
   reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
   latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  parentGoalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -2312,14 +3114,20 @@ export type GoalUpdateWithoutSharedWithInput = {
   reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
   latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneRequiredWithoutOwnedGoalsNestedInput
   approver?: Prisma.UserUpdateOneWithoutApprovedGoalsNestedInput
   cycle?: Prisma.CycleUpdateOneRequiredWithoutGoalsNestedInput
+  parentGoal?: Prisma.GoalUpdateOneWithoutChildGoalsNestedInput
+  childGoals?: Prisma.GoalUpdateManyWithoutParentGoalNestedInput
   checkins?: Prisma.CheckinUpdateManyWithoutGoalNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutGoalNestedInput
   comments?: Prisma.GoalCommentUpdateManyWithoutGoalNestedInput
+  milestones?: Prisma.MilestoneUpdateManyWithoutGoalNestedInput
 }
 
 export type GoalUncheckedUpdateWithoutSharedWithInput = {
@@ -2349,11 +3157,17 @@ export type GoalUncheckedUpdateWithoutSharedWithInput = {
   reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
   latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  parentGoalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  childGoals?: Prisma.GoalUncheckedUpdateManyWithoutParentGoalNestedInput
   checkins?: Prisma.CheckinUncheckedUpdateManyWithoutGoalNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutGoalNestedInput
   comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutGoalNestedInput
+  milestones?: Prisma.MilestoneUncheckedUpdateManyWithoutGoalNestedInput
 }
 
 export type GoalUncheckedUpdateManyWithoutSharedWithInput = {
@@ -2383,6 +3197,10 @@ export type GoalUncheckedUpdateManyWithoutSharedWithInput = {
   reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
   latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  parentGoalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -2413,6 +3231,10 @@ export type GoalCreateManyCycleInput = {
   reworkCount?: number
   latestScore?: number | null
   latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  parentGoalId?: string | null
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -2441,14 +3263,20 @@ export type GoalUpdateWithoutCycleInput = {
   reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
   latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sharedWith?: Prisma.UserUpdateManyWithoutSharedGoalsNestedInput
   owner?: Prisma.UserUpdateOneRequiredWithoutOwnedGoalsNestedInput
   approver?: Prisma.UserUpdateOneWithoutApprovedGoalsNestedInput
+  parentGoal?: Prisma.GoalUpdateOneWithoutChildGoalsNestedInput
+  childGoals?: Prisma.GoalUpdateManyWithoutParentGoalNestedInput
   checkins?: Prisma.CheckinUpdateManyWithoutGoalNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutGoalNestedInput
   comments?: Prisma.GoalCommentUpdateManyWithoutGoalNestedInput
+  milestones?: Prisma.MilestoneUpdateManyWithoutGoalNestedInput
 }
 
 export type GoalUncheckedUpdateWithoutCycleInput = {
@@ -2477,12 +3305,18 @@ export type GoalUncheckedUpdateWithoutCycleInput = {
   reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
   latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  parentGoalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sharedWith?: Prisma.UserUncheckedUpdateManyWithoutSharedGoalsNestedInput
+  childGoals?: Prisma.GoalUncheckedUpdateManyWithoutParentGoalNestedInput
   checkins?: Prisma.CheckinUncheckedUpdateManyWithoutGoalNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutGoalNestedInput
   comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutGoalNestedInput
+  milestones?: Prisma.MilestoneUncheckedUpdateManyWithoutGoalNestedInput
 }
 
 export type GoalUncheckedUpdateManyWithoutCycleInput = {
@@ -2511,6 +3345,158 @@ export type GoalUncheckedUpdateManyWithoutCycleInput = {
   reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
   latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  parentGoalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type GoalCreateManyParentGoalInput = {
+  id?: string
+  title: string
+  description?: string | null
+  thrustArea: string
+  uomType: $Enums.UoMType
+  uomUnit?: string | null
+  target?: number | null
+  targetDate?: Date | string | null
+  weightage: number
+  status?: $Enums.GoalStatus
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  isShared?: boolean
+  primaryOwnerId?: string | null
+  ownerId: string
+  approverId?: string | null
+  cycleId: string
+  submittedAt?: Date | string | null
+  approvedAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  rejectReason?: string | null
+  returnedAt?: Date | string | null
+  returnReason?: string | null
+  reworkCount?: number
+  latestScore?: number | null
+  latestStatus?: $Enums.ProgressStatus
+  goalLevel?: $Enums.GoalLevel
+  cancelledAt?: Date | string | null
+  cancelReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type GoalUpdateWithoutParentGoalInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  thrustArea?: Prisma.StringFieldUpdateOperationsInput | string
+  uomType?: Prisma.EnumUoMTypeFieldUpdateOperationsInput | $Enums.UoMType
+  uomUnit?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  target?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  targetDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  weightage?: Prisma.FloatFieldUpdateOperationsInput | number
+  status?: Prisma.EnumGoalStatusFieldUpdateOperationsInput | $Enums.GoalStatus
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isShared?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  primaryOwnerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  returnedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  returnReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
+  latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sharedWith?: Prisma.UserUpdateManyWithoutSharedGoalsNestedInput
+  owner?: Prisma.UserUpdateOneRequiredWithoutOwnedGoalsNestedInput
+  approver?: Prisma.UserUpdateOneWithoutApprovedGoalsNestedInput
+  cycle?: Prisma.CycleUpdateOneRequiredWithoutGoalsNestedInput
+  childGoals?: Prisma.GoalUpdateManyWithoutParentGoalNestedInput
+  checkins?: Prisma.CheckinUpdateManyWithoutGoalNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutGoalNestedInput
+  comments?: Prisma.GoalCommentUpdateManyWithoutGoalNestedInput
+  milestones?: Prisma.MilestoneUpdateManyWithoutGoalNestedInput
+}
+
+export type GoalUncheckedUpdateWithoutParentGoalInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  thrustArea?: Prisma.StringFieldUpdateOperationsInput | string
+  uomType?: Prisma.EnumUoMTypeFieldUpdateOperationsInput | $Enums.UoMType
+  uomUnit?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  target?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  targetDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  weightage?: Prisma.FloatFieldUpdateOperationsInput | number
+  status?: Prisma.EnumGoalStatusFieldUpdateOperationsInput | $Enums.GoalStatus
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isShared?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  primaryOwnerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  approverId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cycleId?: Prisma.StringFieldUpdateOperationsInput | string
+  submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  returnedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  returnReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
+  latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sharedWith?: Prisma.UserUncheckedUpdateManyWithoutSharedGoalsNestedInput
+  childGoals?: Prisma.GoalUncheckedUpdateManyWithoutParentGoalNestedInput
+  checkins?: Prisma.CheckinUncheckedUpdateManyWithoutGoalNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutGoalNestedInput
+  comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutGoalNestedInput
+  milestones?: Prisma.MilestoneUncheckedUpdateManyWithoutGoalNestedInput
+}
+
+export type GoalUncheckedUpdateManyWithoutParentGoalInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  thrustArea?: Prisma.StringFieldUpdateOperationsInput | string
+  uomType?: Prisma.EnumUoMTypeFieldUpdateOperationsInput | $Enums.UoMType
+  uomUnit?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  target?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  targetDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  weightage?: Prisma.FloatFieldUpdateOperationsInput | number
+  status?: Prisma.EnumGoalStatusFieldUpdateOperationsInput | $Enums.GoalStatus
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isShared?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  primaryOwnerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  approverId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cycleId?: Prisma.StringFieldUpdateOperationsInput | string
+  submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  returnedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  returnReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reworkCount?: Prisma.IntFieldUpdateOperationsInput | number
+  latestScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  latestStatus?: Prisma.EnumProgressStatusFieldUpdateOperationsInput | $Enums.ProgressStatus
+  goalLevel?: Prisma.EnumGoalLevelFieldUpdateOperationsInput | $Enums.GoalLevel
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -2522,16 +3508,20 @@ export type GoalUncheckedUpdateManyWithoutCycleInput = {
 
 export type GoalCountOutputType = {
   sharedWith: number
+  childGoals: number
   checkins: number
   auditLogs: number
   comments: number
+  milestones: number
 }
 
 export type GoalCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sharedWith?: boolean | GoalCountOutputTypeCountSharedWithArgs
+  childGoals?: boolean | GoalCountOutputTypeCountChildGoalsArgs
   checkins?: boolean | GoalCountOutputTypeCountCheckinsArgs
   auditLogs?: boolean | GoalCountOutputTypeCountAuditLogsArgs
   comments?: boolean | GoalCountOutputTypeCountCommentsArgs
+  milestones?: boolean | GoalCountOutputTypeCountMilestonesArgs
 }
 
 /**
@@ -2554,6 +3544,13 @@ export type GoalCountOutputTypeCountSharedWithArgs<ExtArgs extends runtime.Types
 /**
  * GoalCountOutputType without action
  */
+export type GoalCountOutputTypeCountChildGoalsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.GoalWhereInput
+}
+
+/**
+ * GoalCountOutputType without action
+ */
 export type GoalCountOutputTypeCountCheckinsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.CheckinWhereInput
 }
@@ -2570,6 +3567,13 @@ export type GoalCountOutputTypeCountAuditLogsArgs<ExtArgs extends runtime.Types.
  */
 export type GoalCountOutputTypeCountCommentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.GoalCommentWhereInput
+}
+
+/**
+ * GoalCountOutputType without action
+ */
+export type GoalCountOutputTypeCountMilestonesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.MilestoneWhereInput
 }
 
 
@@ -2600,15 +3604,22 @@ export type GoalSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   reworkCount?: boolean
   latestScore?: boolean
   latestStatus?: boolean
+  goalLevel?: boolean
+  parentGoalId?: boolean
+  cancelledAt?: boolean
+  cancelReason?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   sharedWith?: boolean | Prisma.Goal$sharedWithArgs<ExtArgs>
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   approver?: boolean | Prisma.Goal$approverArgs<ExtArgs>
   cycle?: boolean | Prisma.CycleDefaultArgs<ExtArgs>
+  parentGoal?: boolean | Prisma.Goal$parentGoalArgs<ExtArgs>
+  childGoals?: boolean | Prisma.Goal$childGoalsArgs<ExtArgs>
   checkins?: boolean | Prisma.Goal$checkinsArgs<ExtArgs>
   auditLogs?: boolean | Prisma.Goal$auditLogsArgs<ExtArgs>
   comments?: boolean | Prisma.Goal$commentsArgs<ExtArgs>
+  milestones?: boolean | Prisma.Goal$milestonesArgs<ExtArgs>
   _count?: boolean | Prisma.GoalCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["goal"]>
 
@@ -2639,11 +3650,16 @@ export type GoalSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   reworkCount?: boolean
   latestScore?: boolean
   latestStatus?: boolean
+  goalLevel?: boolean
+  parentGoalId?: boolean
+  cancelledAt?: boolean
+  cancelReason?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   approver?: boolean | Prisma.Goal$approverArgs<ExtArgs>
   cycle?: boolean | Prisma.CycleDefaultArgs<ExtArgs>
+  parentGoal?: boolean | Prisma.Goal$parentGoalArgs<ExtArgs>
 }, ExtArgs["result"]["goal"]>
 
 export type GoalSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -2673,11 +3689,16 @@ export type GoalSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   reworkCount?: boolean
   latestScore?: boolean
   latestStatus?: boolean
+  goalLevel?: boolean
+  parentGoalId?: boolean
+  cancelledAt?: boolean
+  cancelReason?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   approver?: boolean | Prisma.Goal$approverArgs<ExtArgs>
   cycle?: boolean | Prisma.CycleDefaultArgs<ExtArgs>
+  parentGoal?: boolean | Prisma.Goal$parentGoalArgs<ExtArgs>
 }, ExtArgs["result"]["goal"]>
 
 export type GoalSelectScalar = {
@@ -2707,30 +3728,39 @@ export type GoalSelectScalar = {
   reworkCount?: boolean
   latestScore?: boolean
   latestStatus?: boolean
+  goalLevel?: boolean
+  parentGoalId?: boolean
+  cancelledAt?: boolean
+  cancelReason?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type GoalOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "thrustArea" | "uomType" | "uomUnit" | "target" | "targetDate" | "weightage" | "status" | "isLocked" | "lockedAt" | "isShared" | "primaryOwnerId" | "ownerId" | "approverId" | "cycleId" | "submittedAt" | "approvedAt" | "rejectedAt" | "rejectReason" | "returnedAt" | "returnReason" | "reworkCount" | "latestScore" | "latestStatus" | "createdAt" | "updatedAt", ExtArgs["result"]["goal"]>
+export type GoalOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "thrustArea" | "uomType" | "uomUnit" | "target" | "targetDate" | "weightage" | "status" | "isLocked" | "lockedAt" | "isShared" | "primaryOwnerId" | "ownerId" | "approverId" | "cycleId" | "submittedAt" | "approvedAt" | "rejectedAt" | "rejectReason" | "returnedAt" | "returnReason" | "reworkCount" | "latestScore" | "latestStatus" | "goalLevel" | "parentGoalId" | "cancelledAt" | "cancelReason" | "createdAt" | "updatedAt", ExtArgs["result"]["goal"]>
 export type GoalInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sharedWith?: boolean | Prisma.Goal$sharedWithArgs<ExtArgs>
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   approver?: boolean | Prisma.Goal$approverArgs<ExtArgs>
   cycle?: boolean | Prisma.CycleDefaultArgs<ExtArgs>
+  parentGoal?: boolean | Prisma.Goal$parentGoalArgs<ExtArgs>
+  childGoals?: boolean | Prisma.Goal$childGoalsArgs<ExtArgs>
   checkins?: boolean | Prisma.Goal$checkinsArgs<ExtArgs>
   auditLogs?: boolean | Prisma.Goal$auditLogsArgs<ExtArgs>
   comments?: boolean | Prisma.Goal$commentsArgs<ExtArgs>
+  milestones?: boolean | Prisma.Goal$milestonesArgs<ExtArgs>
   _count?: boolean | Prisma.GoalCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type GoalIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   approver?: boolean | Prisma.Goal$approverArgs<ExtArgs>
   cycle?: boolean | Prisma.CycleDefaultArgs<ExtArgs>
+  parentGoal?: boolean | Prisma.Goal$parentGoalArgs<ExtArgs>
 }
 export type GoalIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   approver?: boolean | Prisma.Goal$approverArgs<ExtArgs>
   cycle?: boolean | Prisma.CycleDefaultArgs<ExtArgs>
+  parentGoal?: boolean | Prisma.Goal$parentGoalArgs<ExtArgs>
 }
 
 export type $GoalPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2740,9 +3770,12 @@ export type $GoalPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     owner: Prisma.$UserPayload<ExtArgs>
     approver: Prisma.$UserPayload<ExtArgs> | null
     cycle: Prisma.$CyclePayload<ExtArgs>
+    parentGoal: Prisma.$GoalPayload<ExtArgs> | null
+    childGoals: Prisma.$GoalPayload<ExtArgs>[]
     checkins: Prisma.$CheckinPayload<ExtArgs>[]
     auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
     comments: Prisma.$GoalCommentPayload<ExtArgs>[]
+    milestones: Prisma.$MilestonePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2771,6 +3804,10 @@ export type $GoalPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     reworkCount: number
     latestScore: number | null
     latestStatus: $Enums.ProgressStatus
+    goalLevel: $Enums.GoalLevel
+    parentGoalId: string | null
+    cancelledAt: Date | null
+    cancelReason: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["goal"]>
@@ -3171,9 +4208,12 @@ export interface Prisma__GoalClient<T, Null = never, ExtArgs extends runtime.Typ
   owner<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   approver<T extends Prisma.Goal$approverArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Goal$approverArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   cycle<T extends Prisma.CycleDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CycleDefaultArgs<ExtArgs>>): Prisma.Prisma__CycleClient<runtime.Types.Result.GetResult<Prisma.$CyclePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  parentGoal<T extends Prisma.Goal$parentGoalArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Goal$parentGoalArgs<ExtArgs>>): Prisma.Prisma__GoalClient<runtime.Types.Result.GetResult<Prisma.$GoalPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  childGoals<T extends Prisma.Goal$childGoalsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Goal$childGoalsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GoalPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   checkins<T extends Prisma.Goal$checkinsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Goal$checkinsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CheckinPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   auditLogs<T extends Prisma.Goal$auditLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Goal$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   comments<T extends Prisma.Goal$commentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Goal$commentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GoalCommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  milestones<T extends Prisma.Goal$milestonesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Goal$milestonesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MilestonePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3229,6 +4269,10 @@ export interface GoalFieldRefs {
   readonly reworkCount: Prisma.FieldRef<"Goal", 'Int'>
   readonly latestScore: Prisma.FieldRef<"Goal", 'Float'>
   readonly latestStatus: Prisma.FieldRef<"Goal", 'ProgressStatus'>
+  readonly goalLevel: Prisma.FieldRef<"Goal", 'GoalLevel'>
+  readonly parentGoalId: Prisma.FieldRef<"Goal", 'String'>
+  readonly cancelledAt: Prisma.FieldRef<"Goal", 'DateTime'>
+  readonly cancelReason: Prisma.FieldRef<"Goal", 'String'>
   readonly createdAt: Prisma.FieldRef<"Goal", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Goal", 'DateTime'>
 }
@@ -3675,6 +4719,49 @@ export type Goal$approverArgs<ExtArgs extends runtime.Types.Extensions.InternalA
 }
 
 /**
+ * Goal.parentGoal
+ */
+export type Goal$parentGoalArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Goal
+   */
+  select?: Prisma.GoalSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Goal
+   */
+  omit?: Prisma.GoalOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GoalInclude<ExtArgs> | null
+  where?: Prisma.GoalWhereInput
+}
+
+/**
+ * Goal.childGoals
+ */
+export type Goal$childGoalsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Goal
+   */
+  select?: Prisma.GoalSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Goal
+   */
+  omit?: Prisma.GoalOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GoalInclude<ExtArgs> | null
+  where?: Prisma.GoalWhereInput
+  orderBy?: Prisma.GoalOrderByWithRelationInput | Prisma.GoalOrderByWithRelationInput[]
+  cursor?: Prisma.GoalWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.GoalScalarFieldEnum | Prisma.GoalScalarFieldEnum[]
+}
+
+/**
  * Goal.checkins
  */
 export type Goal$checkinsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -3744,6 +4831,30 @@ export type Goal$commentsArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   take?: number
   skip?: number
   distinct?: Prisma.GoalCommentScalarFieldEnum | Prisma.GoalCommentScalarFieldEnum[]
+}
+
+/**
+ * Goal.milestones
+ */
+export type Goal$milestonesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Milestone
+   */
+  select?: Prisma.MilestoneSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Milestone
+   */
+  omit?: Prisma.MilestoneOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MilestoneInclude<ExtArgs> | null
+  where?: Prisma.MilestoneWhereInput
+  orderBy?: Prisma.MilestoneOrderByWithRelationInput | Prisma.MilestoneOrderByWithRelationInput[]
+  cursor?: Prisma.MilestoneWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.MilestoneScalarFieldEnum | Prisma.MilestoneScalarFieldEnum[]
 }
 
 /**

@@ -274,6 +274,13 @@ export type UserWhereInput = {
   notifications?: Prisma.NotificationListRelationFilter
   escalationLogs?: Prisma.EscalationLogListRelationFilter
   comments?: Prisma.GoalCommentListRelationFilter
+  feedbackGiven?: Prisma.PeerFeedbackListRelationFilter
+  feedbackReceived?: Prisma.PeerFeedbackListRelationFilter
+  reviewResponses?: Prisma.ReviewResponseListRelationFilter
+  reviewSubject?: Prisma.ReviewResponseListRelationFilter
+  enpsResponses?: Prisma.ENPSResponseListRelationFilter
+  managedMeetings?: Prisma.OneOnOneMeetingListRelationFilter
+  employeeMeetings?: Prisma.OneOnOneMeetingListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -304,6 +311,13 @@ export type UserOrderByWithRelationInput = {
   notifications?: Prisma.NotificationOrderByRelationAggregateInput
   escalationLogs?: Prisma.EscalationLogOrderByRelationAggregateInput
   comments?: Prisma.GoalCommentOrderByRelationAggregateInput
+  feedbackGiven?: Prisma.PeerFeedbackOrderByRelationAggregateInput
+  feedbackReceived?: Prisma.PeerFeedbackOrderByRelationAggregateInput
+  reviewResponses?: Prisma.ReviewResponseOrderByRelationAggregateInput
+  reviewSubject?: Prisma.ReviewResponseOrderByRelationAggregateInput
+  enpsResponses?: Prisma.ENPSResponseOrderByRelationAggregateInput
+  managedMeetings?: Prisma.OneOnOneMeetingOrderByRelationAggregateInput
+  employeeMeetings?: Prisma.OneOnOneMeetingOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -337,6 +351,13 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   notifications?: Prisma.NotificationListRelationFilter
   escalationLogs?: Prisma.EscalationLogListRelationFilter
   comments?: Prisma.GoalCommentListRelationFilter
+  feedbackGiven?: Prisma.PeerFeedbackListRelationFilter
+  feedbackReceived?: Prisma.PeerFeedbackListRelationFilter
+  reviewResponses?: Prisma.ReviewResponseListRelationFilter
+  reviewSubject?: Prisma.ReviewResponseListRelationFilter
+  enpsResponses?: Prisma.ENPSResponseListRelationFilter
+  managedMeetings?: Prisma.OneOnOneMeetingListRelationFilter
+  employeeMeetings?: Prisma.OneOnOneMeetingListRelationFilter
 }, "id" | "email" | "employeeCode">
 
 export type UserOrderByWithAggregationInput = {
@@ -407,6 +428,13 @@ export type UserCreateInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   escalationLogs?: Prisma.EscalationLogCreateNestedManyWithoutUserInput
   comments?: Prisma.GoalCommentCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -435,6 +463,13 @@ export type UserUncheckedCreateInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   escalationLogs?: Prisma.EscalationLogUncheckedCreateNestedManyWithoutUserInput
   comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserUpdateInput = {
@@ -463,6 +498,13 @@ export type UserUpdateInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   escalationLogs?: Prisma.EscalationLogUpdateManyWithoutUserNestedInput
   comments?: Prisma.GoalCommentUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -491,6 +533,13 @@ export type UserUncheckedUpdateInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   escalationLogs?: Prisma.EscalationLogUncheckedUpdateManyWithoutUserNestedInput
   comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -897,6 +946,104 @@ export type UserUpdateOneRequiredWithoutCommentsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutCommentsInput, Prisma.UserUpdateWithoutCommentsInput>, Prisma.UserUncheckedUpdateWithoutCommentsInput>
 }
 
+export type UserCreateNestedOneWithoutFeedbackGivenInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutFeedbackGivenInput, Prisma.UserUncheckedCreateWithoutFeedbackGivenInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutFeedbackGivenInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedOneWithoutFeedbackReceivedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutFeedbackReceivedInput, Prisma.UserUncheckedCreateWithoutFeedbackReceivedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutFeedbackReceivedInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutFeedbackGivenNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutFeedbackGivenInput, Prisma.UserUncheckedCreateWithoutFeedbackGivenInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutFeedbackGivenInput
+  upsert?: Prisma.UserUpsertWithoutFeedbackGivenInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutFeedbackGivenInput, Prisma.UserUpdateWithoutFeedbackGivenInput>, Prisma.UserUncheckedUpdateWithoutFeedbackGivenInput>
+}
+
+export type UserUpdateOneRequiredWithoutFeedbackReceivedNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutFeedbackReceivedInput, Prisma.UserUncheckedCreateWithoutFeedbackReceivedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutFeedbackReceivedInput
+  upsert?: Prisma.UserUpsertWithoutFeedbackReceivedInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutFeedbackReceivedInput, Prisma.UserUpdateWithoutFeedbackReceivedInput>, Prisma.UserUncheckedUpdateWithoutFeedbackReceivedInput>
+}
+
+export type UserCreateNestedOneWithoutReviewResponsesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReviewResponsesInput, Prisma.UserUncheckedCreateWithoutReviewResponsesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReviewResponsesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedOneWithoutReviewSubjectInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReviewSubjectInput, Prisma.UserUncheckedCreateWithoutReviewSubjectInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReviewSubjectInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutReviewResponsesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReviewResponsesInput, Prisma.UserUncheckedCreateWithoutReviewResponsesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReviewResponsesInput
+  upsert?: Prisma.UserUpsertWithoutReviewResponsesInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutReviewResponsesInput, Prisma.UserUpdateWithoutReviewResponsesInput>, Prisma.UserUncheckedUpdateWithoutReviewResponsesInput>
+}
+
+export type UserUpdateOneRequiredWithoutReviewSubjectNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReviewSubjectInput, Prisma.UserUncheckedCreateWithoutReviewSubjectInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReviewSubjectInput
+  upsert?: Prisma.UserUpsertWithoutReviewSubjectInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutReviewSubjectInput, Prisma.UserUpdateWithoutReviewSubjectInput>, Prisma.UserUncheckedUpdateWithoutReviewSubjectInput>
+}
+
+export type UserCreateNestedOneWithoutEnpsResponsesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutEnpsResponsesInput, Prisma.UserUncheckedCreateWithoutEnpsResponsesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutEnpsResponsesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutEnpsResponsesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutEnpsResponsesInput, Prisma.UserUncheckedCreateWithoutEnpsResponsesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutEnpsResponsesInput
+  upsert?: Prisma.UserUpsertWithoutEnpsResponsesInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutEnpsResponsesInput, Prisma.UserUpdateWithoutEnpsResponsesInput>, Prisma.UserUncheckedUpdateWithoutEnpsResponsesInput>
+}
+
+export type UserCreateNestedOneWithoutManagedMeetingsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutManagedMeetingsInput, Prisma.UserUncheckedCreateWithoutManagedMeetingsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutManagedMeetingsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedOneWithoutEmployeeMeetingsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutEmployeeMeetingsInput, Prisma.UserUncheckedCreateWithoutEmployeeMeetingsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutEmployeeMeetingsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutManagedMeetingsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutManagedMeetingsInput, Prisma.UserUncheckedCreateWithoutManagedMeetingsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutManagedMeetingsInput
+  upsert?: Prisma.UserUpsertWithoutManagedMeetingsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutManagedMeetingsInput, Prisma.UserUpdateWithoutManagedMeetingsInput>, Prisma.UserUncheckedUpdateWithoutManagedMeetingsInput>
+}
+
+export type UserUpdateOneRequiredWithoutEmployeeMeetingsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutEmployeeMeetingsInput, Prisma.UserUncheckedCreateWithoutEmployeeMeetingsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutEmployeeMeetingsInput
+  upsert?: Prisma.UserUpsertWithoutEmployeeMeetingsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutEmployeeMeetingsInput, Prisma.UserUpdateWithoutEmployeeMeetingsInput>, Prisma.UserUncheckedUpdateWithoutEmployeeMeetingsInput>
+}
+
 export type UserCreateWithoutReportsInput = {
   id?: string
   email: string
@@ -922,6 +1069,13 @@ export type UserCreateWithoutReportsInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   escalationLogs?: Prisma.EscalationLogCreateNestedManyWithoutUserInput
   comments?: Prisma.GoalCommentCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserUncheckedCreateWithoutReportsInput = {
@@ -949,6 +1103,13 @@ export type UserUncheckedCreateWithoutReportsInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   escalationLogs?: Prisma.EscalationLogUncheckedCreateNestedManyWithoutUserInput
   comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserCreateOrConnectWithoutReportsInput = {
@@ -981,6 +1142,13 @@ export type UserCreateWithoutManagerInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   escalationLogs?: Prisma.EscalationLogCreateNestedManyWithoutUserInput
   comments?: Prisma.GoalCommentCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserUncheckedCreateWithoutManagerInput = {
@@ -1008,6 +1176,13 @@ export type UserUncheckedCreateWithoutManagerInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   escalationLogs?: Prisma.EscalationLogUncheckedCreateNestedManyWithoutUserInput
   comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserCreateOrConnectWithoutManagerInput = {
@@ -1045,6 +1220,13 @@ export type UserCreateWithoutSkipReportsInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   escalationLogs?: Prisma.EscalationLogCreateNestedManyWithoutUserInput
   comments?: Prisma.GoalCommentCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserUncheckedCreateWithoutSkipReportsInput = {
@@ -1072,6 +1254,13 @@ export type UserUncheckedCreateWithoutSkipReportsInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   escalationLogs?: Prisma.EscalationLogUncheckedCreateNestedManyWithoutUserInput
   comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserCreateOrConnectWithoutSkipReportsInput = {
@@ -1104,6 +1293,13 @@ export type UserCreateWithoutSkipManagerInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   escalationLogs?: Prisma.EscalationLogCreateNestedManyWithoutUserInput
   comments?: Prisma.GoalCommentCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserUncheckedCreateWithoutSkipManagerInput = {
@@ -1131,6 +1327,13 @@ export type UserUncheckedCreateWithoutSkipManagerInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   escalationLogs?: Prisma.EscalationLogUncheckedCreateNestedManyWithoutUserInput
   comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserCreateOrConnectWithoutSkipManagerInput = {
@@ -1179,6 +1382,13 @@ export type UserUpdateWithoutReportsInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   escalationLogs?: Prisma.EscalationLogUpdateManyWithoutUserNestedInput
   comments?: Prisma.GoalCommentUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReportsInput = {
@@ -1206,6 +1416,13 @@ export type UserUncheckedUpdateWithoutReportsInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   escalationLogs?: Prisma.EscalationLogUncheckedUpdateManyWithoutUserNestedInput
   comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserUpsertWithWhereUniqueWithoutManagerInput = {
@@ -1281,6 +1498,13 @@ export type UserUpdateWithoutSkipReportsInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   escalationLogs?: Prisma.EscalationLogUpdateManyWithoutUserNestedInput
   comments?: Prisma.GoalCommentUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSkipReportsInput = {
@@ -1308,6 +1532,13 @@ export type UserUncheckedUpdateWithoutSkipReportsInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   escalationLogs?: Prisma.EscalationLogUncheckedUpdateManyWithoutUserNestedInput
   comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserUpsertWithWhereUniqueWithoutSkipManagerInput = {
@@ -1351,6 +1582,13 @@ export type UserCreateWithoutSharedGoalsInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   escalationLogs?: Prisma.EscalationLogCreateNestedManyWithoutUserInput
   comments?: Prisma.GoalCommentCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserUncheckedCreateWithoutSharedGoalsInput = {
@@ -1378,6 +1616,13 @@ export type UserUncheckedCreateWithoutSharedGoalsInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   escalationLogs?: Prisma.EscalationLogUncheckedCreateNestedManyWithoutUserInput
   comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserCreateOrConnectWithoutSharedGoalsInput = {
@@ -1410,6 +1655,13 @@ export type UserCreateWithoutOwnedGoalsInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   escalationLogs?: Prisma.EscalationLogCreateNestedManyWithoutUserInput
   comments?: Prisma.GoalCommentCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserUncheckedCreateWithoutOwnedGoalsInput = {
@@ -1437,6 +1689,13 @@ export type UserUncheckedCreateWithoutOwnedGoalsInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   escalationLogs?: Prisma.EscalationLogUncheckedCreateNestedManyWithoutUserInput
   comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserCreateOrConnectWithoutOwnedGoalsInput = {
@@ -1469,6 +1728,13 @@ export type UserCreateWithoutApprovedGoalsInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   escalationLogs?: Prisma.EscalationLogCreateNestedManyWithoutUserInput
   comments?: Prisma.GoalCommentCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserUncheckedCreateWithoutApprovedGoalsInput = {
@@ -1496,6 +1762,13 @@ export type UserUncheckedCreateWithoutApprovedGoalsInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   escalationLogs?: Prisma.EscalationLogUncheckedCreateNestedManyWithoutUserInput
   comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserCreateOrConnectWithoutApprovedGoalsInput = {
@@ -1555,6 +1828,13 @@ export type UserUpdateWithoutOwnedGoalsInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   escalationLogs?: Prisma.EscalationLogUpdateManyWithoutUserNestedInput
   comments?: Prisma.GoalCommentUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserUncheckedUpdateWithoutOwnedGoalsInput = {
@@ -1582,6 +1862,13 @@ export type UserUncheckedUpdateWithoutOwnedGoalsInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   escalationLogs?: Prisma.EscalationLogUncheckedUpdateManyWithoutUserNestedInput
   comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserUpsertWithoutApprovedGoalsInput = {
@@ -1620,6 +1907,13 @@ export type UserUpdateWithoutApprovedGoalsInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   escalationLogs?: Prisma.EscalationLogUpdateManyWithoutUserNestedInput
   comments?: Prisma.GoalCommentUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserUncheckedUpdateWithoutApprovedGoalsInput = {
@@ -1647,6 +1941,13 @@ export type UserUncheckedUpdateWithoutApprovedGoalsInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   escalationLogs?: Prisma.EscalationLogUncheckedUpdateManyWithoutUserNestedInput
   comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserCreateWithoutCheckinsInput = {
@@ -1674,6 +1975,13 @@ export type UserCreateWithoutCheckinsInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   escalationLogs?: Prisma.EscalationLogCreateNestedManyWithoutUserInput
   comments?: Prisma.GoalCommentCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserUncheckedCreateWithoutCheckinsInput = {
@@ -1701,6 +2009,13 @@ export type UserUncheckedCreateWithoutCheckinsInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   escalationLogs?: Prisma.EscalationLogUncheckedCreateNestedManyWithoutUserInput
   comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserCreateOrConnectWithoutCheckinsInput = {
@@ -1744,6 +2059,13 @@ export type UserUpdateWithoutCheckinsInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   escalationLogs?: Prisma.EscalationLogUpdateManyWithoutUserNestedInput
   comments?: Prisma.GoalCommentUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCheckinsInput = {
@@ -1771,6 +2093,13 @@ export type UserUncheckedUpdateWithoutCheckinsInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   escalationLogs?: Prisma.EscalationLogUncheckedUpdateManyWithoutUserNestedInput
   comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserCreateWithoutAuditLogsInput = {
@@ -1798,6 +2127,13 @@ export type UserCreateWithoutAuditLogsInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   escalationLogs?: Prisma.EscalationLogCreateNestedManyWithoutUserInput
   comments?: Prisma.GoalCommentCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserUncheckedCreateWithoutAuditLogsInput = {
@@ -1825,6 +2161,13 @@ export type UserUncheckedCreateWithoutAuditLogsInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   escalationLogs?: Prisma.EscalationLogUncheckedCreateNestedManyWithoutUserInput
   comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserCreateOrConnectWithoutAuditLogsInput = {
@@ -1868,6 +2211,13 @@ export type UserUpdateWithoutAuditLogsInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   escalationLogs?: Prisma.EscalationLogUpdateManyWithoutUserNestedInput
   comments?: Prisma.GoalCommentUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAuditLogsInput = {
@@ -1895,6 +2245,13 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   escalationLogs?: Prisma.EscalationLogUncheckedUpdateManyWithoutUserNestedInput
   comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserCreateWithoutNotificationsInput = {
@@ -1922,6 +2279,13 @@ export type UserCreateWithoutNotificationsInput = {
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
   escalationLogs?: Prisma.EscalationLogCreateNestedManyWithoutUserInput
   comments?: Prisma.GoalCommentCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserUncheckedCreateWithoutNotificationsInput = {
@@ -1949,6 +2313,13 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
   escalationLogs?: Prisma.EscalationLogUncheckedCreateNestedManyWithoutUserInput
   comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserCreateOrConnectWithoutNotificationsInput = {
@@ -1992,6 +2363,13 @@ export type UserUpdateWithoutNotificationsInput = {
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
   escalationLogs?: Prisma.EscalationLogUpdateManyWithoutUserNestedInput
   comments?: Prisma.GoalCommentUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotificationsInput = {
@@ -2019,6 +2397,13 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   escalationLogs?: Prisma.EscalationLogUncheckedUpdateManyWithoutUserNestedInput
   comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserCreateWithoutEscalationLogsInput = {
@@ -2046,6 +2431,13 @@ export type UserCreateWithoutEscalationLogsInput = {
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   comments?: Prisma.GoalCommentCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserUncheckedCreateWithoutEscalationLogsInput = {
@@ -2073,6 +2465,13 @@ export type UserUncheckedCreateWithoutEscalationLogsInput = {
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserCreateOrConnectWithoutEscalationLogsInput = {
@@ -2116,6 +2515,13 @@ export type UserUpdateWithoutEscalationLogsInput = {
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   comments?: Prisma.GoalCommentUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserUncheckedUpdateWithoutEscalationLogsInput = {
@@ -2143,6 +2549,13 @@ export type UserUncheckedUpdateWithoutEscalationLogsInput = {
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserCreateWithoutCommentsInput = {
@@ -2170,6 +2583,13 @@ export type UserCreateWithoutCommentsInput = {
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   escalationLogs?: Prisma.EscalationLogCreateNestedManyWithoutUserInput
+  feedbackGiven?: Prisma.PeerFeedbackCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserUncheckedCreateWithoutCommentsInput = {
@@ -2197,6 +2617,13 @@ export type UserUncheckedCreateWithoutCommentsInput = {
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   escalationLogs?: Prisma.EscalationLogUncheckedCreateNestedManyWithoutUserInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
 export type UserCreateOrConnectWithoutCommentsInput = {
@@ -2240,6 +2667,13 @@ export type UserUpdateWithoutCommentsInput = {
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   escalationLogs?: Prisma.EscalationLogUpdateManyWithoutUserNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCommentsInput = {
@@ -2267,6 +2701,1077 @@ export type UserUncheckedUpdateWithoutCommentsInput = {
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   escalationLogs?: Prisma.EscalationLogUncheckedUpdateManyWithoutUserNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutEmployeeNestedInput
+}
+
+export type UserCreateWithoutFeedbackGivenInput = {
+  id?: string
+  email: string
+  name: string
+  password: string
+  role?: $Enums.Role
+  department?: string | null
+  designation?: string | null
+  employeeCode?: string | null
+  isActive?: boolean
+  avatarUrl?: string | null
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  manager?: Prisma.UserCreateNestedOneWithoutReportsInput
+  reports?: Prisma.UserCreateNestedManyWithoutManagerInput
+  skipManager?: Prisma.UserCreateNestedOneWithoutSkipReportsInput
+  skipReports?: Prisma.UserCreateNestedManyWithoutSkipManagerInput
+  ownedGoals?: Prisma.GoalCreateNestedManyWithoutOwnerInput
+  approvedGoals?: Prisma.GoalCreateNestedManyWithoutApproverInput
+  sharedGoals?: Prisma.GoalCreateNestedManyWithoutSharedWithInput
+  checkins?: Prisma.CheckinCreateNestedManyWithoutEmployeeInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  escalationLogs?: Prisma.EscalationLogCreateNestedManyWithoutUserInput
+  comments?: Prisma.GoalCommentCreateNestedManyWithoutAuthorInput
+  feedbackReceived?: Prisma.PeerFeedbackCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutEmployeeInput
+}
+
+export type UserUncheckedCreateWithoutFeedbackGivenInput = {
+  id?: string
+  email: string
+  name: string
+  password: string
+  role?: $Enums.Role
+  department?: string | null
+  designation?: string | null
+  employeeCode?: string | null
+  isActive?: boolean
+  avatarUrl?: string | null
+  managerId?: string | null
+  skipManagerId?: string | null
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  reports?: Prisma.UserUncheckedCreateNestedManyWithoutManagerInput
+  skipReports?: Prisma.UserUncheckedCreateNestedManyWithoutSkipManagerInput
+  ownedGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutOwnerInput
+  approvedGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutApproverInput
+  sharedGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutSharedWithInput
+  checkins?: Prisma.CheckinUncheckedCreateNestedManyWithoutEmployeeInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  escalationLogs?: Prisma.EscalationLogUncheckedCreateNestedManyWithoutUserInput
+  comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutAuthorInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutEmployeeInput
+}
+
+export type UserCreateOrConnectWithoutFeedbackGivenInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutFeedbackGivenInput, Prisma.UserUncheckedCreateWithoutFeedbackGivenInput>
+}
+
+export type UserCreateWithoutFeedbackReceivedInput = {
+  id?: string
+  email: string
+  name: string
+  password: string
+  role?: $Enums.Role
+  department?: string | null
+  designation?: string | null
+  employeeCode?: string | null
+  isActive?: boolean
+  avatarUrl?: string | null
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  manager?: Prisma.UserCreateNestedOneWithoutReportsInput
+  reports?: Prisma.UserCreateNestedManyWithoutManagerInput
+  skipManager?: Prisma.UserCreateNestedOneWithoutSkipReportsInput
+  skipReports?: Prisma.UserCreateNestedManyWithoutSkipManagerInput
+  ownedGoals?: Prisma.GoalCreateNestedManyWithoutOwnerInput
+  approvedGoals?: Prisma.GoalCreateNestedManyWithoutApproverInput
+  sharedGoals?: Prisma.GoalCreateNestedManyWithoutSharedWithInput
+  checkins?: Prisma.CheckinCreateNestedManyWithoutEmployeeInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  escalationLogs?: Prisma.EscalationLogCreateNestedManyWithoutUserInput
+  comments?: Prisma.GoalCommentCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackCreateNestedManyWithoutGiverInput
+  reviewResponses?: Prisma.ReviewResponseCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutEmployeeInput
+}
+
+export type UserUncheckedCreateWithoutFeedbackReceivedInput = {
+  id?: string
+  email: string
+  name: string
+  password: string
+  role?: $Enums.Role
+  department?: string | null
+  designation?: string | null
+  employeeCode?: string | null
+  isActive?: boolean
+  avatarUrl?: string | null
+  managerId?: string | null
+  skipManagerId?: string | null
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  reports?: Prisma.UserUncheckedCreateNestedManyWithoutManagerInput
+  skipReports?: Prisma.UserUncheckedCreateNestedManyWithoutSkipManagerInput
+  ownedGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutOwnerInput
+  approvedGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutApproverInput
+  sharedGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutSharedWithInput
+  checkins?: Prisma.CheckinUncheckedCreateNestedManyWithoutEmployeeInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  escalationLogs?: Prisma.EscalationLogUncheckedCreateNestedManyWithoutUserInput
+  comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutGiverInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutEmployeeInput
+}
+
+export type UserCreateOrConnectWithoutFeedbackReceivedInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutFeedbackReceivedInput, Prisma.UserUncheckedCreateWithoutFeedbackReceivedInput>
+}
+
+export type UserUpsertWithoutFeedbackGivenInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutFeedbackGivenInput, Prisma.UserUncheckedUpdateWithoutFeedbackGivenInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutFeedbackGivenInput, Prisma.UserUncheckedCreateWithoutFeedbackGivenInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutFeedbackGivenInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutFeedbackGivenInput, Prisma.UserUncheckedUpdateWithoutFeedbackGivenInput>
+}
+
+export type UserUpdateWithoutFeedbackGivenInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  employeeCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  manager?: Prisma.UserUpdateOneWithoutReportsNestedInput
+  reports?: Prisma.UserUpdateManyWithoutManagerNestedInput
+  skipManager?: Prisma.UserUpdateOneWithoutSkipReportsNestedInput
+  skipReports?: Prisma.UserUpdateManyWithoutSkipManagerNestedInput
+  ownedGoals?: Prisma.GoalUpdateManyWithoutOwnerNestedInput
+  approvedGoals?: Prisma.GoalUpdateManyWithoutApproverNestedInput
+  sharedGoals?: Prisma.GoalUpdateManyWithoutSharedWithNestedInput
+  checkins?: Prisma.CheckinUpdateManyWithoutEmployeeNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  escalationLogs?: Prisma.EscalationLogUpdateManyWithoutUserNestedInput
+  comments?: Prisma.GoalCommentUpdateManyWithoutAuthorNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutEmployeeNestedInput
+}
+
+export type UserUncheckedUpdateWithoutFeedbackGivenInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  employeeCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  managerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  skipManagerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reports?: Prisma.UserUncheckedUpdateManyWithoutManagerNestedInput
+  skipReports?: Prisma.UserUncheckedUpdateManyWithoutSkipManagerNestedInput
+  ownedGoals?: Prisma.GoalUncheckedUpdateManyWithoutOwnerNestedInput
+  approvedGoals?: Prisma.GoalUncheckedUpdateManyWithoutApproverNestedInput
+  sharedGoals?: Prisma.GoalUncheckedUpdateManyWithoutSharedWithNestedInput
+  checkins?: Prisma.CheckinUncheckedUpdateManyWithoutEmployeeNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  escalationLogs?: Prisma.EscalationLogUncheckedUpdateManyWithoutUserNestedInput
+  comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutAuthorNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutEmployeeNestedInput
+}
+
+export type UserUpsertWithoutFeedbackReceivedInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutFeedbackReceivedInput, Prisma.UserUncheckedUpdateWithoutFeedbackReceivedInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutFeedbackReceivedInput, Prisma.UserUncheckedCreateWithoutFeedbackReceivedInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutFeedbackReceivedInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutFeedbackReceivedInput, Prisma.UserUncheckedUpdateWithoutFeedbackReceivedInput>
+}
+
+export type UserUpdateWithoutFeedbackReceivedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  employeeCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  manager?: Prisma.UserUpdateOneWithoutReportsNestedInput
+  reports?: Prisma.UserUpdateManyWithoutManagerNestedInput
+  skipManager?: Prisma.UserUpdateOneWithoutSkipReportsNestedInput
+  skipReports?: Prisma.UserUpdateManyWithoutSkipManagerNestedInput
+  ownedGoals?: Prisma.GoalUpdateManyWithoutOwnerNestedInput
+  approvedGoals?: Prisma.GoalUpdateManyWithoutApproverNestedInput
+  sharedGoals?: Prisma.GoalUpdateManyWithoutSharedWithNestedInput
+  checkins?: Prisma.CheckinUpdateManyWithoutEmployeeNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  escalationLogs?: Prisma.EscalationLogUpdateManyWithoutUserNestedInput
+  comments?: Prisma.GoalCommentUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUpdateManyWithoutGiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutEmployeeNestedInput
+}
+
+export type UserUncheckedUpdateWithoutFeedbackReceivedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  employeeCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  managerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  skipManagerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reports?: Prisma.UserUncheckedUpdateManyWithoutManagerNestedInput
+  skipReports?: Prisma.UserUncheckedUpdateManyWithoutSkipManagerNestedInput
+  ownedGoals?: Prisma.GoalUncheckedUpdateManyWithoutOwnerNestedInput
+  approvedGoals?: Prisma.GoalUncheckedUpdateManyWithoutApproverNestedInput
+  sharedGoals?: Prisma.GoalUncheckedUpdateManyWithoutSharedWithNestedInput
+  checkins?: Prisma.CheckinUncheckedUpdateManyWithoutEmployeeNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  escalationLogs?: Prisma.EscalationLogUncheckedUpdateManyWithoutUserNestedInput
+  comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutGiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutEmployeeNestedInput
+}
+
+export type UserCreateWithoutReviewResponsesInput = {
+  id?: string
+  email: string
+  name: string
+  password: string
+  role?: $Enums.Role
+  department?: string | null
+  designation?: string | null
+  employeeCode?: string | null
+  isActive?: boolean
+  avatarUrl?: string | null
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  manager?: Prisma.UserCreateNestedOneWithoutReportsInput
+  reports?: Prisma.UserCreateNestedManyWithoutManagerInput
+  skipManager?: Prisma.UserCreateNestedOneWithoutSkipReportsInput
+  skipReports?: Prisma.UserCreateNestedManyWithoutSkipManagerInput
+  ownedGoals?: Prisma.GoalCreateNestedManyWithoutOwnerInput
+  approvedGoals?: Prisma.GoalCreateNestedManyWithoutApproverInput
+  sharedGoals?: Prisma.GoalCreateNestedManyWithoutSharedWithInput
+  checkins?: Prisma.CheckinCreateNestedManyWithoutEmployeeInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  escalationLogs?: Prisma.EscalationLogCreateNestedManyWithoutUserInput
+  comments?: Prisma.GoalCommentCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackCreateNestedManyWithoutReceiverInput
+  reviewSubject?: Prisma.ReviewResponseCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutEmployeeInput
+}
+
+export type UserUncheckedCreateWithoutReviewResponsesInput = {
+  id?: string
+  email: string
+  name: string
+  password: string
+  role?: $Enums.Role
+  department?: string | null
+  designation?: string | null
+  employeeCode?: string | null
+  isActive?: boolean
+  avatarUrl?: string | null
+  managerId?: string | null
+  skipManagerId?: string | null
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  reports?: Prisma.UserUncheckedCreateNestedManyWithoutManagerInput
+  skipReports?: Prisma.UserUncheckedCreateNestedManyWithoutSkipManagerInput
+  ownedGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutOwnerInput
+  approvedGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutApproverInput
+  sharedGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutSharedWithInput
+  checkins?: Prisma.CheckinUncheckedCreateNestedManyWithoutEmployeeInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  escalationLogs?: Prisma.EscalationLogUncheckedCreateNestedManyWithoutUserInput
+  comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutReceiverInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutEmployeeInput
+}
+
+export type UserCreateOrConnectWithoutReviewResponsesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutReviewResponsesInput, Prisma.UserUncheckedCreateWithoutReviewResponsesInput>
+}
+
+export type UserCreateWithoutReviewSubjectInput = {
+  id?: string
+  email: string
+  name: string
+  password: string
+  role?: $Enums.Role
+  department?: string | null
+  designation?: string | null
+  employeeCode?: string | null
+  isActive?: boolean
+  avatarUrl?: string | null
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  manager?: Prisma.UserCreateNestedOneWithoutReportsInput
+  reports?: Prisma.UserCreateNestedManyWithoutManagerInput
+  skipManager?: Prisma.UserCreateNestedOneWithoutSkipReportsInput
+  skipReports?: Prisma.UserCreateNestedManyWithoutSkipManagerInput
+  ownedGoals?: Prisma.GoalCreateNestedManyWithoutOwnerInput
+  approvedGoals?: Prisma.GoalCreateNestedManyWithoutApproverInput
+  sharedGoals?: Prisma.GoalCreateNestedManyWithoutSharedWithInput
+  checkins?: Prisma.CheckinCreateNestedManyWithoutEmployeeInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  escalationLogs?: Prisma.EscalationLogCreateNestedManyWithoutUserInput
+  comments?: Prisma.GoalCommentCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseCreateNestedManyWithoutReviewerInput
+  enpsResponses?: Prisma.ENPSResponseCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutEmployeeInput
+}
+
+export type UserUncheckedCreateWithoutReviewSubjectInput = {
+  id?: string
+  email: string
+  name: string
+  password: string
+  role?: $Enums.Role
+  department?: string | null
+  designation?: string | null
+  employeeCode?: string | null
+  isActive?: boolean
+  avatarUrl?: string | null
+  managerId?: string | null
+  skipManagerId?: string | null
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  reports?: Prisma.UserUncheckedCreateNestedManyWithoutManagerInput
+  skipReports?: Prisma.UserUncheckedCreateNestedManyWithoutSkipManagerInput
+  ownedGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutOwnerInput
+  approvedGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutApproverInput
+  sharedGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutSharedWithInput
+  checkins?: Prisma.CheckinUncheckedCreateNestedManyWithoutEmployeeInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  escalationLogs?: Prisma.EscalationLogUncheckedCreateNestedManyWithoutUserInput
+  comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutReviewerInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutEmployeeInput
+}
+
+export type UserCreateOrConnectWithoutReviewSubjectInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutReviewSubjectInput, Prisma.UserUncheckedCreateWithoutReviewSubjectInput>
+}
+
+export type UserUpsertWithoutReviewResponsesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutReviewResponsesInput, Prisma.UserUncheckedUpdateWithoutReviewResponsesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutReviewResponsesInput, Prisma.UserUncheckedCreateWithoutReviewResponsesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutReviewResponsesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutReviewResponsesInput, Prisma.UserUncheckedUpdateWithoutReviewResponsesInput>
+}
+
+export type UserUpdateWithoutReviewResponsesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  employeeCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  manager?: Prisma.UserUpdateOneWithoutReportsNestedInput
+  reports?: Prisma.UserUpdateManyWithoutManagerNestedInput
+  skipManager?: Prisma.UserUpdateOneWithoutSkipReportsNestedInput
+  skipReports?: Prisma.UserUpdateManyWithoutSkipManagerNestedInput
+  ownedGoals?: Prisma.GoalUpdateManyWithoutOwnerNestedInput
+  approvedGoals?: Prisma.GoalUpdateManyWithoutApproverNestedInput
+  sharedGoals?: Prisma.GoalUpdateManyWithoutSharedWithNestedInput
+  checkins?: Prisma.CheckinUpdateManyWithoutEmployeeNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  escalationLogs?: Prisma.EscalationLogUpdateManyWithoutUserNestedInput
+  comments?: Prisma.GoalCommentUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUpdateManyWithoutReceiverNestedInput
+  reviewSubject?: Prisma.ReviewResponseUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutEmployeeNestedInput
+}
+
+export type UserUncheckedUpdateWithoutReviewResponsesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  employeeCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  managerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  skipManagerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reports?: Prisma.UserUncheckedUpdateManyWithoutManagerNestedInput
+  skipReports?: Prisma.UserUncheckedUpdateManyWithoutSkipManagerNestedInput
+  ownedGoals?: Prisma.GoalUncheckedUpdateManyWithoutOwnerNestedInput
+  approvedGoals?: Prisma.GoalUncheckedUpdateManyWithoutApproverNestedInput
+  sharedGoals?: Prisma.GoalUncheckedUpdateManyWithoutSharedWithNestedInput
+  checkins?: Prisma.CheckinUncheckedUpdateManyWithoutEmployeeNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  escalationLogs?: Prisma.EscalationLogUncheckedUpdateManyWithoutUserNestedInput
+  comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutReceiverNestedInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutEmployeeNestedInput
+}
+
+export type UserUpsertWithoutReviewSubjectInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutReviewSubjectInput, Prisma.UserUncheckedUpdateWithoutReviewSubjectInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutReviewSubjectInput, Prisma.UserUncheckedCreateWithoutReviewSubjectInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutReviewSubjectInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutReviewSubjectInput, Prisma.UserUncheckedUpdateWithoutReviewSubjectInput>
+}
+
+export type UserUpdateWithoutReviewSubjectInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  employeeCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  manager?: Prisma.UserUpdateOneWithoutReportsNestedInput
+  reports?: Prisma.UserUpdateManyWithoutManagerNestedInput
+  skipManager?: Prisma.UserUpdateOneWithoutSkipReportsNestedInput
+  skipReports?: Prisma.UserUpdateManyWithoutSkipManagerNestedInput
+  ownedGoals?: Prisma.GoalUpdateManyWithoutOwnerNestedInput
+  approvedGoals?: Prisma.GoalUpdateManyWithoutApproverNestedInput
+  sharedGoals?: Prisma.GoalUpdateManyWithoutSharedWithNestedInput
+  checkins?: Prisma.CheckinUpdateManyWithoutEmployeeNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  escalationLogs?: Prisma.EscalationLogUpdateManyWithoutUserNestedInput
+  comments?: Prisma.GoalCommentUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUpdateManyWithoutReviewerNestedInput
+  enpsResponses?: Prisma.ENPSResponseUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutEmployeeNestedInput
+}
+
+export type UserUncheckedUpdateWithoutReviewSubjectInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  employeeCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  managerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  skipManagerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reports?: Prisma.UserUncheckedUpdateManyWithoutManagerNestedInput
+  skipReports?: Prisma.UserUncheckedUpdateManyWithoutSkipManagerNestedInput
+  ownedGoals?: Prisma.GoalUncheckedUpdateManyWithoutOwnerNestedInput
+  approvedGoals?: Prisma.GoalUncheckedUpdateManyWithoutApproverNestedInput
+  sharedGoals?: Prisma.GoalUncheckedUpdateManyWithoutSharedWithNestedInput
+  checkins?: Prisma.CheckinUncheckedUpdateManyWithoutEmployeeNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  escalationLogs?: Prisma.EscalationLogUncheckedUpdateManyWithoutUserNestedInput
+  comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedUpdateManyWithoutReviewerNestedInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutEmployeeNestedInput
+}
+
+export type UserCreateWithoutEnpsResponsesInput = {
+  id?: string
+  email: string
+  name: string
+  password: string
+  role?: $Enums.Role
+  department?: string | null
+  designation?: string | null
+  employeeCode?: string | null
+  isActive?: boolean
+  avatarUrl?: string | null
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  manager?: Prisma.UserCreateNestedOneWithoutReportsInput
+  reports?: Prisma.UserCreateNestedManyWithoutManagerInput
+  skipManager?: Prisma.UserCreateNestedOneWithoutSkipReportsInput
+  skipReports?: Prisma.UserCreateNestedManyWithoutSkipManagerInput
+  ownedGoals?: Prisma.GoalCreateNestedManyWithoutOwnerInput
+  approvedGoals?: Prisma.GoalCreateNestedManyWithoutApproverInput
+  sharedGoals?: Prisma.GoalCreateNestedManyWithoutSharedWithInput
+  checkins?: Prisma.CheckinCreateNestedManyWithoutEmployeeInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  escalationLogs?: Prisma.EscalationLogCreateNestedManyWithoutUserInput
+  comments?: Prisma.GoalCommentCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseCreateNestedManyWithoutSubjectInput
+  managedMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutEmployeeInput
+}
+
+export type UserUncheckedCreateWithoutEnpsResponsesInput = {
+  id?: string
+  email: string
+  name: string
+  password: string
+  role?: $Enums.Role
+  department?: string | null
+  designation?: string | null
+  employeeCode?: string | null
+  isActive?: boolean
+  avatarUrl?: string | null
+  managerId?: string | null
+  skipManagerId?: string | null
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  reports?: Prisma.UserUncheckedCreateNestedManyWithoutManagerInput
+  skipReports?: Prisma.UserUncheckedCreateNestedManyWithoutSkipManagerInput
+  ownedGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutOwnerInput
+  approvedGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutApproverInput
+  sharedGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutSharedWithInput
+  checkins?: Prisma.CheckinUncheckedCreateNestedManyWithoutEmployeeInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  escalationLogs?: Prisma.EscalationLogUncheckedCreateNestedManyWithoutUserInput
+  comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutSubjectInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutManagerInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutEmployeeInput
+}
+
+export type UserCreateOrConnectWithoutEnpsResponsesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutEnpsResponsesInput, Prisma.UserUncheckedCreateWithoutEnpsResponsesInput>
+}
+
+export type UserUpsertWithoutEnpsResponsesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutEnpsResponsesInput, Prisma.UserUncheckedUpdateWithoutEnpsResponsesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutEnpsResponsesInput, Prisma.UserUncheckedCreateWithoutEnpsResponsesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutEnpsResponsesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutEnpsResponsesInput, Prisma.UserUncheckedUpdateWithoutEnpsResponsesInput>
+}
+
+export type UserUpdateWithoutEnpsResponsesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  employeeCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  manager?: Prisma.UserUpdateOneWithoutReportsNestedInput
+  reports?: Prisma.UserUpdateManyWithoutManagerNestedInput
+  skipManager?: Prisma.UserUpdateOneWithoutSkipReportsNestedInput
+  skipReports?: Prisma.UserUpdateManyWithoutSkipManagerNestedInput
+  ownedGoals?: Prisma.GoalUpdateManyWithoutOwnerNestedInput
+  approvedGoals?: Prisma.GoalUpdateManyWithoutApproverNestedInput
+  sharedGoals?: Prisma.GoalUpdateManyWithoutSharedWithNestedInput
+  checkins?: Prisma.CheckinUpdateManyWithoutEmployeeNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  escalationLogs?: Prisma.EscalationLogUpdateManyWithoutUserNestedInput
+  comments?: Prisma.GoalCommentUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUpdateManyWithoutSubjectNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutEmployeeNestedInput
+}
+
+export type UserUncheckedUpdateWithoutEnpsResponsesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  employeeCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  managerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  skipManagerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reports?: Prisma.UserUncheckedUpdateManyWithoutManagerNestedInput
+  skipReports?: Prisma.UserUncheckedUpdateManyWithoutSkipManagerNestedInput
+  ownedGoals?: Prisma.GoalUncheckedUpdateManyWithoutOwnerNestedInput
+  approvedGoals?: Prisma.GoalUncheckedUpdateManyWithoutApproverNestedInput
+  sharedGoals?: Prisma.GoalUncheckedUpdateManyWithoutSharedWithNestedInput
+  checkins?: Prisma.CheckinUncheckedUpdateManyWithoutEmployeeNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  escalationLogs?: Prisma.EscalationLogUncheckedUpdateManyWithoutUserNestedInput
+  comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedUpdateManyWithoutSubjectNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutEmployeeNestedInput
+}
+
+export type UserCreateWithoutManagedMeetingsInput = {
+  id?: string
+  email: string
+  name: string
+  password: string
+  role?: $Enums.Role
+  department?: string | null
+  designation?: string | null
+  employeeCode?: string | null
+  isActive?: boolean
+  avatarUrl?: string | null
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  manager?: Prisma.UserCreateNestedOneWithoutReportsInput
+  reports?: Prisma.UserCreateNestedManyWithoutManagerInput
+  skipManager?: Prisma.UserCreateNestedOneWithoutSkipReportsInput
+  skipReports?: Prisma.UserCreateNestedManyWithoutSkipManagerInput
+  ownedGoals?: Prisma.GoalCreateNestedManyWithoutOwnerInput
+  approvedGoals?: Prisma.GoalCreateNestedManyWithoutApproverInput
+  sharedGoals?: Prisma.GoalCreateNestedManyWithoutSharedWithInput
+  checkins?: Prisma.CheckinCreateNestedManyWithoutEmployeeInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  escalationLogs?: Prisma.EscalationLogCreateNestedManyWithoutUserInput
+  comments?: Prisma.GoalCommentCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseCreateNestedManyWithoutUserInput
+  employeeMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutEmployeeInput
+}
+
+export type UserUncheckedCreateWithoutManagedMeetingsInput = {
+  id?: string
+  email: string
+  name: string
+  password: string
+  role?: $Enums.Role
+  department?: string | null
+  designation?: string | null
+  employeeCode?: string | null
+  isActive?: boolean
+  avatarUrl?: string | null
+  managerId?: string | null
+  skipManagerId?: string | null
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  reports?: Prisma.UserUncheckedCreateNestedManyWithoutManagerInput
+  skipReports?: Prisma.UserUncheckedCreateNestedManyWithoutSkipManagerInput
+  ownedGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutOwnerInput
+  approvedGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutApproverInput
+  sharedGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutSharedWithInput
+  checkins?: Prisma.CheckinUncheckedCreateNestedManyWithoutEmployeeInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  escalationLogs?: Prisma.EscalationLogUncheckedCreateNestedManyWithoutUserInput
+  comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedCreateNestedManyWithoutUserInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutEmployeeInput
+}
+
+export type UserCreateOrConnectWithoutManagedMeetingsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutManagedMeetingsInput, Prisma.UserUncheckedCreateWithoutManagedMeetingsInput>
+}
+
+export type UserCreateWithoutEmployeeMeetingsInput = {
+  id?: string
+  email: string
+  name: string
+  password: string
+  role?: $Enums.Role
+  department?: string | null
+  designation?: string | null
+  employeeCode?: string | null
+  isActive?: boolean
+  avatarUrl?: string | null
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  manager?: Prisma.UserCreateNestedOneWithoutReportsInput
+  reports?: Prisma.UserCreateNestedManyWithoutManagerInput
+  skipManager?: Prisma.UserCreateNestedOneWithoutSkipReportsInput
+  skipReports?: Prisma.UserCreateNestedManyWithoutSkipManagerInput
+  ownedGoals?: Prisma.GoalCreateNestedManyWithoutOwnerInput
+  approvedGoals?: Prisma.GoalCreateNestedManyWithoutApproverInput
+  sharedGoals?: Prisma.GoalCreateNestedManyWithoutSharedWithInput
+  checkins?: Prisma.CheckinCreateNestedManyWithoutEmployeeInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  escalationLogs?: Prisma.EscalationLogCreateNestedManyWithoutUserInput
+  comments?: Prisma.GoalCommentCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingCreateNestedManyWithoutManagerInput
+}
+
+export type UserUncheckedCreateWithoutEmployeeMeetingsInput = {
+  id?: string
+  email: string
+  name: string
+  password: string
+  role?: $Enums.Role
+  department?: string | null
+  designation?: string | null
+  employeeCode?: string | null
+  isActive?: boolean
+  avatarUrl?: string | null
+  managerId?: string | null
+  skipManagerId?: string | null
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  reports?: Prisma.UserUncheckedCreateNestedManyWithoutManagerInput
+  skipReports?: Prisma.UserUncheckedCreateNestedManyWithoutSkipManagerInput
+  ownedGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutOwnerInput
+  approvedGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutApproverInput
+  sharedGoals?: Prisma.GoalUncheckedCreateNestedManyWithoutSharedWithInput
+  checkins?: Prisma.CheckinUncheckedCreateNestedManyWithoutEmployeeInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  escalationLogs?: Prisma.EscalationLogUncheckedCreateNestedManyWithoutUserInput
+  comments?: Prisma.GoalCommentUncheckedCreateNestedManyWithoutAuthorInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutGiverInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedCreateNestedManyWithoutReceiverInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutReviewerInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedCreateNestedManyWithoutSubjectInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedCreateNestedManyWithoutUserInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedCreateNestedManyWithoutManagerInput
+}
+
+export type UserCreateOrConnectWithoutEmployeeMeetingsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutEmployeeMeetingsInput, Prisma.UserUncheckedCreateWithoutEmployeeMeetingsInput>
+}
+
+export type UserUpsertWithoutManagedMeetingsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutManagedMeetingsInput, Prisma.UserUncheckedUpdateWithoutManagedMeetingsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutManagedMeetingsInput, Prisma.UserUncheckedCreateWithoutManagedMeetingsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutManagedMeetingsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutManagedMeetingsInput, Prisma.UserUncheckedUpdateWithoutManagedMeetingsInput>
+}
+
+export type UserUpdateWithoutManagedMeetingsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  employeeCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  manager?: Prisma.UserUpdateOneWithoutReportsNestedInput
+  reports?: Prisma.UserUpdateManyWithoutManagerNestedInput
+  skipManager?: Prisma.UserUpdateOneWithoutSkipReportsNestedInput
+  skipReports?: Prisma.UserUpdateManyWithoutSkipManagerNestedInput
+  ownedGoals?: Prisma.GoalUpdateManyWithoutOwnerNestedInput
+  approvedGoals?: Prisma.GoalUpdateManyWithoutApproverNestedInput
+  sharedGoals?: Prisma.GoalUpdateManyWithoutSharedWithNestedInput
+  checkins?: Prisma.CheckinUpdateManyWithoutEmployeeNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  escalationLogs?: Prisma.EscalationLogUpdateManyWithoutUserNestedInput
+  comments?: Prisma.GoalCommentUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUpdateManyWithoutUserNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutEmployeeNestedInput
+}
+
+export type UserUncheckedUpdateWithoutManagedMeetingsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  employeeCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  managerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  skipManagerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reports?: Prisma.UserUncheckedUpdateManyWithoutManagerNestedInput
+  skipReports?: Prisma.UserUncheckedUpdateManyWithoutSkipManagerNestedInput
+  ownedGoals?: Prisma.GoalUncheckedUpdateManyWithoutOwnerNestedInput
+  approvedGoals?: Prisma.GoalUncheckedUpdateManyWithoutApproverNestedInput
+  sharedGoals?: Prisma.GoalUncheckedUpdateManyWithoutSharedWithNestedInput
+  checkins?: Prisma.CheckinUncheckedUpdateManyWithoutEmployeeNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  escalationLogs?: Prisma.EscalationLogUncheckedUpdateManyWithoutUserNestedInput
+  comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedUpdateManyWithoutUserNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutEmployeeNestedInput
+}
+
+export type UserUpsertWithoutEmployeeMeetingsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutEmployeeMeetingsInput, Prisma.UserUncheckedUpdateWithoutEmployeeMeetingsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutEmployeeMeetingsInput, Prisma.UserUncheckedCreateWithoutEmployeeMeetingsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutEmployeeMeetingsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutEmployeeMeetingsInput, Prisma.UserUncheckedUpdateWithoutEmployeeMeetingsInput>
+}
+
+export type UserUpdateWithoutEmployeeMeetingsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  employeeCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  manager?: Prisma.UserUpdateOneWithoutReportsNestedInput
+  reports?: Prisma.UserUpdateManyWithoutManagerNestedInput
+  skipManager?: Prisma.UserUpdateOneWithoutSkipReportsNestedInput
+  skipReports?: Prisma.UserUpdateManyWithoutSkipManagerNestedInput
+  ownedGoals?: Prisma.GoalUpdateManyWithoutOwnerNestedInput
+  approvedGoals?: Prisma.GoalUpdateManyWithoutApproverNestedInput
+  sharedGoals?: Prisma.GoalUpdateManyWithoutSharedWithNestedInput
+  checkins?: Prisma.CheckinUpdateManyWithoutEmployeeNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  escalationLogs?: Prisma.EscalationLogUpdateManyWithoutUserNestedInput
+  comments?: Prisma.GoalCommentUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutManagerNestedInput
+}
+
+export type UserUncheckedUpdateWithoutEmployeeMeetingsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  employeeCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  managerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  skipManagerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reports?: Prisma.UserUncheckedUpdateManyWithoutManagerNestedInput
+  skipReports?: Prisma.UserUncheckedUpdateManyWithoutSkipManagerNestedInput
+  ownedGoals?: Prisma.GoalUncheckedUpdateManyWithoutOwnerNestedInput
+  approvedGoals?: Prisma.GoalUncheckedUpdateManyWithoutApproverNestedInput
+  sharedGoals?: Prisma.GoalUncheckedUpdateManyWithoutSharedWithNestedInput
+  checkins?: Prisma.CheckinUncheckedUpdateManyWithoutEmployeeNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  escalationLogs?: Prisma.EscalationLogUncheckedUpdateManyWithoutUserNestedInput
+  comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutManagerNestedInput
 }
 
 export type UserCreateManyManagerInput = {
@@ -2328,6 +3833,13 @@ export type UserUpdateWithoutManagerInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   escalationLogs?: Prisma.EscalationLogUpdateManyWithoutUserNestedInput
   comments?: Prisma.GoalCommentUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserUncheckedUpdateWithoutManagerInput = {
@@ -2355,6 +3867,13 @@ export type UserUncheckedUpdateWithoutManagerInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   escalationLogs?: Prisma.EscalationLogUncheckedUpdateManyWithoutUserNestedInput
   comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserUncheckedUpdateManyWithoutManagerInput = {
@@ -2399,6 +3918,13 @@ export type UserUpdateWithoutSkipManagerInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   escalationLogs?: Prisma.EscalationLogUpdateManyWithoutUserNestedInput
   comments?: Prisma.GoalCommentUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSkipManagerInput = {
@@ -2426,6 +3952,13 @@ export type UserUncheckedUpdateWithoutSkipManagerInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   escalationLogs?: Prisma.EscalationLogUncheckedUpdateManyWithoutUserNestedInput
   comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserUncheckedUpdateManyWithoutSkipManagerInput = {
@@ -2470,6 +4003,13 @@ export type UserUpdateWithoutSharedGoalsInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   escalationLogs?: Prisma.EscalationLogUpdateManyWithoutUserNestedInput
   comments?: Prisma.GoalCommentUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSharedGoalsInput = {
@@ -2497,6 +4037,13 @@ export type UserUncheckedUpdateWithoutSharedGoalsInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   escalationLogs?: Prisma.EscalationLogUncheckedUpdateManyWithoutUserNestedInput
   comments?: Prisma.GoalCommentUncheckedUpdateManyWithoutAuthorNestedInput
+  feedbackGiven?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutGiverNestedInput
+  feedbackReceived?: Prisma.PeerFeedbackUncheckedUpdateManyWithoutReceiverNestedInput
+  reviewResponses?: Prisma.ReviewResponseUncheckedUpdateManyWithoutReviewerNestedInput
+  reviewSubject?: Prisma.ReviewResponseUncheckedUpdateManyWithoutSubjectNestedInput
+  enpsResponses?: Prisma.ENPSResponseUncheckedUpdateManyWithoutUserNestedInput
+  managedMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutManagerNestedInput
+  employeeMeetings?: Prisma.OneOnOneMeetingUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
 export type UserUncheckedUpdateManyWithoutSharedGoalsInput = {
@@ -2533,6 +4080,13 @@ export type UserCountOutputType = {
   notifications: number
   escalationLogs: number
   comments: number
+  feedbackGiven: number
+  feedbackReceived: number
+  reviewResponses: number
+  reviewSubject: number
+  enpsResponses: number
+  managedMeetings: number
+  employeeMeetings: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2546,6 +4100,13 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   notifications?: boolean | UserCountOutputTypeCountNotificationsArgs
   escalationLogs?: boolean | UserCountOutputTypeCountEscalationLogsArgs
   comments?: boolean | UserCountOutputTypeCountCommentsArgs
+  feedbackGiven?: boolean | UserCountOutputTypeCountFeedbackGivenArgs
+  feedbackReceived?: boolean | UserCountOutputTypeCountFeedbackReceivedArgs
+  reviewResponses?: boolean | UserCountOutputTypeCountReviewResponsesArgs
+  reviewSubject?: boolean | UserCountOutputTypeCountReviewSubjectArgs
+  enpsResponses?: boolean | UserCountOutputTypeCountEnpsResponsesArgs
+  managedMeetings?: boolean | UserCountOutputTypeCountManagedMeetingsArgs
+  employeeMeetings?: boolean | UserCountOutputTypeCountEmployeeMeetingsArgs
 }
 
 /**
@@ -2628,6 +4189,55 @@ export type UserCountOutputTypeCountCommentsArgs<ExtArgs extends runtime.Types.E
   where?: Prisma.GoalCommentWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountFeedbackGivenArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PeerFeedbackWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountFeedbackReceivedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PeerFeedbackWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountReviewResponsesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ReviewResponseWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountReviewSubjectArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ReviewResponseWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountEnpsResponsesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ENPSResponseWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountManagedMeetingsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.OneOnOneMeetingWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountEmployeeMeetingsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.OneOnOneMeetingWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -2657,6 +4267,13 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   notifications?: boolean | Prisma.User$notificationsArgs<ExtArgs>
   escalationLogs?: boolean | Prisma.User$escalationLogsArgs<ExtArgs>
   comments?: boolean | Prisma.User$commentsArgs<ExtArgs>
+  feedbackGiven?: boolean | Prisma.User$feedbackGivenArgs<ExtArgs>
+  feedbackReceived?: boolean | Prisma.User$feedbackReceivedArgs<ExtArgs>
+  reviewResponses?: boolean | Prisma.User$reviewResponsesArgs<ExtArgs>
+  reviewSubject?: boolean | Prisma.User$reviewSubjectArgs<ExtArgs>
+  enpsResponses?: boolean | Prisma.User$enpsResponsesArgs<ExtArgs>
+  managedMeetings?: boolean | Prisma.User$managedMeetingsArgs<ExtArgs>
+  employeeMeetings?: boolean | Prisma.User$employeeMeetingsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -2732,6 +4349,13 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   notifications?: boolean | Prisma.User$notificationsArgs<ExtArgs>
   escalationLogs?: boolean | Prisma.User$escalationLogsArgs<ExtArgs>
   comments?: boolean | Prisma.User$commentsArgs<ExtArgs>
+  feedbackGiven?: boolean | Prisma.User$feedbackGivenArgs<ExtArgs>
+  feedbackReceived?: boolean | Prisma.User$feedbackReceivedArgs<ExtArgs>
+  reviewResponses?: boolean | Prisma.User$reviewResponsesArgs<ExtArgs>
+  reviewSubject?: boolean | Prisma.User$reviewSubjectArgs<ExtArgs>
+  enpsResponses?: boolean | Prisma.User$enpsResponsesArgs<ExtArgs>
+  managedMeetings?: boolean | Prisma.User$managedMeetingsArgs<ExtArgs>
+  employeeMeetings?: boolean | Prisma.User$employeeMeetingsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2758,6 +4382,13 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     notifications: Prisma.$NotificationPayload<ExtArgs>[]
     escalationLogs: Prisma.$EscalationLogPayload<ExtArgs>[]
     comments: Prisma.$GoalCommentPayload<ExtArgs>[]
+    feedbackGiven: Prisma.$PeerFeedbackPayload<ExtArgs>[]
+    feedbackReceived: Prisma.$PeerFeedbackPayload<ExtArgs>[]
+    reviewResponses: Prisma.$ReviewResponsePayload<ExtArgs>[]
+    reviewSubject: Prisma.$ReviewResponsePayload<ExtArgs>[]
+    enpsResponses: Prisma.$ENPSResponsePayload<ExtArgs>[]
+    managedMeetings: Prisma.$OneOnOneMeetingPayload<ExtArgs>[]
+    employeeMeetings: Prisma.$OneOnOneMeetingPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -3181,6 +4812,13 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   notifications<T extends Prisma.User$notificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   escalationLogs<T extends Prisma.User$escalationLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$escalationLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EscalationLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   comments<T extends Prisma.User$commentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$commentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GoalCommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  feedbackGiven<T extends Prisma.User$feedbackGivenArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$feedbackGivenArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PeerFeedbackPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  feedbackReceived<T extends Prisma.User$feedbackReceivedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$feedbackReceivedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PeerFeedbackPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  reviewResponses<T extends Prisma.User$reviewResponsesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$reviewResponsesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReviewResponsePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  reviewSubject<T extends Prisma.User$reviewSubjectArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$reviewSubjectArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReviewResponsePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  enpsResponses<T extends Prisma.User$enpsResponsesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$enpsResponsesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ENPSResponsePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  managedMeetings<T extends Prisma.User$managedMeetingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$managedMeetingsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OneOnOneMeetingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  employeeMeetings<T extends Prisma.User$employeeMeetingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$employeeMeetingsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OneOnOneMeetingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3901,6 +5539,174 @@ export type User$commentsArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   take?: number
   skip?: number
   distinct?: Prisma.GoalCommentScalarFieldEnum | Prisma.GoalCommentScalarFieldEnum[]
+}
+
+/**
+ * User.feedbackGiven
+ */
+export type User$feedbackGivenArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PeerFeedback
+   */
+  select?: Prisma.PeerFeedbackSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PeerFeedback
+   */
+  omit?: Prisma.PeerFeedbackOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PeerFeedbackInclude<ExtArgs> | null
+  where?: Prisma.PeerFeedbackWhereInput
+  orderBy?: Prisma.PeerFeedbackOrderByWithRelationInput | Prisma.PeerFeedbackOrderByWithRelationInput[]
+  cursor?: Prisma.PeerFeedbackWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PeerFeedbackScalarFieldEnum | Prisma.PeerFeedbackScalarFieldEnum[]
+}
+
+/**
+ * User.feedbackReceived
+ */
+export type User$feedbackReceivedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PeerFeedback
+   */
+  select?: Prisma.PeerFeedbackSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PeerFeedback
+   */
+  omit?: Prisma.PeerFeedbackOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PeerFeedbackInclude<ExtArgs> | null
+  where?: Prisma.PeerFeedbackWhereInput
+  orderBy?: Prisma.PeerFeedbackOrderByWithRelationInput | Prisma.PeerFeedbackOrderByWithRelationInput[]
+  cursor?: Prisma.PeerFeedbackWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PeerFeedbackScalarFieldEnum | Prisma.PeerFeedbackScalarFieldEnum[]
+}
+
+/**
+ * User.reviewResponses
+ */
+export type User$reviewResponsesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ReviewResponse
+   */
+  select?: Prisma.ReviewResponseSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ReviewResponse
+   */
+  omit?: Prisma.ReviewResponseOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ReviewResponseInclude<ExtArgs> | null
+  where?: Prisma.ReviewResponseWhereInput
+  orderBy?: Prisma.ReviewResponseOrderByWithRelationInput | Prisma.ReviewResponseOrderByWithRelationInput[]
+  cursor?: Prisma.ReviewResponseWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ReviewResponseScalarFieldEnum | Prisma.ReviewResponseScalarFieldEnum[]
+}
+
+/**
+ * User.reviewSubject
+ */
+export type User$reviewSubjectArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ReviewResponse
+   */
+  select?: Prisma.ReviewResponseSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ReviewResponse
+   */
+  omit?: Prisma.ReviewResponseOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ReviewResponseInclude<ExtArgs> | null
+  where?: Prisma.ReviewResponseWhereInput
+  orderBy?: Prisma.ReviewResponseOrderByWithRelationInput | Prisma.ReviewResponseOrderByWithRelationInput[]
+  cursor?: Prisma.ReviewResponseWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ReviewResponseScalarFieldEnum | Prisma.ReviewResponseScalarFieldEnum[]
+}
+
+/**
+ * User.enpsResponses
+ */
+export type User$enpsResponsesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ENPSResponse
+   */
+  select?: Prisma.ENPSResponseSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ENPSResponse
+   */
+  omit?: Prisma.ENPSResponseOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ENPSResponseInclude<ExtArgs> | null
+  where?: Prisma.ENPSResponseWhereInput
+  orderBy?: Prisma.ENPSResponseOrderByWithRelationInput | Prisma.ENPSResponseOrderByWithRelationInput[]
+  cursor?: Prisma.ENPSResponseWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ENPSResponseScalarFieldEnum | Prisma.ENPSResponseScalarFieldEnum[]
+}
+
+/**
+ * User.managedMeetings
+ */
+export type User$managedMeetingsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the OneOnOneMeeting
+   */
+  select?: Prisma.OneOnOneMeetingSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the OneOnOneMeeting
+   */
+  omit?: Prisma.OneOnOneMeetingOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.OneOnOneMeetingInclude<ExtArgs> | null
+  where?: Prisma.OneOnOneMeetingWhereInput
+  orderBy?: Prisma.OneOnOneMeetingOrderByWithRelationInput | Prisma.OneOnOneMeetingOrderByWithRelationInput[]
+  cursor?: Prisma.OneOnOneMeetingWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.OneOnOneMeetingScalarFieldEnum | Prisma.OneOnOneMeetingScalarFieldEnum[]
+}
+
+/**
+ * User.employeeMeetings
+ */
+export type User$employeeMeetingsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the OneOnOneMeeting
+   */
+  select?: Prisma.OneOnOneMeetingSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the OneOnOneMeeting
+   */
+  omit?: Prisma.OneOnOneMeetingOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.OneOnOneMeetingInclude<ExtArgs> | null
+  where?: Prisma.OneOnOneMeetingWhereInput
+  orderBy?: Prisma.OneOnOneMeetingOrderByWithRelationInput | Prisma.OneOnOneMeetingOrderByWithRelationInput[]
+  cursor?: Prisma.OneOnOneMeetingWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.OneOnOneMeetingScalarFieldEnum | Prisma.OneOnOneMeetingScalarFieldEnum[]
 }
 
 /**

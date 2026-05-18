@@ -34,34 +34,12 @@ interface Checkin {
 }
 
 function useTeamCheckins() {
-  return useQuery({
+  return useQuery<Checkin[]>({
     queryKey: ["manager-checkins"],
     queryFn: async () => {
-      // Fetch all team goals then get their checkins
-      const res = await fetch("/api/goals?scope=team");
-      if (!res.ok) throw new Error("Failed");
-      const goals = await res.json();
-
-      // Flatten to checkins with goal + employee context
-      const checkins: Checkin[] = [];
-      for (const goal of goals) {
-        if (!goal.checkins) continue;
-        for (const c of goal.checkins) {
-          if (c.submittedAt) {
-            checkins.push({
-              ...c,
-              goal: { id: goal.id, title: goal.title, uomType: goal.uomType, uomUnit: goal.uomUnit, target: goal.target },
-              employee: goal.owner,
-            });
-          }
-        }
-      }
-      return checkins.sort((a, b) => {
-        // Unreviewed first
-        if (!a.managerCheckedIn && b.managerCheckedIn) return -1;
-        if (a.managerCheckedIn && !b.managerCheckedIn) return 1;
-        return new Date(b.submittedAt!).getTime() - new Date(a.submittedAt!).getTime();
-      });
+      const res = await fetch("/api/checkins");
+      if (!res.ok) throw new Error("Failed to load check-ins");
+      return res.json();
     },
     staleTime: 30_000,
   });

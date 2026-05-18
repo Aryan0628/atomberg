@@ -42,6 +42,14 @@ model User {
   escalationLogs  EscalationLog[]
   comments        GoalComment[]
 
+  feedbackGiven       PeerFeedback[] @relation("FeedbackGiver")
+  feedbackReceived    PeerFeedback[] @relation("FeedbackReceiver")
+  reviewResponses     ReviewResponse[] @relation("ReviewResponder")
+  reviewSubject       ReviewResponse[] @relation("ReviewSubject")
+  enpsResponses       ENPSResponse[]
+  managedMeetings     OneOnOneMeeting[] @relation("MeetingManager")
+  employeeMeetings    OneOnOneMeeting[] @relation("MeetingEmployee")
+
   lastLoginAt     DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -126,9 +134,19 @@ model Goal {
   latestScore     Float?
   latestStatus    ProgressStatus @default(NOT_STARTED)
 
+  // Cascading hierarchy
+  goalLevel       GoalLevel   @default(INDIVIDUAL)
+  parentGoalId    String?
+  parentGoal      Goal?       @relation("GoalHierarchy", fields: [parentGoalId], references: [id])
+  childGoals      Goal[]      @relation("GoalHierarchy")
+
+  cancelledAt     DateTime?
+  cancelReason    String?
+
   checkins        Checkin[]
   auditLogs       AuditLog[]
   comments        GoalComment[]
+  milestones      Milestone[]
 
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
@@ -137,6 +155,12 @@ model Goal {
   @@index([approverId])
   @@index([status])
   @@index([cycleId, status])   // analytics + action-items: WHERE cycleId=X AND status IN [...]
+}
+
+enum GoalLevel {
+  COMPANY
+  DEPARTMENT
+  INDIVIDUAL
 }
 
 enum UoMType {
@@ -155,6 +179,7 @@ enum GoalStatus {
   REJECTED
   RETURNED
   LOCKED
+  CANCELLED
 }
 
 enum ProgressStatus {
@@ -243,6 +268,7 @@ enum AuditAction {
   GOAL_RETURNED
   GOAL_LOCKED
   GOAL_UNLOCKED
+  GOAL_CANCELLED
   TARGET_EDITED
   WEIGHTAGE_EDITED
   CHECKIN_SUBMITTED
@@ -258,6 +284,10 @@ enum AuditAction {
   TEMPLATE_USED
   CYCLE_CLONED
   GOALS_AUTO_LOCKED
+  FEEDBACK_SUBMITTED
+  REVIEW_SUBMITTED
+  ENPS_SUBMITTED
+  MEETING_CREATED
 }
 
 // ─── NOTIFICATIONS ───────────────────────────────────────────
@@ -282,6 +312,7 @@ enum NotificationType {
   GOAL_APPROVED
   GOAL_REJECTED
   GOAL_RETURNED
+  GOAL_CANCELLED
   CHECKIN_WINDOW_OPEN
   CHECKIN_REMINDER
   CHECKIN_OVERDUE
@@ -291,6 +322,11 @@ enum NotificationType {
   GOAL_SHARED_WITH_YOU
   GOAL_COMMENT_FROM_MANAGER
   GOAL_COMMENT_FROM_EMPLOYEE
+  FEEDBACK_REQUEST_RECEIVED
+  FEEDBACK_SUBMITTED
+  REVIEW_CYCLE_STARTED
+  MEETING_SCHEDULED
+  ENPS_SURVEY_AVAILABLE
 }
 
 // ─── ESCALATION ──────────────────────────────────────────────
@@ -374,4 +410,211 @@ model GoalComment {
   updatedAt DateTime @updatedAt
 
   @@index([goalId])
+}
+
+// ─── MILESTONES (sub-tasks within a goal) ────────────────────
+
+model Milestone {
+  id          String    @id @default(cuid())
+  goalId      String
+  goal        Goal      @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  title       String
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  dueDate     DateTime?
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([goalId])
+}
+
+// ─── PEER FEEDBACK (360° + ad-hoc) ───────────────────────────
+
+model PeerFeedback {
+  id          String         @id @default(cuid())
+  giverId     String
+  giver       User           @relation("FeedbackGiver", fields: [giverId], references: [id])
+  receiverId  String
+  receiver    User           @relation("FeedbackReceiver", fields: [receiverId], references: [id])
+  type        FeedbackType   @default(PEER)
+  status      FeedbackStatus @default(PENDING)
+  message     String?
+  answers     Json           @default("[]") // [{question: string, answer: string, rating?: number}]
+  isAnonymous Boolean        @default(false)
+  reviewCycleId String?
+  reviewCycle   ReviewCycle? @relation(fields: [reviewCycleId], references: [id])
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([receiverId])
+  @@index([giverId])
+  @@index([reviewCycleId])
+}
+
+enum FeedbackType {
+  PEER
+  UPWARD
+  SELF
+  MANAGER
+}
+
+enum FeedbackStatus {
+  PENDING
+  COMPLETED
+  DECLINED
+}
+
+// ─── FORMAL REVIEW CYCLES ────────────────────────────────────
+
+model ReviewCycle {
+  id             String        @id @default(cuid())
+  name           String
+  cadence        ReviewCadence @default(ANNUAL)
+  status         ReviewStatus  @default(DRAFT)
+  startDate      DateTime
+  endDate        DateTime
+  departments    String[]
+  includeSelf    Boolean       @default(true)
+  includePeer    Boolean       @default(false)
+  includeManager Boolean       @default(true)
+  includeSkip    Boolean       @default(false)
+  includeUpward  Boolean       @default(false)
+  createdById    String
+  questions      ReviewQuestion[]
+  responses      ReviewResponse[]
+  feedbacks      PeerFeedback[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+enum ReviewCadence {
+  ANNUAL
+  SEMI_ANNUAL
+  QUARTERLY
+  CUSTOM
+}
+
+enum ReviewStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+model ReviewQuestion {
+  id            String       @id @default(cuid())
+  reviewCycleId String
+  reviewCycle   ReviewCycle  @relation(fields: [reviewCycleId], references: [id], onDelete: Cascade)
+  text          String
+  type          QuestionType @default(TEXT)
+  ratingLabels  String[]
+  required      Boolean      @default(true)
+  order         Int          @default(0)
+
+  @@index([reviewCycleId])
+}
+
+enum QuestionType {
+  TEXT
+  RATING
+  YES_NO
+}
+
+model ReviewResponse {
+  id            String      @id @default(cuid())
+  reviewCycleId String
+  reviewCycle   ReviewCycle @relation(fields: [reviewCycleId], references: [id])
+  reviewerId    String
+  reviewer      User        @relation("ReviewResponder", fields: [reviewerId], references: [id])
+  subjectId     String
+  subject       User        @relation("ReviewSubject", fields: [subjectId], references: [id])
+  feedbackType  FeedbackType
+  answers       Json        @default("[]")
+  submittedAt   DateTime?
+  createdAt     DateTime    @default(now())
+
+  @@unique([reviewCycleId, reviewerId, subjectId, feedbackType])
+  @@index([reviewCycleId])
+  @@index([subjectId])
+}
+
+// ─── eNPS SURVEY ─────────────────────────────────────────────
+
+model ENPSSurvey {
+  id        String        @id @default(cuid())
+  name      String
+  status    SurveyStatus  @default(ACTIVE)
+  startDate DateTime
+  endDate   DateTime
+  responses ENPSResponse[]
+  createdAt DateTime      @default(now())
+}
+
+enum SurveyStatus {
+  ACTIVE
+  CLOSED
+}
+
+model ENPSResponse {
+  id          String     @id @default(cuid())
+  surveyId    String
+  survey      ENPSSurvey @relation(fields: [surveyId], references: [id])
+  userId      String
+  user        User       @relation(fields: [userId], references: [id])
+  score       Int        // 0-10
+  comment     String?
+  submittedAt DateTime   @default(now())
+
+  @@unique([surveyId, userId])
+  @@index([surveyId])
+}
+
+// ─── 1:1 MEETINGS ────────────────────────────────────────────
+
+model OneOnOneMeeting {
+  id          String              @id @default(cuid())
+  managerId   String
+  manager     User                @relation("MeetingManager", fields: [managerId], references: [id])
+  employeeId  String
+  employee    User                @relation("MeetingEmployee", fields: [employeeId], references: [id])
+  scheduledAt DateTime
+  completedAt DateTime?
+  notes       String?
+  agendaItems MeetingAgendaItem[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([managerId])
+  @@index([employeeId])
+}
+
+model MeetingAgendaItem {
+  id        String          @id @default(cuid())
+  meetingId String
+  meeting   OneOnOneMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  title     String
+  goalId    String?
+  addedBy   String
+  done      Boolean         @default(false)
+  order     Int             @default(0)
+
+  @@index([meetingId])
+}
+
+// ─── SCHEDULED REPORTS ───────────────────────────────────────
+
+model ScheduledReport {
+  id          String   @id @default(cuid())
+  name        String
+  columns     String[] // selected field keys
+  filters     Json     @default("{}") // {cycleId?, department?, status?}
+  schedule    String   // cron expression: "0 9 * * 1" = Mon 9AM
+  recipients  String[] // email addresses
+  format      String   @default("excel") // "excel" | "csv"
+  lastSentAt  DateTime?
+  isActive    Boolean  @default(true)
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

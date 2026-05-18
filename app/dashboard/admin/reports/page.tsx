@@ -1,18 +1,322 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useRef } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import {
   Download, FileSpreadsheet, FileText, Shield, TrendingUp,
   Users, CheckSquare, Clock, AlertCircle, CalendarDays,
+  GripVertical, Plus, Trash2, Mail, Settings2,
 } from "lucide-react";
 import { downloadICS, cycleToICSEvents } from "@/lib/ics";
+
+// ─── Custom Report Builder (drag-and-drop columns) ───────────────────────────
+
+const ALL_COLUMNS = [
+  { id: "employeeName", label: "Employee Name" },
+  { id: "department", label: "Department" },
+  { id: "managerName", label: "Manager" },
+  { id: "goalTitle", label: "Goal Title" },
+  { id: "thrustArea", label: "Thrust Area" },
+  { id: "uomType", label: "UoM Type" },
+  { id: "target", label: "Target" },
+  { id: "weightage", label: "Weightage %" },
+  { id: "status", label: "Goal Status" },
+  { id: "latestScore", label: "Latest Score %" },
+  { id: "q1Score", label: "Q1 Score" },
+  { id: "q2Score", label: "Q2 Score" },
+  { id: "q3Score", label: "Q3 Score" },
+  { id: "q4Score", label: "Q4 Score" },
+  { id: "submittedAt", label: "Submitted At" },
+  { id: "approvedAt", label: "Approved At" },
+  { id: "lockedAt", label: "Locked At" },
+];
+
+function CustomReportBuilder() {
+  const [selectedCols, setSelectedCols] = useState<string[]>(["employeeName", "department", "goalTitle", "weightage", "latestScore"]);
+  const [reportName, setReportName] = useState("My Custom Report");
+  const [format, setFormat] = useState<"excel" | "csv">("excel");
+  const [filterDept, setFilterDept] = useState("");
+  const [filterStatus, setFilterStatus] = useState("ALL");
+  const dragItem = useRef<string | null>(null);
+  const dragOver = useRef<string | null>(null);
+
+  const available = ALL_COLUMNS.filter((c) => !selectedCols.includes(c.id));
+
+  const onDragStart = (id: string) => { dragItem.current = id; };
+  const onDragEnter = (id: string) => { dragOver.current = id; };
+
+  const onDropToSelected = () => {
+    if (!dragItem.current || selectedCols.includes(dragItem.current)) return;
+    setSelectedCols((prev) => [...prev, dragItem.current!]);
+    dragItem.current = null;
+  };
+
+  const onDropReorder = () => {
+    if (!dragItem.current || !dragOver.current || dragItem.current === dragOver.current) return;
+    setSelectedCols((prev) => {
+      const arr = [...prev];
+      const from = arr.indexOf(dragItem.current!);
+      const to = arr.indexOf(dragOver.current!);
+      if (from === -1 || to === -1) return prev;
+      arr.splice(from, 1);
+      arr.splice(to, 0, dragItem.current!);
+      return arr;
+    });
+    dragItem.current = null;
+    dragOver.current = null;
+  };
+
+  const removeCol = (id: string) => setSelectedCols((p) => p.filter((c) => c !== id));
+
+  const handleExport = async () => {
+    const params = new URLSearchParams({
+      columns: selectedCols.join(","),
+      format,
+      ...(filterDept && { department: filterDept }),
+      ...(filterStatus !== "ALL" && { status: filterStatus }),
+    });
+    const ext = format === "excel" ? "xlsx" : "csv";
+    const url = format === "excel" ? `/api/export/excel?${params}` : `/api/export/csv?${params}`;
+    toast.loading("Building custom report…");
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = href; a.download = `${reportName.replace(/\s+/g, "_")}.${ext}`; a.click();
+      URL.revokeObjectURL(href);
+      toast.dismiss(); toast.success("Report downloaded!");
+    } catch { toast.dismiss(); toast.error("Export failed"); }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-3">
+        <div className="flex-1 space-y-1">
+          <Label className="text-xs">Report Name</Label>
+          <Input value={reportName} onChange={(e) => setReportName(e.target.value)} className="h-8 text-sm" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Format</Label>
+          <Select value={format} onValueChange={(v) => v && setFormat(v as "excel" | "csv")}>
+            <SelectTrigger className="w-28 h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="excel">Excel (.xlsx)</SelectItem>
+              <SelectItem value="csv">CSV</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Filter Status</Label>
+          <Select value={filterStatus} onValueChange={(v) => v && setFilterStatus(v)}>
+            <SelectTrigger className="w-32 h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All</SelectItem>
+              {["DRAFT","SUBMITTED","APPROVED","LOCKED","REJECTED","RETURNED","CANCELLED"].map((s) =>
+                <SelectItem key={s} value={s}>{s}</SelectItem>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        {/* Available columns */}
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-2">Available Columns</p>
+          <div className="border rounded-lg p-2 min-h-32 space-y-1 bg-muted/20"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={() => {
+              if (dragItem.current && selectedCols.includes(dragItem.current)) {
+                removeCol(dragItem.current);
+              }
+            }}>
+            {available.length === 0
+              ? <p className="text-xs text-muted-foreground text-center py-4">All columns selected</p>
+              : available.map((col) => (
+                <div key={col.id} draggable onDragStart={() => onDragStart(col.id)}
+                  className="flex items-center gap-2 px-2 py-1.5 rounded bg-background border text-xs cursor-grab hover:border-primary transition-colors">
+                  <GripVertical className="w-3 h-3 text-muted-foreground" />
+                  {col.label}
+                </div>
+              ))}
+          </div>
+        </div>
+
+        {/* Selected columns (reorderable) */}
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-2">Report Columns (drag to reorder)</p>
+          <div className="border-2 border-dashed border-primary/30 rounded-lg p-2 min-h-32 space-y-1 bg-primary/5"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={onDropToSelected}>
+            {selectedCols.length === 0
+              ? <p className="text-xs text-muted-foreground text-center py-4">Drag columns here</p>
+              : selectedCols.map((id) => {
+                const col = ALL_COLUMNS.find((c) => c.id === id)!;
+                return (
+                  <div key={id} draggable
+                    onDragStart={() => onDragStart(id)}
+                    onDragEnter={() => onDragEnter(id)}
+                    onDragEnd={onDropReorder}
+                    onDragOver={(e) => e.preventDefault()}
+                    className="flex items-center gap-2 px-2 py-1.5 rounded bg-background border border-primary/20 text-xs cursor-grab hover:border-primary transition-colors">
+                    <GripVertical className="w-3 h-3 text-muted-foreground" />
+                    <span className="flex-1">{col?.label}</span>
+                    <button onClick={() => removeCol(id)} className="text-muted-foreground hover:text-destructive">
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      </div>
+
+      <Button onClick={handleExport} disabled={selectedCols.length === 0} className="gap-2">
+        <Download className="w-4 h-4" />
+        Export Custom Report ({selectedCols.length} columns)
+      </Button>
+    </div>
+  );
+}
+
+// ─── Scheduled Reports ────────────────────────────────────────────────────────
+
+type ScheduledReport = {
+  id: string; name: string; schedule: string; recipients: string[];
+  format: string; columns: string[]; createdAt: string;
+};
+
+const SCHEDULE_LABELS: Record<string, string> = {
+  "0 9 * * 1": "Weekly (Mon 9 AM)",
+  "0 9 * * *": "Daily (9 AM)",
+  "0 9 1 * *": "Monthly (1st, 9 AM)",
+};
+
+function ScheduledReports() {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({
+    name: "", schedule: "0 9 * * 1", recipients: "", format: "excel" as "excel" | "csv",
+    columns: ["employeeName", "goalTitle", "latestScore"],
+  });
+
+  const { data: reports = [] } = useQuery<ScheduledReport[]>({
+    queryKey: ["scheduled-reports"],
+    queryFn: () => fetch("/api/scheduled-reports").then((r) => r.json()),
+  });
+
+  const create = useMutation({
+    mutationFn: () => fetch("/api/scheduled-reports", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...form,
+        recipients: form.recipients.split(",").map((e) => e.trim()).filter(Boolean),
+      }),
+    }).then((r) => r.json()),
+    onSuccess: (data) => {
+      if (data.error) { toast.error(JSON.stringify(data.error)); return; }
+      toast.success("Scheduled report created");
+      setOpen(false);
+      qc.invalidateQueries({ queryKey: ["scheduled-reports"] });
+    },
+    onError: () => toast.error("Failed to create scheduled report"),
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => fetch(`/api/scheduled-reports?id=${id}`, { method: "DELETE" }).then((r) => r.json()),
+    onSuccess: () => { toast.success("Deleted"); qc.invalidateQueries({ queryKey: ["scheduled-reports"] }); },
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">Automatically email reports to HR and stakeholders on a schedule.</p>
+        <Button size="sm" variant="outline" onClick={() => setOpen(!open)}>
+          <Plus className="w-3.5 h-3.5 mr-1" />Add Schedule
+        </Button>
+      </div>
+
+      {open && (
+        <Card className="border-dashed">
+          <CardContent className="pt-4 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Report Name</Label>
+                <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  placeholder="Weekly Goal Summary" className="h-8 text-sm" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Schedule</Label>
+                <Select value={form.schedule} onValueChange={(v) => v && setForm((f) => ({ ...f, schedule: v }))}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(SCHEDULE_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Recipients (comma-separated emails)</Label>
+              <Input value={form.recipients} onChange={(e) => setForm((f) => ({ ...f, recipients: e.target.value }))}
+                placeholder="hr@atomberg.com, ceo@atomberg.com" className="h-8 text-sm" />
+            </div>
+            <div className="flex gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Format</Label>
+                <Select value={form.format} onValueChange={(v) => v && setForm((f) => ({ ...f, format: v as "excel" | "csv" }))}>
+                  <SelectTrigger className="w-28 h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="excel">Excel</SelectItem>
+                    <SelectItem value="csv">CSV</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button size="sm" className="mt-auto" onClick={() => create.mutate()} disabled={!form.name || !form.recipients || create.isPending}>
+                Save Schedule
+              </Button>
+              <Button size="sm" variant="ghost" className="mt-auto" onClick={() => setOpen(false)}>Cancel</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {reports.length === 0 ? (
+        <div className="text-center py-8 text-sm text-muted-foreground">
+          <Mail className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+          No scheduled reports yet
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {reports.map((r) => (
+            <div key={r.id} className="flex items-center gap-3 p-3 border rounded-lg">
+              <Mail className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium">{r.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {SCHEDULE_LABELS[r.schedule] ?? r.schedule} · {r.recipients.join(", ")} · {r.format.toUpperCase()}
+                </p>
+              </div>
+              <button onClick={() => remove.mutate(r.id)} className="text-muted-foreground hover:text-destructive flex-shrink-0">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function useOverview() {
   return useQuery({
@@ -213,6 +517,39 @@ export default function AdminReportsPage() {
           />
         </div>
       )}
+
+      {/* Custom Report Builder */}
+      <div>
+        <CardHeader className="px-0 pt-0 pb-3">
+          <CardTitle className="text-base text-foreground flex items-center gap-2">
+            <Settings2 className="w-4 h-4 text-slate-500" />
+            Custom Report Builder
+          </CardTitle>
+        </CardHeader>
+        <Card>
+          <CardContent className="pt-5">
+            <p className="text-sm text-muted-foreground mb-4">
+              Drag and drop columns to build a custom report. Reorder columns by dragging within the selection area.
+            </p>
+            <CustomReportBuilder />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Scheduled Reports */}
+      <div>
+        <CardHeader className="px-0 pt-0 pb-3">
+          <CardTitle className="text-base text-foreground flex items-center gap-2">
+            <Mail className="w-4 h-4 text-slate-500" />
+            Scheduled Report Emails
+          </CardTitle>
+        </CardHeader>
+        <Card>
+          <CardContent className="pt-5">
+            <ScheduledReports />
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Audit Report */}
       <div>

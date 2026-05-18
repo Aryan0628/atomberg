@@ -19,6 +19,15 @@ export const Role = {
 export type Role = (typeof Role)[keyof typeof Role]
 
 
+export const GoalLevel = {
+  COMPANY: 'COMPANY',
+  DEPARTMENT: 'DEPARTMENT',
+  INDIVIDUAL: 'INDIVIDUAL'
+} as const
+
+export type GoalLevel = (typeof GoalLevel)[keyof typeof GoalLevel]
+
+
 export const UoMType = {
   NUMERIC_MIN: 'NUMERIC_MIN',
   NUMERIC_MAX: 'NUMERIC_MAX',
@@ -37,7 +46,8 @@ export const GoalStatus = {
   APPROVED: 'APPROVED',
   REJECTED: 'REJECTED',
   RETURNED: 'RETURNED',
-  LOCKED: 'LOCKED'
+  LOCKED: 'LOCKED',
+  CANCELLED: 'CANCELLED'
 } as const
 
 export type GoalStatus = (typeof GoalStatus)[keyof typeof GoalStatus]
@@ -72,6 +82,7 @@ export const AuditAction = {
   GOAL_RETURNED: 'GOAL_RETURNED',
   GOAL_LOCKED: 'GOAL_LOCKED',
   GOAL_UNLOCKED: 'GOAL_UNLOCKED',
+  GOAL_CANCELLED: 'GOAL_CANCELLED',
   TARGET_EDITED: 'TARGET_EDITED',
   WEIGHTAGE_EDITED: 'WEIGHTAGE_EDITED',
   CHECKIN_SUBMITTED: 'CHECKIN_SUBMITTED',
@@ -86,7 +97,11 @@ export const AuditAction = {
   GOAL_COMMENT_ADDED: 'GOAL_COMMENT_ADDED',
   TEMPLATE_USED: 'TEMPLATE_USED',
   CYCLE_CLONED: 'CYCLE_CLONED',
-  GOALS_AUTO_LOCKED: 'GOALS_AUTO_LOCKED'
+  GOALS_AUTO_LOCKED: 'GOALS_AUTO_LOCKED',
+  FEEDBACK_SUBMITTED: 'FEEDBACK_SUBMITTED',
+  REVIEW_SUBMITTED: 'REVIEW_SUBMITTED',
+  ENPS_SUBMITTED: 'ENPS_SUBMITTED',
+  MEETING_CREATED: 'MEETING_CREATED'
 } as const
 
 export type AuditAction = (typeof AuditAction)[keyof typeof AuditAction]
@@ -97,6 +112,7 @@ export const NotificationType = {
   GOAL_APPROVED: 'GOAL_APPROVED',
   GOAL_REJECTED: 'GOAL_REJECTED',
   GOAL_RETURNED: 'GOAL_RETURNED',
+  GOAL_CANCELLED: 'GOAL_CANCELLED',
   CHECKIN_WINDOW_OPEN: 'CHECKIN_WINDOW_OPEN',
   CHECKIN_REMINDER: 'CHECKIN_REMINDER',
   CHECKIN_OVERDUE: 'CHECKIN_OVERDUE',
@@ -105,7 +121,12 @@ export const NotificationType = {
   CYCLE_STARTED: 'CYCLE_STARTED',
   GOAL_SHARED_WITH_YOU: 'GOAL_SHARED_WITH_YOU',
   GOAL_COMMENT_FROM_MANAGER: 'GOAL_COMMENT_FROM_MANAGER',
-  GOAL_COMMENT_FROM_EMPLOYEE: 'GOAL_COMMENT_FROM_EMPLOYEE'
+  GOAL_COMMENT_FROM_EMPLOYEE: 'GOAL_COMMENT_FROM_EMPLOYEE',
+  FEEDBACK_REQUEST_RECEIVED: 'FEEDBACK_REQUEST_RECEIVED',
+  FEEDBACK_SUBMITTED: 'FEEDBACK_SUBMITTED',
+  REVIEW_CYCLE_STARTED: 'REVIEW_CYCLE_STARTED',
+  MEETING_SCHEDULED: 'MEETING_SCHEDULED',
+  ENPS_SURVEY_AVAILABLE: 'ENPS_SURVEY_AVAILABLE'
 } as const
 
 export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType]
@@ -128,3 +149,59 @@ export const EscalateeTo = {
 } as const
 
 export type EscalateeTo = (typeof EscalateeTo)[keyof typeof EscalateeTo]
+
+
+export const FeedbackType = {
+  PEER: 'PEER',
+  UPWARD: 'UPWARD',
+  SELF: 'SELF',
+  MANAGER: 'MANAGER'
+} as const
+
+export type FeedbackType = (typeof FeedbackType)[keyof typeof FeedbackType]
+
+
+export const FeedbackStatus = {
+  PENDING: 'PENDING',
+  COMPLETED: 'COMPLETED',
+  DECLINED: 'DECLINED'
+} as const
+
+export type FeedbackStatus = (typeof FeedbackStatus)[keyof typeof FeedbackStatus]
+
+
+export const ReviewCadence = {
+  ANNUAL: 'ANNUAL',
+  SEMI_ANNUAL: 'SEMI_ANNUAL',
+  QUARTERLY: 'QUARTERLY',
+  CUSTOM: 'CUSTOM'
+} as const
+
+export type ReviewCadence = (typeof ReviewCadence)[keyof typeof ReviewCadence]
+
+
+export const ReviewStatus = {
+  DRAFT: 'DRAFT',
+  ACTIVE: 'ACTIVE',
+  COMPLETED: 'COMPLETED',
+  ARCHIVED: 'ARCHIVED'
+} as const
+
+export type ReviewStatus = (typeof ReviewStatus)[keyof typeof ReviewStatus]
+
+
+export const QuestionType = {
+  TEXT: 'TEXT',
+  RATING: 'RATING',
+  YES_NO: 'YES_NO'
+} as const
+
+export type QuestionType = (typeof QuestionType)[keyof typeof QuestionType]
+
+
+export const SurveyStatus = {
+  ACTIVE: 'ACTIVE',
+  CLOSED: 'CLOSED'
+} as const
+
+export type SurveyStatus = (typeof SurveyStatus)[keyof typeof SurveyStatus]

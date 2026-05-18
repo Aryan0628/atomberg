@@ -61,7 +61,17 @@ export const ModelName = {
   EscalationLog: 'EscalationLog',
   ThrustArea: 'ThrustArea',
   GoalTemplate: 'GoalTemplate',
-  GoalComment: 'GoalComment'
+  GoalComment: 'GoalComment',
+  Milestone: 'Milestone',
+  PeerFeedback: 'PeerFeedback',
+  ReviewCycle: 'ReviewCycle',
+  ReviewQuestion: 'ReviewQuestion',
+  ReviewResponse: 'ReviewResponse',
+  ENPSSurvey: 'ENPSSurvey',
+  ENPSResponse: 'ENPSResponse',
+  OneOnOneMeeting: 'OneOnOneMeeting',
+  MeetingAgendaItem: 'MeetingAgendaItem',
+  ScheduledReport: 'ScheduledReport'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -151,6 +161,10 @@ export const GoalScalarFieldEnum = {
   reworkCount: 'reworkCount',
   latestScore: 'latestScore',
   latestStatus: 'latestStatus',
+  goalLevel: 'goalLevel',
+  parentGoalId: 'parentGoalId',
+  cancelledAt: 'cancelledAt',
+  cancelReason: 'cancelReason',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -289,6 +303,155 @@ export const GoalCommentScalarFieldEnum = {
 export type GoalCommentScalarFieldEnum = (typeof GoalCommentScalarFieldEnum)[keyof typeof GoalCommentScalarFieldEnum]
 
 
+export const MilestoneScalarFieldEnum = {
+  id: 'id',
+  goalId: 'goalId',
+  title: 'title',
+  completed: 'completed',
+  completedAt: 'completedAt',
+  dueDate: 'dueDate',
+  order: 'order',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MilestoneScalarFieldEnum = (typeof MilestoneScalarFieldEnum)[keyof typeof MilestoneScalarFieldEnum]
+
+
+export const PeerFeedbackScalarFieldEnum = {
+  id: 'id',
+  giverId: 'giverId',
+  receiverId: 'receiverId',
+  type: 'type',
+  status: 'status',
+  message: 'message',
+  answers: 'answers',
+  isAnonymous: 'isAnonymous',
+  reviewCycleId: 'reviewCycleId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PeerFeedbackScalarFieldEnum = (typeof PeerFeedbackScalarFieldEnum)[keyof typeof PeerFeedbackScalarFieldEnum]
+
+
+export const ReviewCycleScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  cadence: 'cadence',
+  status: 'status',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  departments: 'departments',
+  includeSelf: 'includeSelf',
+  includePeer: 'includePeer',
+  includeManager: 'includeManager',
+  includeSkip: 'includeSkip',
+  includeUpward: 'includeUpward',
+  createdById: 'createdById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ReviewCycleScalarFieldEnum = (typeof ReviewCycleScalarFieldEnum)[keyof typeof ReviewCycleScalarFieldEnum]
+
+
+export const ReviewQuestionScalarFieldEnum = {
+  id: 'id',
+  reviewCycleId: 'reviewCycleId',
+  text: 'text',
+  type: 'type',
+  ratingLabels: 'ratingLabels',
+  required: 'required',
+  order: 'order'
+} as const
+
+export type ReviewQuestionScalarFieldEnum = (typeof ReviewQuestionScalarFieldEnum)[keyof typeof ReviewQuestionScalarFieldEnum]
+
+
+export const ReviewResponseScalarFieldEnum = {
+  id: 'id',
+  reviewCycleId: 'reviewCycleId',
+  reviewerId: 'reviewerId',
+  subjectId: 'subjectId',
+  feedbackType: 'feedbackType',
+  answers: 'answers',
+  submittedAt: 'submittedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type ReviewResponseScalarFieldEnum = (typeof ReviewResponseScalarFieldEnum)[keyof typeof ReviewResponseScalarFieldEnum]
+
+
+export const ENPSSurveyScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  status: 'status',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  createdAt: 'createdAt'
+} as const
+
+export type ENPSSurveyScalarFieldEnum = (typeof ENPSSurveyScalarFieldEnum)[keyof typeof ENPSSurveyScalarFieldEnum]
+
+
+export const ENPSResponseScalarFieldEnum = {
+  id: 'id',
+  surveyId: 'surveyId',
+  userId: 'userId',
+  score: 'score',
+  comment: 'comment',
+  submittedAt: 'submittedAt'
+} as const
+
+export type ENPSResponseScalarFieldEnum = (typeof ENPSResponseScalarFieldEnum)[keyof typeof ENPSResponseScalarFieldEnum]
+
+
+export const OneOnOneMeetingScalarFieldEnum = {
+  id: 'id',
+  managerId: 'managerId',
+  employeeId: 'employeeId',
+  scheduledAt: 'scheduledAt',
+  completedAt: 'completedAt',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type OneOnOneMeetingScalarFieldEnum = (typeof OneOnOneMeetingScalarFieldEnum)[keyof typeof OneOnOneMeetingScalarFieldEnum]
+
+
+export const MeetingAgendaItemScalarFieldEnum = {
+  id: 'id',
+  meetingId: 'meetingId',
+  title: 'title',
+  goalId: 'goalId',
+  addedBy: 'addedBy',
+  done: 'done',
+  order: 'order'
+} as const
+
+export type MeetingAgendaItemScalarFieldEnum = (typeof MeetingAgendaItemScalarFieldEnum)[keyof typeof MeetingAgendaItemScalarFieldEnum]
+
+
+export const ScheduledReportScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  columns: 'columns',
+  filters: 'filters',
+  schedule: 'schedule',
+  recipients: 'recipients',
+  format: 'format',
+  lastSentAt: 'lastSentAt',
+  isActive: 'isActive',
+  createdById: 'createdById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ScheduledReportScalarFieldEnum = (typeof ScheduledReportScalarFieldEnum)[keyof typeof ScheduledReportScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -303,6 +466,13 @@ export const NullableJsonNullValueInput = {
 } as const
 
 export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {

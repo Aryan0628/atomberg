@@ -14,12 +14,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { getGoalStatusColor, getUoMLabel, getUoMColor, formatDate, formatScore } from "@/lib/utils";
 import { getScoreColor } from "@/lib/scoring";
 import { GoalRiskBadge } from "@/components/shared/GoalRiskBadge";
-import { Target, Weight, BarChart3, CheckCircle2, XCircle, RotateCcw, Lock, FileText, ClipboardCheck, ArrowLeft, Pencil } from "lucide-react";
+import { Target, Weight, BarChart3, CheckCircle2, XCircle, RotateCcw, Lock, FileText, ClipboardCheck, ArrowLeft, Pencil, Flag, Plus, Trash2, AlertTriangle } from "lucide-react";
 import { GoalCommentThread } from "@/components/shared/GoalCommentThread";
 import Link from "next/link";
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+
+type Milestone = { id: string; title: string; dueDate: string | null; completedAt: string | null; order: number };
 
 export default function GoalDetailPage() {
   const params = useParams();
@@ -29,6 +31,61 @@ export default function GoalDetailPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editForm, setEditForm] = useState<Record<string, string>>({});
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelling, setCancelling] = useState(false);
+  const [newMilestone, setNewMilestone] = useState({ title: "", dueDate: "" });
+  const [addingMilestone, setAddingMilestone] = useState(false);
+
+  const { data: milestones = [], refetch: refetchMilestones } = useQuery<Milestone[]>({
+    queryKey: ["milestones", params.id],
+    queryFn: () => fetch(`/api/goals/${params.id}/milestones`).then((r) => r.json()),
+    enabled: !!params.id,
+  });
+
+  async function toggleMilestone(milestoneId: string) {
+    await fetch(`/api/goals/${params.id}/milestones/${milestoneId}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ toggle: true }),
+    });
+    refetchMilestones();
+    queryClient.invalidateQueries({ queryKey: ["goal", params.id] });
+  }
+
+  async function deleteMilestone(milestoneId: string) {
+    await fetch(`/api/goals/${params.id}/milestones/${milestoneId}`, { method: "DELETE" });
+    refetchMilestones();
+  }
+
+  async function createMilestone() {
+    if (!newMilestone.title) return;
+    setAddingMilestone(true);
+    try {
+      const res = await fetch(`/api/goals/${params.id}/milestones`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newMilestone),
+      });
+      if (!res.ok) { const e = await res.json(); toast.error(e.error || "Failed"); return; }
+      setNewMilestone({ title: "", dueDate: "" });
+      refetchMilestones();
+    } finally { setAddingMilestone(false); }
+  }
+
+  async function cancelGoal() {
+    if (cancelReason.length < 5) { toast.error("Please provide a reason (min 5 chars)"); return; }
+    setCancelling(true);
+    try {
+      const res = await fetch(`/api/goals/${params.id}/cancel`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: cancelReason }),
+      });
+      if (!res.ok) { const e = await res.json(); toast.error(e.error || "Failed to cancel"); return; }
+      toast.success("Goal cancelled");
+      setCancelOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["goal", params.id] });
+      router.refresh();
+    } finally { setCancelling(false); }
+  }
 
   function openEdit() {
     if (!goal) return;
@@ -104,6 +161,12 @@ export default function GoalDetailPage() {
           {["RETURNED", "DRAFT"].includes(goal.status) && (
             <Button size="sm" variant="outline" className="gap-1.5" onClick={openEdit}>
               <Pencil className="w-3.5 h-3.5" /> Edit Goal
+            </Button>
+          )}
+          {!["LOCKED", "CANCELLED", "REJECTED"].includes(goal.status) && (
+            <Button size="sm" variant="outline" className="gap-1.5 text-destructive hover:text-destructive border-destructive/30 hover:border-destructive"
+              onClick={() => setCancelOpen(true)}>
+              <XCircle className="w-3.5 h-3.5" /> Cancel
             </Button>
           )}
           <GoalRiskBadge checkins={goal.checkins ?? []} />
@@ -275,6 +338,54 @@ export default function GoalDetailPage() {
         </CardContent>
       </Card>
 
+      {/* Milestones */}
+      <Card className="border-border shadow-sm">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <Flag className="w-4 h-4 text-muted-foreground" /> Milestones
+            </CardTitle>
+            <span className="text-xs text-muted-foreground">
+              {milestones.filter((m) => m.completedAt).length}/{milestones.length} done
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {milestones.length === 0 && (
+            <p className="text-sm text-muted-foreground">No milestones yet — add key checkpoints below.</p>
+          )}
+          {milestones.map((m) => (
+            <div key={m.id} className="flex items-center gap-3 group">
+              <button onClick={() => toggleMilestone(m.id)}
+                className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors
+                  ${m.completedAt ? "bg-green-500 border-green-500 text-white" : "border-border hover:border-green-400"}`}>
+                {m.completedAt && <CheckCircle2 className="w-3 h-3" />}
+              </button>
+              <span className={`text-sm flex-1 ${m.completedAt ? "line-through text-muted-foreground" : ""}`}>{m.title}</span>
+              {m.dueDate && (
+                <span className="text-xs text-muted-foreground">{new Date(m.dueDate).toLocaleDateString()}</span>
+              )}
+              <button onClick={() => deleteMilestone(m.id)}
+                className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity">
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))}
+          {!["LOCKED", "CANCELLED"].includes(goal.status) && milestones.length < 10 && (
+            <div className="flex gap-2 pt-2">
+              <Input value={newMilestone.title} onChange={(e) => setNewMilestone((n) => ({ ...n, title: e.target.value }))}
+                placeholder="New milestone…" className="text-sm h-8 flex-1"
+                onKeyDown={(e) => e.key === "Enter" && newMilestone.title && createMilestone()} />
+              <Input type="date" value={newMilestone.dueDate} onChange={(e) => setNewMilestone((n) => ({ ...n, dueDate: e.target.value }))}
+                className="text-sm h-8 w-36" />
+              <Button size="sm" className="h-8" onClick={createMilestone} disabled={!newMilestone.title || addingMilestone}>
+                <Plus className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Check-in Button (for locked goals) */}
       {goal.isLocked && (
         <div className="flex gap-3">
@@ -288,6 +399,30 @@ export default function GoalDetailPage() {
 
       {/* Comment Thread */}
       <GoalCommentThread goalId={goal.id} />
+
+      {/* Cancel Goal Dialog */}
+      <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="w-4 h-4" /> Cancel Goal
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Cancelling a goal removes it from your active cycle. This cannot be undone. Please provide a reason.
+          </p>
+          <div className="space-y-3">
+            <Textarea value={cancelReason} onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="Reason for cancellation (min 5 characters)…" rows={3} />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setCancelOpen(false)}>Keep Goal</Button>
+              <Button variant="destructive" onClick={cancelGoal} disabled={cancelReason.length < 5 || cancelling}>
+                {cancelling ? "Cancelling…" : "Cancel Goal"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Dialog (DRAFT / RETURNED goals) */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>

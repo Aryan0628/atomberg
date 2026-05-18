@@ -22,26 +22,34 @@ const USER_SELECT = {
   _count: { select: { ownedGoals: true, reports: true } },
 } as const;
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { searchParams } = new URL(req.url);
+  const myReports = searchParams.get("myReports") === "true";
+  const forFeedback = searchParams.get("forFeedback") === "true";
 
+  // Employees can fetch a minimal peer list for the feedback recipient selector only
   if (session.user.role === "EMPLOYEE") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (!forFeedback) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const peers = await withCache(`users:peers:${session.user.id}`, 300, () =>
+      prisma.user.findMany({
+        where: { isActive: true, id: { not: session.user.id } },
+        select: { id: true, name: true, department: true },
+        orderBy: { name: "asc" },
+      })
+    );
+    return NextResponse.json(peers);
   }
 
   if (session.user.role === "MANAGER") {
-    const users = await withCache(`users:manager:${session.user.id}`, 120, () =>
-      prisma.user.findMany({
-        where: {
-          OR: [
-            { id: session.user.id },
-            { managerId: session.user.id, isActive: true },
-          ],
-        },
-        select: USER_SELECT,
-        orderBy: { name: "asc" },
-      })
+    // ?myReports=true returns only direct reports (not the manager themselves)
+    const where = myReports
+      ? { managerId: session.user.id, isActive: true }
+      : { OR: [{ id: session.user.id }, { managerId: session.user.id, isActive: true }] };
+
+    const users = await withCache(`users:manager:${session.user.id}:${myReports}`, 120, () =>
+      prisma.user.findMany({ where, select: USER_SELECT, orderBy: { name: "asc" } })
     );
     return NextResponse.json(users);
   }
