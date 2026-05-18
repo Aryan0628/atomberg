@@ -1,27 +1,24 @@
 // lib/audit.ts
 // Tamper-evident audit ledger — every entry is SHA-256 chained to the previous.
-// Hash payload includes ALL fields (userId, action, entityType, entityId, goalId,
-// oldValue, newValue, ipAddress, userAgent, createdAt) so tampering with any
-// field — including omitted ones like IP — is detected by the verify endpoint.
 //
-// Performance: last hash is cached in Redis (LAST_HASH_KEY, 5 min TTL).
-// For standalone (non-transaction) writes this eliminates the findFirst DB trip.
-// For transaction writes (tx param provided), we still hit the DB — necessary
-// for correctness since the tx client sees uncommitted data from its own writes.
+// Concurrency: standalone writes acquire a PostgreSQL advisory lock (pg_advisory_xact_lock)
+// inside a transaction so concurrent requests cannot fork the chain. Without this lock,
+// two simultaneous writeAudit() calls could both read the same "last hash" and produce
+// two entries with identical previousHash, breaking verify's linear walk.
 //
-// Concurrency note: ordering uses (createdAt, id) so concurrent writes at the
-// same millisecond get a deterministic chain order. A true advisory lock would
-// require raw SQL; this is the correct approach for Prisma without extensions.
+// The advisory lock is session-scoped and released automatically at transaction commit —
+// zero risk of lock leaks. Lock ID 424242 is an arbitrary stable constant for this table.
+//
+// Transaction writes (tx param provided): the caller's transaction already serialises the
+// write, so we skip the inner transaction wrapper and write directly into the caller's tx.
 //
 // RULE: No DELETE endpoint for AuditLog. Return 405 if anyone tries.
 
 import { createHash } from "crypto";
 import { prisma } from "@/lib/db";
-import { redisGet, redisSetex } from "@/lib/redis";
 import { AuditAction } from "@/lib/generated/prisma/enums";
 
-const LAST_HASH_KEY = "audit:last-hash";
-const LAST_HASH_TTL = 300; // 5 min — refreshed on every write
+const ADVISORY_LOCK_ID = BigInt(424242);
 
 interface AuditData {
   userId: string;
@@ -34,76 +31,66 @@ interface AuditData {
   request?: Request;
 }
 
-// Fetch the previous hash: Redis for standalone writes, DB for tx writes.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function fetchPreviousHash(client: any, isTx: boolean): Promise<string> {
-  if (!isTx) {
-    // Non-transaction path: try Redis cache first (no DB round trip).
-    try {
-      const cached = await redisGet(LAST_HASH_KEY);
-      if (cached) return cached;
-    } catch {
-      // Redis unavailable — fall through to DB
-    }
-  }
-
-  // Transaction path OR Redis miss: query the DB for the latest hash.
-  // (createdAt DESC, id DESC) covered by the compound index on AuditLog.
-  const last = await client.auditLog.findFirst({
-    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-    select: { hash: true },
-  });
-  return last?.hash ?? "GENESIS";
-}
-
-// Accepts an optional Prisma transaction client so audit writes can be
-// included inside a $transaction without breaking the hash chain.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function writeAudit(data: AuditData, tx?: any) {
-  const isTx = tx != null;
-  const client = tx ?? prisma;
+async function _writeAuditInner(data: AuditData, client: any): Promise<ReturnType<typeof prisma.auditLog.create>> {
   const ip = data.request?.headers.get("x-forwarded-for") ?? "unknown";
   const ua = data.request?.headers.get("user-agent") ?? "unknown";
   const now = new Date();
 
-  const previousHash = await fetchPreviousHash(client, isTx);
+  // Always read last hash from DB — Redis cache caused race conditions.
+  const last = await client.auditLog.findFirst({
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    select: { hash: true },
+  });
+  const previousHash = last?.hash ?? "GENESIS";
 
   // Hash the FULL canonical payload — any field omitted here is undetectable tampering.
   const canonicalPayload = JSON.stringify({
-    userId: data.userId,
-    action: data.action,
+    userId:     data.userId,
+    action:     data.action,
     entityType: data.entityType,
-    entityId: data.entityId,
-    goalId: data.goalId ?? null,
-    oldValue: data.oldValue ?? null,
-    newValue: data.newValue ?? null,
-    ipAddress: ip,
-    userAgent: ua,
-    createdAt: now.toISOString(),
+    entityId:   data.entityId,
+    goalId:     data.goalId ?? null,
+    oldValue:   data.oldValue ?? null,
+    newValue:   data.newValue ?? null,
+    ipAddress:  ip,
+    userAgent:  ua,
+    createdAt:  now.toISOString(),
   });
   const hash = createHash("sha256").update(canonicalPayload + previousHash).digest("hex");
 
-  const entry = await client.auditLog.create({
+  return client.auditLog.create({
     data: {
-      userId: data.userId,
-      action: data.action,
-      entityType: data.entityType,
-      entityId: data.entityId,
-      goalId: data.goalId,
+      userId:      data.userId,
+      action:      data.action,
+      entityType:  data.entityType,
+      entityId:    data.entityId,
+      goalId:      data.goalId,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      oldValue: data.oldValue as any,
+      oldValue:    data.oldValue as any,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      newValue: data.newValue as any,
-      ipAddress: ip,
-      userAgent: ua,
+      newValue:    data.newValue as any,
+      ipAddress:   ip,
+      userAgent:   ua,
       hash,
       previousHash,
-      createdAt: now, // must match timestamp in canonicalPayload — do not let DB default this
+      createdAt:   now, // must match the timestamp used in canonicalPayload
     },
   });
+}
 
-  // Update Redis cache with the new hash — fire-and-forget, never block the caller.
-  redisSetex(LAST_HASH_KEY, LAST_HASH_TTL, hash).catch(() => {});
+// Accepts an optional Prisma transaction client. When called without tx, wraps in its
+// own $transaction with an advisory lock to serialize concurrent standalone writes.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function writeAudit(data: AuditData, tx?: any) {
+  if (tx) {
+    // Already inside a caller-managed transaction — write directly.
+    return _writeAuditInner(data, tx);
+  }
 
-  return entry;
+  // Standalone write: acquire advisory lock so hash chain stays linear under concurrency.
+  return prisma.$transaction(async (innerTx) => {
+    await innerTx.$executeRaw`SELECT pg_advisory_xact_lock(${ADVISORY_LOCK_ID})`;
+    return _writeAuditInner(data, innerTx);
+  });
 }

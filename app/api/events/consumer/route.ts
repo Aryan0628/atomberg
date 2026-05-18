@@ -31,8 +31,10 @@ async function authorize(req: Request): Promise<boolean> {
       return false;
     }
   }
-  // Path 2 — manual trigger (CRON_SECRET bearer token)
-  return req.headers.get("authorization") === `Bearer ${process.env.CRON_SECRET}`;
+  // Path 2 — manual trigger (CRON_SECRET bearer token).
+  // Guard against undefined secret: "Bearer undefined" must never authenticate.
+  const cronSecret = process.env.CRON_SECRET;
+  return !!cronSecret && req.headers.get("authorization") === `Bearer ${cronSecret}`;
 }
 
 export async function POST(req: Request) {

@@ -79,7 +79,7 @@ export default function ENPSPage() {
     mutationFn: () => fetch("/api/enps", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ name: form.title, startDate: form.startDate, endDate: form.endDate }),
     }).then((r) => r.json()),
     onSuccess: (data) => {
       if (data.error) { toast.error(data.error); return; }

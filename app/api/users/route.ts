@@ -84,12 +84,12 @@ export async function POST(req: Request) {
     data: { ...parsed.data, password: hashedPassword },
   });
 
-  // New user invalidates admin list and their manager's team list
+  // Invalidate admin list and both variants of the manager's team cache.
+  // Read keys use users:manager:{id}:{myReports} — must match both variants.
   void Promise.all([
     invalidateCache("users:admin"),
-    parsed.data.managerId
-      ? invalidateCache(`users:manager:${parsed.data.managerId}`)
-      : Promise.resolve(),
+    parsed.data.managerId ? invalidateCache(`users:manager:${parsed.data.managerId}:true`)  : Promise.resolve(),
+    parsed.data.managerId ? invalidateCache(`users:manager:${parsed.data.managerId}:false`) : Promise.resolve(),
   ]);
 
   await writeAudit({

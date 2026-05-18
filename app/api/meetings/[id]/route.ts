@@ -60,7 +60,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (data.toggleAgendaItem) {
     const itemId = data.toggleAgendaItem as string;
     const existing = await prisma.meetingAgendaItem.findUnique({ where: { id: itemId } });
-    if (!existing) return NextResponse.json({ error: "Item not found" }, { status: 404 });
+    // IDOR guard: item must belong to the authorised meeting, not any other meeting
+    if (!existing || existing.meetingId !== id) {
+      return NextResponse.json({ error: "Item not found" }, { status: 404 });
+    }
     const updated = await prisma.meetingAgendaItem.update({
       where: { id: itemId }, data: { done: !existing.done },
     });

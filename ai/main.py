@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from typing import Optional
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Depends, Request
+from fastapi import FastAPI, Depends, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -38,10 +38,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Allow calls only from Vercel deployment — adjust origin in production
+# CORS: default to deny-all (*) is overridden in production by setting ALLOWED_ORIGINS
+# to the Vercel deployment URL (e.g. "https://your-app.vercel.app").
+# The HMAC auth middleware is the primary guard; CORS is defence-in-depth.
+_allowed_origins = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.environ.get("ALLOWED_ORIGINS", "*").split(","),
+    allow_origins=_allowed_origins or ["*"],  # fail open in dev so local Next.js works
     allow_methods=["POST"],
     allow_headers=["*"],
 )

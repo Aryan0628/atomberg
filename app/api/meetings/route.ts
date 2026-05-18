@@ -55,6 +55,17 @@ export async function POST(req: Request) {
   const parsed = MeetingSchema.safeParse(body.data);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
 
+  // Managers can only schedule 1:1s with their own direct reports
+  if (session.user.role === "MANAGER") {
+    const employee = await prisma.user.findUnique({
+      where: { id: parsed.data.employeeId },
+      select: { managerId: true },
+    });
+    if (!employee || employee.managerId !== session.user.id) {
+      return NextResponse.json({ error: "Employee is not your direct report" }, { status: 403 });
+    }
+  }
+
   const meeting = await prisma.oneOnOneMeeting.create({
     data: {
       managerId: session.user.id,

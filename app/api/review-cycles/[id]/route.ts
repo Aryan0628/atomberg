@@ -5,7 +5,10 @@ import { NextResponse } from "next/server";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Full review data (including all responses) is PII — restrict to ADMIN/HR
+  if (!session || !["ADMIN", "HR"].includes(session.user.role as string)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   const { id } = await params;
 
   const cycle = await prisma.reviewCycle.findUnique({
@@ -15,7 +18,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       responses: {
         include: {
           reviewer: { select: { id: true, name: true, department: true } },
-          subject: { select: { id: true, name: true, department: true } },
+          subject:  { select: { id: true, name: true, department: true } },
         },
       },
     },

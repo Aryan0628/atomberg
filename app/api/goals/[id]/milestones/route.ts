@@ -5,15 +5,38 @@ import { parseJson } from "@/lib/utils";
 import { NextResponse } from "next/server";
 
 const MilestoneSchema = z.object({
-  title: z.string().min(1).max(200),
+  title:   z.string().min(1).max(200),
   dueDate: z.coerce.date().optional(),
-  order: z.number().int().optional(),
+  order:   z.number().int().optional(),
 });
+
+async function canAccessGoal(goalId: string, userId: string, role: string): Promise<boolean> {
+  const goal = await prisma.goal.findUnique({
+    where: { id: goalId },
+    select: {
+      ownerId:    true,
+      approverId: true,
+      owner:      { select: { managerId: true } },
+      sharedWith: { select: { id: true } },
+    },
+  });
+  if (!goal) return false;
+  if (["ADMIN", "HR"].includes(role)) return true;
+  if (goal.ownerId === userId) return true;
+  if (goal.approverId === userId) return true;
+  if (goal.owner?.managerId === userId) return true;
+  if (goal.sharedWith.some((u) => u.id === userId)) return true;
+  return false;
+}
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
+
+  const allowed = await canAccessGoal(id, session.user.id, session.user.role as string);
+  if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
   const milestones = await prisma.milestone.findMany({
     where: { goalId: id },
     orderBy: { order: "asc" },

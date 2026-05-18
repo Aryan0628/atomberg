@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -49,8 +49,11 @@ export default function GoalStatusReportPage() {
   }, {});
 
   const staleDays = 7;
+  // Capture once per render cycle — avoids calling Date.now() on every list item
+  // and prevents hydration mismatch between server and client render.
+  const now = useMemo(() => Date.now(), []);
   const isStale = (updatedAt: string) => {
-    const diff = (Date.now() - new Date(updatedAt).getTime()) / (1000 * 60 * 60 * 24);
+    const diff = (now - new Date(updatedAt).getTime()) / (1000 * 60 * 60 * 24);
     return diff > staleDays;
   };
 

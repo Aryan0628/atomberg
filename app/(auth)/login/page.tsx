@@ -11,13 +11,15 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
-const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+// NODE_ENV is a compile-time constant in Next.js — this entire block is
+// dead-code-eliminated in production builds, so passwords never ship to prod.
+const IS_DEMO = process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 
 const demoCredentials = [
-  { role: "Admin", email: "admin@atomberg.com", password: "Admin@123" },
-  { role: "HR", email: "hr@atomberg.com", password: "Hr@123" },
-  { role: "Manager", email: "vikram.singh@atomberg.com", password: "Manager@123" },
-  { role: "Employee", email: "rahul.sharma@atomberg.com", password: "Employee@123" },
+  { role: "Admin",    email: "admin@atomberg.com",        password: "Admin@123" },
+  { role: "HR",       email: "hr@atomberg.com",            password: "Hr@123" },
+  { role: "Manager",  email: "vikram.singh@atomberg.com",  password: "Manager@123" },
+  { role: "Employee", email: "rahul.sharma@atomberg.com",  password: "Employee@123" },
 ];
 
 function getRoleDashboard(role?: string) {
