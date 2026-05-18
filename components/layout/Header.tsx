@@ -11,9 +11,10 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Bell, Sun, Moon, LogOut, ChevronDown, Shuffle, Circle } from "lucide-react";
+import { Bell, Sun, Moon, LogOut, ChevronDown, Shuffle, Circle, Search, Command } from "lucide-react";
 import { getInitials, formatRelativeTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 // Map path segments to human readable page titles
 const PAGE_TITLES: Record<string, string> = {
@@ -49,7 +50,23 @@ export function Header() {
   const { data: session }    = useSession();
   const { theme, setTheme }  = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [searchQ, setSearchQ] = useState("");
+  const router = useRouter();
   useEffect(() => { setMounted(true); }, []);
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    const q = searchQ.trim();
+    if (!q) return;
+    const role = session?.user?.role;
+    const base = role === "ADMIN" || role === "HR"
+      ? "/dashboard/admin"
+      : role === "MANAGER"
+      ? "/dashboard/manager"
+      : "/dashboard/employee";
+    router.push(`${base}/goals?search=${encodeURIComponent(q)}`);
+    setSearchQ("");
+  }
 
   const pageTitle = usePageTitle();
   const { data: notifData } = useNotifications();
@@ -70,6 +87,20 @@ export function Header() {
       <h1 className="text-sm font-semibold text-foreground tracking-tight">
         {pageTitle}
       </h1>
+
+      {/* Global search bar */}
+      <form onSubmit={handleSearch} className="hidden md:flex items-center relative">
+        <Search className="absolute left-2.5 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+        <input
+          value={searchQ}
+          onChange={(e) => setSearchQ(e.target.value)}
+          placeholder="Search goals…"
+          className="h-8 w-48 pl-8 pr-8 rounded-lg border border-input bg-muted/40 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-all focus:w-64"
+        />
+        <kbd className="absolute right-2 text-[10px] text-muted-foreground hidden md:flex items-center gap-0.5 pointer-events-none">
+          <Command className="w-2.5 h-2.5" />K
+        </kbd>
+      </form>
 
       <div className="flex items-center gap-2">
         {/* Demo Role Switcher */}

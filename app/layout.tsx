@@ -16,6 +16,17 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "AtomQuest Portal — Goal Setting & Tracking",
   description: "In-house goal setting and tracking portal for Atomberg Technologies. Set goals, track check-ins, and manage performance across the organization.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "AtomQuest",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+    "msapplication-TileColor": "#1D4ED8",
+    "theme-color": "#1D4ED8",
+  },
 };
 
 export default function RootLayout({

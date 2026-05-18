@@ -8,7 +8,7 @@ import { useAppStore } from "@/store/useAppStore";
 import {
   LayoutDashboard, Target, ClipboardCheck, Users, Calendar,
   BarChart3, Shield, FileText, PanelLeftClose, PanelLeftOpen,
-  UserCheck, Share2, AlertTriangle, Settings, History, BookTemplate,
+  UserCheck, Share2, AlertTriangle, Settings, History, BookTemplate, GitBranch,
 } from "lucide-react";
 
 const employeeLinks = [
@@ -35,7 +35,8 @@ const adminLinks = [
   { href: "/dashboard/admin/escalations",label: "Escalations", icon: AlertTriangle },
   { href: "/dashboard/admin/reports",    label: "Reports",    icon: FileText },
   { href: "/dashboard/admin/templates",  label: "Templates",  icon: BookTemplate },
-  { href: "/dashboard/admin/org-chart",  label: "Org Chart",  icon: Settings },
+  { href: "/dashboard/admin/org-chart",    label: "Org Chart",    icon: Settings },
+  { href: "/dashboard/admin/architecture", label: "Architecture", icon: GitBranch },
 ];
 
 const ROLE_LABEL: Record<string, string> = {

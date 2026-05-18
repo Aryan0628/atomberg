@@ -430,6 +430,72 @@ export async function checkRedundancy(payload: RedundancyRequest): Promise<Redun
   }
 }
 
+// ─── NLP Goal Parser Types ─────────────────────────────────────────────────────
+
+export interface NLPParseResponse {
+  title: string;
+  thrustArea: string;
+  uomType: string;
+  target: number | null;
+  uomUnit: string | null;
+  targetDate: string | null;
+  description: string;
+}
+
+async function callPythonNLP(text: string): Promise<NLPParseResponse> {
+  const url = `${process.env.AI_SERVICE_URL}/nlp/parse-goal`;
+  const body = JSON.stringify({ text });
+  const { token, timestamp } = signRequest(body);
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Service-Token": token, "X-Timestamp": timestamp },
+    body,
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!res.ok) throw new Error(`AI service ${res.status}`);
+  return res.json();
+}
+
+async function nlpParseFallback(text: string): Promise<NLPParseResponse> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY not configured");
+
+  const prompt = `You are an HR goal-setting assistant. Extract structured goal fields from this natural language description.
+
+User input: "${text}"
+
+Return ONLY valid JSON:
+{"title":"...","thrustArea":"Sales Revenue|Customer Experience|Operational Excellence|Safety & Compliance|People Development|Cost Efficiency|Innovation|Digital Transformation","uomType":"NUMERIC_MIN|NUMERIC_MAX|TIMELINE|ZERO|PERCENTAGE","target":null,"uomUnit":null,"targetDate":null,"description":"..."}`;
+
+  const raw = await geminiGenerate(prompt);
+  const match = raw.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error("No JSON in NLP fallback response");
+  const parsed = JSON.parse(match[0]);
+  return {
+    title: parsed.title ?? "",
+    thrustArea: parsed.thrustArea ?? "Sales Revenue",
+    uomType: parsed.uomType ?? "NUMERIC_MIN",
+    target: typeof parsed.target === "number" ? parsed.target : null,
+    uomUnit: parsed.uomUnit ?? null,
+    targetDate: parsed.targetDate ?? null,
+    description: parsed.description ?? "",
+  };
+}
+
+export async function parseGoalNLP(text: string): Promise<NLPParseResponse> {
+  const serviceUrl = process.env.AI_SERVICE_URL;
+  if (!serviceUrl || Date.now() < _openUntil) return nlpParseFallback(text);
+  try {
+    const result = await callPythonNLP(text);
+    _failures = 0;
+    return result;
+  } catch {
+    _failures++;
+    if (_failures >= FAILURE_THRESHOLD) { _openUntil = Date.now() + OPEN_DURATION_MS; _failures = 0; }
+    return nlpParseFallback(text);
+  }
+}
+
 export async function evaluateGoal(payload: GoalEvalRequest): Promise<GoalEvalResponse> {
   const serviceUrl = process.env.AI_SERVICE_URL;
 

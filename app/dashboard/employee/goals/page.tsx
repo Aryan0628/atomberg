@@ -15,14 +15,17 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Plus, Search, Send, Target, ArrowRight, BookTemplate, ChevronRight, BarChart2, Loader2 } from "lucide-react";
+import { Plus, Search, Send, Target, ArrowRight, BookTemplate, ChevronRight, BarChart2, Loader2, Sparkles, Wand2, HelpCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AiAnalysisPanel, type AiResult } from "@/components/goals/AiAnalysisPanel";
 import { RedundancyWarning } from "@/components/goals/RedundancyWarning";
 import Link from "next/link";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import type { RedundancyMatch } from "@/lib/ai-client";
 import { getGoalStatusColor, getUoMLabel, getUoMColor, formatScore } from "@/lib/utils";
 import { getScoreColor } from "@/lib/scoring";
+import { GoalRing } from "@/components/goals/GoalRing";
 
 const THRUST_AREAS = [
   "Sales Revenue", "Customer Experience", "Operational Excellence",
@@ -55,7 +58,7 @@ function useTemplates() {
   });
 }
 
-export default function EmployeeGoalsPage() {
+function EmployeeGoalsPage() {
   const { data: goals, isLoading } = useGoals();
   const { data: cycle } = useCurrentCycle();
   const { data: templates } = useTemplates();
@@ -63,8 +66,14 @@ export default function EmployeeGoalsPage() {
   const createGoal = useCreateGoal();
   const queryClient = useQueryClient();
 
-  const [search, setSearch] = useState("");
+  const searchParams = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const [statusFilter, setStatusFilter] = useState("ALL");
+
+  useEffect(() => {
+    const q = searchParams.get("search");
+    if (q) setSearch(q);
+  }, [searchParams]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -72,6 +81,39 @@ export default function EmployeeGoalsPage() {
   const [redundancyMatches, setRedundancyMatches] = useState<RedundancyMatch[]>([]);
   const [redundancyDismissed, setRedundancyDismissed] = useState(false);
   const redundancyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [nlMode, setNlMode] = useState(false);
+  const [nlText, setNlText] = useState("");
+  const [nlParsing, setNlParsing] = useState(false);
+
+  async function handleNlParse() {
+    if (!nlText.trim()) return;
+    setNlParsing(true);
+    try {
+      const res = await fetch("/api/ai/parse-goal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: nlText }),
+      });
+      if (!res.ok) throw new Error("Parsing failed");
+      const parsed = await res.json();
+      setForm((prev) => ({
+        ...prev,
+        title: parsed.title || prev.title,
+        description: parsed.description || prev.description,
+        thrustArea: parsed.thrustArea || prev.thrustArea,
+        uomType: parsed.uomType || prev.uomType,
+        target: parsed.target != null ? String(parsed.target) : prev.target,
+        uomUnit: parsed.uomUnit || prev.uomUnit,
+        targetDate: parsed.targetDate ? parsed.targetDate.slice(0, 10) : prev.targetDate,
+      }));
+      setNlMode(false);
+      toast.success("Goal fields extracted — review and confirm below");
+    } catch {
+      toast.error("Could not parse goal — try rephrasing or fill manually");
+    } finally {
+      setNlParsing(false);
+    }
+  }
 
   // Debounced redundancy check — fires 1.5s after the user stops typing the title
   function triggerRedundancyCheck(title: string, thrustArea: string) {
@@ -308,12 +350,58 @@ export default function EmployeeGoalsPage() {
         <Button disabled={activeGoals.length >= 8} onClick={() => setDialogOpen(true)}>
           <Plus className="w-4 h-4 mr-1" /> New Goal
         </Button>
-        <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) { setForm(EMPTY_FORM); setAiResult(null); setRedundancyMatches([]); setRedundancyDismissed(false); } }}>
+        <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) { setForm(EMPTY_FORM); setAiResult(null); setRedundancyMatches([]); setRedundancyDismissed(false); setNlMode(false); setNlText(""); } }}>
           <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Goal</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleCreateGoal} className="space-y-4">
+
+              {/* ── NL Goal Parser ── */}
+              <div className="rounded-xl border border-violet-200 dark:border-violet-800/60 bg-violet-50 dark:bg-violet-950/30 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-violet-700 dark:text-violet-300">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    AI Goal Parser
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setNlMode((v) => !v)}
+                    className="text-[10px] font-medium text-violet-500 hover:text-violet-700 dark:hover:text-violet-200 transition-colors"
+                  >
+                    {nlMode ? "Close" : "Describe in plain English →"}
+                  </button>
+                </div>
+                {nlMode && (
+                  <div className="space-y-2">
+                    <Textarea
+                      placeholder={`e.g. "Reduce average customer response TAT from 72 hours to 48 hours by Q2"`}
+                      value={nlText}
+                      onChange={(e) => setNlText(e.target.value)}
+                      rows={2}
+                      className="text-sm resize-none bg-white dark:bg-slate-900 border-violet-200 dark:border-violet-700"
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="gap-1.5 bg-violet-600 hover:bg-violet-700 text-white w-full"
+                      onClick={handleNlParse}
+                      disabled={nlParsing || !nlText.trim()}
+                    >
+                      {nlParsing
+                        ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Extracting fields…</>
+                        : <><Wand2 className="w-3.5 h-3.5" /> Extract Goal Fields</>
+                      }
+                    </Button>
+                  </div>
+                )}
+                {!nlMode && (
+                  <p className="text-[11px] text-violet-500 dark:text-violet-400">
+                    Type your goal in natural language — AI will fill in UoM, target, and deadline for you.
+                  </p>
+                )}
+              </div>
+
               <div className="space-y-2">
                 <Label>Title *</Label>
                 <Input
@@ -349,7 +437,24 @@ export default function EmployeeGoalsPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>UoM Type *</Label>
+                  <div className="flex items-center gap-1.5">
+                    <Label>UoM Type *</Label>
+                    <TooltipProvider delay={100}>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <HelpCircle className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-[240px] text-xs space-y-1.5 p-3">
+                          <p className="font-semibold mb-1">Unit of Measurement types:</p>
+                          <p><span className="font-medium">Higher is Better</span> — score = actual ÷ target (e.g. sales revenue)</p>
+                          <p><span className="font-medium">Lower is Better</span> — score = target ÷ actual (e.g. TAT, cost, defects)</p>
+                          <p><span className="font-medium">Timeline</span> — 100% if completed on/before deadline</p>
+                          <p><span className="font-medium">Zero Target</span> — 100% if value is zero (e.g. safety incidents)</p>
+                          <p><span className="font-medium">Percentage</span> — direct % scale (0–100)</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <Select value={form.uomType} onValueChange={(v) => v && setForm({ ...form, uomType: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{UOM_TYPES.map((u) => <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>)}</SelectContent>
@@ -375,7 +480,23 @@ export default function EmployeeGoalsPage() {
                 </div>
               )}
               <div className="space-y-2">
-                <Label>Weightage % *</Label>
+                <div className="flex items-center gap-1.5">
+                  <Label>Weightage % *</Label>
+                  <TooltipProvider delay={100}>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <HelpCircle className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-[200px] text-xs p-3">
+                        <p className="font-semibold mb-1">Weightage Rules:</p>
+                        <p>• Minimum per goal: <strong>10%</strong></p>
+                        <p>• Maximum per goal: <strong>100%</strong></p>
+                        <p>• All your goals must sum to exactly <strong>100%</strong></p>
+                        <p>• Max <strong>8 goals</strong> per cycle</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
                 <Input type="number" min={10} max={100} step={5} required value={form.weightage} onChange={(e) => setForm({ ...form, weightage: e.target.value })} />
                 <p className="text-xs text-slate-400">Remaining: {Math.max(0, 100 - totalWeightage)}% · All goals must total 100%</p>
               </div>
@@ -450,38 +571,43 @@ export default function EmployeeGoalsPage() {
           {filteredGoals.map((goal: Record<string, unknown>) => (
             <Link key={goal.id as string} href={`/dashboard/employee/goals/${goal.id}`}>
               <Card className="hover:shadow-md transition-all hover:border-primary/50 cursor-pointer group h-full shadow-sm">
-                <CardHeader className="pb-4 pt-6 px-6">
+                <CardHeader className="pb-3 pt-5 px-6">
                   <div className="flex items-start justify-between gap-3">
                     <CardTitle className="text-base font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">
                       {goal.title as string}
                     </CardTitle>
-                    <Badge className={`font-normal ${getGoalStatusColor(goal.status as string)}`} variant="secondary">
+                    <Badge className={`font-normal flex-shrink-0 ${getGoalStatusColor(goal.status as string)}`} variant="secondary">
                       {(goal.status as string).replace(/_/g, " ")}
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4 px-6 pb-6">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="outline" className="text-xs text-muted-foreground border-border font-medium">
-                      {goal.thrustArea as string}
-                    </Badge>
-                    <Badge variant="outline" className={`text-xs font-medium border-border ${getUoMColor(goal.uomType as string)}`}>
-                      {getUoMLabel(goal.uomType as string)}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Weight: <span className="font-semibold text-foreground">{goal.weightage as number}%</span></span>
-                    {goal.latestScore !== null && goal.latestScore !== undefined && (
-                      <span className={`font-semibold ${getScoreColor(goal.latestScore as number)}`}>
-                        Score: {formatScore(goal.latestScore as number)}
-                      </span>
+                <CardContent className="px-6 pb-5">
+                  <div className="flex items-center gap-4">
+                    {/* Ring — shown when score exists, placeholder ring otherwise */}
+                    {goal.latestScore !== null && goal.latestScore !== undefined ? (
+                      <GoalRing score={goal.latestScore as number} size={56} />
+                    ) : (
+                      <div className="w-14 h-14 rounded-full border-[5px] border-muted/25 flex items-center justify-center flex-shrink-0">
+                        <span className="text-[9px] text-muted-foreground font-medium">N/A</span>
+                      </div>
                     )}
-                    {!!goal.target && (
-                      <span className="text-muted-foreground">Target: <span className="font-semibold text-foreground">{goal.target as number}{goal.uomUnit ? ` ${goal.uomUnit}` : ""}</span></span>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-end">
-                    <ArrowRight className="w-4 h-4 text-muted-foreground opacity-50 group-hover:opacity-100 group-hover:text-primary transition-all group-hover:translate-x-1" />
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Badge variant="outline" className="text-xs text-muted-foreground border-border font-medium">
+                          {goal.thrustArea as string}
+                        </Badge>
+                        <Badge variant="outline" className={`text-xs font-medium border-border ${getUoMColor(goal.uomType as string)}`}>
+                          {getUoMLabel(goal.uomType as string)}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Weight: <span className="font-semibold text-foreground">{goal.weightage as number}%</span></span>
+                        {!!goal.target && (
+                          <span className="text-xs text-muted-foreground">Target: <span className="font-semibold text-foreground">{goal.target as number}{goal.uomUnit ? ` ${goal.uomUnit}` : ""}</span></span>
+                        )}
+                      </div>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground opacity-50 group-hover:opacity-100 group-hover:text-primary transition-all group-hover:translate-x-1 flex-shrink-0" />
                   </div>
                 </CardContent>
               </Card>
@@ -538,5 +664,13 @@ export default function EmployeeGoalsPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense>
+      <EmployeeGoalsPage />
+    </Suspense>
   );
 }

@@ -9,6 +9,8 @@ import Link from "next/link";
 import { ActionCenter } from "@/components/shared/ActionCenter";
 import { formatScore, getGoalStatusColor, getCountdown } from "@/lib/utils";
 import { computeWeightedScore, forecastAnnualScore, getScoreLabel } from "@/lib/scoring";
+import { GoalRing } from "@/components/goals/GoalRing";
+import { GamificationBadges } from "@/components/employee/GamificationBadges";
 import { useEffect, useState } from "react";
 
 // ─── Stat Card ────────────────────────────────────────
@@ -103,9 +105,21 @@ export default function EmployeeDashboard() {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard title="Goals"          value={allGoals.length}                                                icon={Target}      subtitle={`${lockedGoals.length} locked`}                                                     loading={goalsLoading} highlight />
-        <StatCard title="Weighted Score" value={weightedScore > 0 ? `${weightedScore.toFixed(1)}%` : "—"}       icon={TrendingUp}   subtitle={goalsWithScores.length > 0 ? getScoreLabel(weightedScore) : "No check-ins yet"} loading={goalsLoading} />
         <StatCard title="Weightage"      value={`${totalWeightage}%`}                                           icon={CheckCircle2} subtitle={Math.abs(totalWeightage - 100) < 0.01 ? "Complete" : `${(100 - totalWeightage).toFixed(0)}% remaining`} loading={goalsLoading} />
         <StatCard title="Annual Forecast" value={forecast > 0 ? `${forecast}%` : "—"}                           icon={TrendingUp}   subtitle={forecast >= 80 ? "Above target" : forecast > 0 ? "On track" : "Pending check-ins"} loading={goalsLoading} />
+        {/* Weighted score as a ring card */}
+        {goalsLoading ? (
+          <div className="h-24 rounded-xl border bg-card animate-pulse" />
+        ) : (
+          <div className="rounded-xl border bg-card p-4 flex items-center gap-4 shadow-sm">
+            <GoalRing score={weightedScore} size={64} strokeWidth={6} />
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Weighted Score</p>
+              <p className="text-lg font-bold text-foreground">{weightedScore > 0 ? `${weightedScore.toFixed(1)}%` : "—"}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{goalsWithScores.length > 0 ? getScoreLabel(weightedScore) : "No check-ins yet"}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Draft alert */}
@@ -129,6 +143,9 @@ export default function EmployeeDashboard() {
           </Link>
         </div>
       )}
+
+      {/* Gamification badges */}
+      <GamificationBadges />
 
       {/* Goals list */}
       <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">

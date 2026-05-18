@@ -76,20 +76,24 @@ export async function runEscalationEngine() {
 
         if (submitted === 0) {
           const key = `esc:${emp.id}:${rule.trigger}:${cycle.id}:${rule.escalateTo}`;
-          const already = await redisGet(key);
+          // Redis is optional — if it's down, fail open (send the escalation rather than skip it)
+          let already = false;
+          try { already = !!(await redisGet(key)); } catch { /* Redis unavailable — proceed */ }
           if (!already) {
             const recipient = await resolveRecipient(emp, rule.escalateTo);
             if (recipient) {
               await sendEscalationEmail(recipient, rule.trigger, rule.escalateTo, cycle.name);
             }
-            await prisma.escalationLog.create({
-              data: {
-                userId: emp.id,
-                trigger: rule.trigger,
-                escalatedTo: rule.escalateTo,
-                emailSent: !!recipient,
-              },
-            });
+            await prisma.$transaction([
+              prisma.escalationLog.create({
+                data: {
+                  userId: emp.id,
+                  trigger: rule.trigger,
+                  escalatedTo: rule.escalateTo,
+                  emailSent: !!recipient,
+                },
+              }),
+            ]);
             await writeAudit({
               userId: emp.id,
               action: "ESCALATION_SENT",
@@ -97,7 +101,7 @@ export async function runEscalationEngine() {
               entityId: emp.id,
               newValue: { trigger: rule.trigger, escalateTo: rule.escalateTo },
             });
-            await redisSetex(key, 86400, "1");
+            try { await redisSetex(key, 86400, "1"); } catch { /* Redis unavailable — dedup will miss, acceptable */ }
             processed++;
           }
         }
@@ -116,17 +120,20 @@ export async function runEscalationEngine() {
         include: { owner: true },
       });
 
-      // For GOAL_NOT_APPROVED, the "subject" is the manager who hasn't approved
-      const managerIds = [...new Set(pendingGoals.map((g) => g.owner.managerId).filter(Boolean))];
+      // For GOAL_NOT_APPROVED, the "subject" is the manager who hasn't approved.
+      // Batch all manager lookups to avoid N+1 queries.
+      const managerIds = [...new Set(pendingGoals.map((g) => g.owner.managerId).filter(Boolean))] as string[];
+      const managersRaw = await prisma.user.findMany({
+        where: { id: { in: managerIds } },
+        select: { id: true, name: true, email: true, managerId: true, skipManagerId: true },
+      });
+      const managerMap = Object.fromEntries(managersRaw.map((m) => [m.id, m]));
       for (const mId of managerIds) {
-        if (!mId) continue;
         const key = `esc:${mId}:${rule.trigger}:${cycle.id}:${rule.escalateTo}`;
-        const already = await redisGet(key);
+        let already = false;
+        try { already = !!(await redisGet(key)); } catch { /* Redis unavailable — proceed */ }
         if (!already) {
-          const manager = await prisma.user.findUnique({
-            where: { id: mId },
-            select: { id: true, name: true, email: true, managerId: true, skipManagerId: true },
-          });
+          const manager = managerMap[mId];
           if (manager) {
             const recipient = await resolveRecipient(manager, rule.escalateTo);
             if (recipient) {
@@ -140,7 +147,7 @@ export async function runEscalationEngine() {
                 emailSent: !!recipient,
               },
             });
-            await redisSetex(key, 86400, "1");
+            try { await redisSetex(key, 86400, "1"); } catch { /* Redis unavailable */ }
             processed++;
           }
         }
@@ -167,7 +174,8 @@ export async function runEscalationEngine() {
         });
         if (checkins < emp.ownedGoals.length) {
           const key = `esc:${emp.id}:${rule.trigger}:${cycle.id}:${currentQuarter}`;
-          const already = await redisGet(key);
+          let already = false;
+          try { already = !!(await redisGet(key)); } catch { /* Redis unavailable — proceed */ }
           if (!already) {
             const recipient = await resolveRecipient(emp, rule.escalateTo);
             if (recipient) {
@@ -181,7 +189,7 @@ export async function runEscalationEngine() {
                 emailSent: !!recipient,
               },
             });
-            await redisSetex(key, 86400, "1");
+            try { await redisSetex(key, 86400, "1"); } catch { /* Redis unavailable */ }
             processed++;
           }
         }

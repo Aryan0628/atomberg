@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { getGoalStatusColor, getUoMLabel, getUoMColor, formatDate, formatScore } from "@/lib/utils";
 import { getScoreColor } from "@/lib/scoring";
+import { GoalRiskBadge } from "@/components/shared/GoalRiskBadge";
 import { Target, Weight, BarChart3, CheckCircle2, XCircle, RotateCcw, Lock, FileText, ClipboardCheck, ArrowLeft, Pencil } from "lucide-react";
 import { GoalCommentThread } from "@/components/shared/GoalCommentThread";
 import Link from "next/link";
@@ -105,6 +106,7 @@ export default function GoalDetailPage() {
               <Pencil className="w-3.5 h-3.5" /> Edit Goal
             </Button>
           )}
+          <GoalRiskBadge checkins={goal.checkins ?? []} />
           <Badge className={`${getGoalStatusColor(goal.status)} font-normal text-sm px-3 py-1`} variant="secondary">
             {goal.status.replace("_", " ")}
           </Badge>

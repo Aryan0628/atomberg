@@ -11,7 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnnualReviewModal } from "@/components/goals/AnnualReviewModal";
 import { getInitials, getGoalStatusColor, formatScore } from "@/lib/utils";
-import { getScoreColor, computeWeightedScore } from "@/lib/scoring";
+import { getScoreColor, computeWeightedScore, computeGoalRisk } from "@/lib/scoring";
 import { ClipboardList } from "lucide-react";
 
 interface ReviewTarget {
@@ -69,6 +69,12 @@ export default function ManagerTeamPage() {
           const locked = emp.goals.filter((g) => g.status === "LOCKED").length;
           const hasLockedGoals = locked > 0;
 
+          // Aggregate all checkins across goals for team-level risk
+          const allCheckins = emp.goals.flatMap((g: Record<string, unknown>) =>
+            ((g.checkins ?? []) as { quarter: string; scorePercentage: number | null }[])
+          );
+          const teamRisk = computeGoalRisk(allCheckins);
+
           return (
             <Card key={id} className="hover:shadow-md transition-shadow border-border shadow-sm">
               <CardContent className="p-6">
@@ -82,7 +88,15 @@ export default function ManagerTeamPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-4 flex-wrap mb-2">
                       <div>
-                        <p className="font-semibold text-foreground">{emp.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-foreground">{emp.name}</p>
+                          {teamRisk.level !== "no_data" && (
+                            <span className={`inline-flex items-center gap-1 text-xs font-semibold ${teamRisk.color}`} title={teamRisk.reason}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${teamRisk.dotColor}`} />
+                              {teamRisk.label}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs text-muted-foreground">{emp.dept}</p>
                       </div>
                       <div className="flex items-center gap-4">

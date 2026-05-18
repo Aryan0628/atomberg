@@ -134,6 +134,49 @@ export function computeGoalWellness(data: {
 }
 
 /**
+ * Goal Risk Predictor — unique differentiator.
+ * After Q1/Q2 check-in, linearly extrapolates whether a goal will hit 70%+ by year end.
+ * Returns a risk level and a short reason string for display on dashboards.
+ */
+export type RiskLevel = "on_track" | "at_risk" | "critical" | "no_data";
+
+export interface GoalRisk {
+  level: RiskLevel;
+  label: string;
+  reason: string;
+  color: string;
+  dotColor: string;
+}
+
+export function computeGoalRisk(checkins: { quarter: string; scorePercentage: number | null }[]): GoalRisk {
+  const scored = checkins.filter((c) => c.scorePercentage !== null && c.scorePercentage >= 0);
+  if (scored.length === 0) {
+    return { level: "no_data", label: "No Data", reason: "No check-ins submitted yet", color: "text-slate-400", dotColor: "bg-slate-300" };
+  }
+
+  const scores = scored.map((c) => c.scorePercentage as number);
+  const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+
+  // Simple linear extrapolation: if we have Q1+Q2, check trend direction
+  let trajectory = avg;
+  if (scored.length >= 2) {
+    const last = scores[scores.length - 1];
+    const prev = scores[scores.length - 2];
+    const slope = last - prev;
+    // Project one more quarter
+    trajectory = Math.min(last + slope, 150);
+  }
+
+  if (avg >= 80 && trajectory >= 70) {
+    return { level: "on_track", label: "On Track", reason: `Avg ${avg.toFixed(0)}% — projected to finish strong`, color: "text-emerald-600 dark:text-emerald-400", dotColor: "bg-emerald-500" };
+  }
+  if (avg >= 60 || trajectory >= 60) {
+    return { level: "at_risk", label: "At Risk", reason: `Avg ${avg.toFixed(0)}% — needs improvement to hit target`, color: "text-amber-600 dark:text-amber-400", dotColor: "bg-amber-400" };
+  }
+  return { level: "critical", label: "Critical", reason: `Avg ${avg.toFixed(0)}% — significantly below target`, color: "text-red-600 dark:text-red-400", dotColor: "bg-red-500" };
+}
+
+/**
  * Forecasts annual weighted score based on available quarter scores.
  * Returns the running average — simple but effective for the Forecast card.
  */
